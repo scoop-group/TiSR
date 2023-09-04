@@ -140,4 +140,7 @@ ops, data = Options(
 );                         #                                     :cos => (sin, cos))
 ```
 
+# Funding
+
+This work was funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) within the Priority Programme SPP 2331: "Machine Learning in Chemical Engineering" - project no. 466528284 
 
