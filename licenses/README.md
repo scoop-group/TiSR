@@ -4,8 +4,8 @@
 There are several parts of this code that are inspired by the SymbolicRegression.jl package. Most
 importantly, it was used as a starting point on how the basis, i.e., the Node that form the
 equations and how they are evaluated. However, most of the code was completely rewritten without
-reference to SymbolicRegression.jl, as I was curious to build it up myself understand the process
-completely, after I had understood the Node and eval_equation parts. The version of
+reference to SymbolicRegression.jl, as I was curious to build it up myself and understand the
+process completely, after I had understood the Node and eval_equation parts. The version of
 SymbolicRegression.jl in questions is 51b7da4 of May 1, 2022. 
 
 - Node -> Node
