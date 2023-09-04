@@ -1,0 +1,3 @@
+[submodule "src/ParameterEstimation"]
+	path = src/ParameterEstimation
+	url = git@github.com:viktmar/ParameterEstimation.git

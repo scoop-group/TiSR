@@ -35,14 +35,15 @@ using XLSX
 
 include("options.jl")
 include("node_n_eval_n_utilities.jl")
-include("param_fitting.jl")
 include("genetic_ops.jl")
 include("simplify.jl")
-include("specific_measures.jl")
 include("selection.jl")
+include("param_fitting.jl")
 include("string_to_node.jl")
+include("specific_measures.jl")
 include("nsga-II.jl")
 include("individual.jl")
 include("write_to_excel.jl")
+include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
 
 end # module
