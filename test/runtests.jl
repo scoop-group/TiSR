@@ -1,6 +1,6 @@
-using TiSR
-using Test
 
-@testset "TiSR.jl" begin
-    # Write your tests here.
-end
+
+include("test_node_n_eval_utilities.jl")
+include("test_param_fitting.jl")
+include("test_selection.jl")
+

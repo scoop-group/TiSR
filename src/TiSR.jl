@@ -40,10 +40,9 @@ using XLSX
 
 include("options.jl")
 include("node_n_eval_n_utilities.jl")
-include("levenberg_marquardt.jl")
 include("param_fitting.jl")
 include("genetic_ops.jl")
-include("simplyfy.jl")
+include("simplify.jl")
 include("specific_measures.jl")
 include("selection.jl")
 include("string_to_node.jl")
