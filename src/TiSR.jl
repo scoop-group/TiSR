@@ -1,5 +1,56 @@
+# ==============================================================================
+# imports
+# ==============================================================================
+
 module TiSR
 
-# Write your package code here.
+export Options,
+    Node,
+    generational_loop,
+    write_to_excel,
+    string_to_node,
+    general_params,
+    selection_params,
+    fitting_params,
+    mutation_params,
+    data_descript,
+    residual_after_fitting,
 
-end
+    list_of_param_nodes,
+    node_to_symbolic
+
+
+using Statistics
+using Random
+
+import Base: isapprox, show
+
+using ForwardDiff
+using OrderedCollections
+using StatsBase: wsample
+using SymbolicUtils
+using SymbolicUtils.Code
+using StaticArrays
+
+using DataFrames
+
+using Dates
+using XLSX
+
+
+include("options.jl")
+include("node_n_eval_n_utilities.jl")
+include("levenberg_marquardt.jl")
+include("param_fitting.jl")
+include("genetic_ops.jl")
+include("simplyfy.jl")
+include("specific_measures.jl")
+include("selection.jl")
+include("string_to_node.jl")
+include("nsga-II.jl")
+include("individual.jl")
+include("write_to_excel.jl")
+
+# include("test/run_tests.jl")
+
+end # module
