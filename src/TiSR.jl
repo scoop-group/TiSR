@@ -1,6 +1,3 @@
-# ==============================================================================
-# imports
-# ==============================================================================
 
 module TiSR
 
@@ -22,7 +19,7 @@ export Options,
 
 using Statistics
 using Random
-
+using Dates
 import Base: isapprox, show
 
 using ForwardDiff
@@ -33,8 +30,6 @@ using SymbolicUtils.Code
 using StaticArrays
 
 using DataFrames
-
-using Dates
 using XLSX
 
 
@@ -49,7 +44,5 @@ include("string_to_node.jl")
 include("nsga-II.jl")
 include("individual.jl")
 include("write_to_excel.jl")
-
-# include("test/run_tests.jl")
 
 end # module
