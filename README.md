@@ -17,7 +17,7 @@ For more details on past and future uses, a paper accompanying this code is avai
 This package is currently not registered.
 First, clone this repository and make sure to do it recursively, as there is a submodule.
 Thereafter, install all the dependencies, which are loaded in the TiSR.jl file.
-If you keep trying to load the module, you will be promoted for each package to install it. 
+If you keep trying to load the module, you will be prompted for each package to install it. 
 
 A more detailed example is provided in example/example_main.jl.
 However, you may also start with the following minimal example:
@@ -25,7 +25,7 @@ However, you may also start with the following minimal example:
 
 ```julia
 
-include("src/TiSR.jl") # evalualte the module
+include("src/TiSR.jl") # evaluate the module
 using .TiSR            # load the module
 
 # create synthetic data
@@ -62,7 +62,7 @@ ops, data = Options(
 hall_of_fame, population, prog_dict = generational_loop(data, ops);
 
 # inspect the results
-col = "mare"
+col = "mare" # mean relative error
 perm = sortperm(hall_of_fame[col])
 
 hall_of_fame[col][perm]
