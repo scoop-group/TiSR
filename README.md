@@ -12,6 +12,64 @@ It implements a NSGA-II genetic algorithm for symbolic regression and is aimed a
 The project and the code are a work-in-progress and there are many more features planned.
 For more details on past and future uses, a paper accompanying this code is available at arxiv.com.
 
+# Getting started
+
+This package is currently not registered.
+First, clone this repository and make sure to do it recursively, as there is a submodule.
+Thereafter, install all the dependencies, which are loaded in the TiSR.jl file.
+If you keep trying to load the module, you will be promoted for each package to install it. 
+
+A more detailed example is provided in example/example_main.jl.
+However, you may also start with the following minimal example:
+
+
+```julia
+
+include("src/TiSR.jl") # evalualte the module
+using .TiSR            # load the module
+
+# create synthetic data
+data_matr = rand(1000, 3)
+data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
+# -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2)
+
+# make some custom settings
+fit_weights = 1 ./ data_matr[:, end] # weights to minimize relative deviation
+parts = [0.8, 0.2]
+
+ops, data = Options(
+    data_descript=data_descript(
+        data_matr;
+        parts          = parts,
+        fit_weights    = fit_weights
+    ),
+    general=general_params(
+        n_gens          = typemax(Int64),
+        pop_size        = 200,
+        max_compl       = 30,
+        pow_abs_param   = true,
+        prevent_doubles = 1e-2,
+        t_lim           = 60 * 2.0,                  # will run for 2 minutes
+        multithreadding = true,
+    ),
+    fitting=fitting_params(
+        early_stop_iter = 5,
+        max_iter        = 15,
+    ),
+);
+
+# start the equation search
+hall_of_fame, population, prog_dict = generational_loop(data, ops);
+
+# inspect the results
+col = "mare"
+perm = sortperm(hall_of_fame[col])
+
+hall_of_fame[col][perm]
+hall_of_fame["compl"][perm]
+hall_of_fame["node"][perm]
+
+```
 
 # Available settings and their default values
 
