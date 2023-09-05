@@ -1,19 +1,5 @@
 # Thermodynamics-informed Symbolic Regression - A Tool for the Thermodynamic Equation of State Development
 
-[![Build Status](https://github.com/scoop-group/TiSR.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/scoop-group/TiSR.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Build Status](https://travis-ci.com/scoop-group/TiSR.jl.svg?branch=main)](https://travis-ci.com/scoop-group/TiSR.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/scoop-group/TiSR.jl?svg=true)](https://ci.appveyor.com/project/scoop-group/TiSR-jl)
-[![Coverage](https://codecov.io/gh/scoop-group/TiSR.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/scoop-group/TiSR.jl)
-[![Coverage](https://coveralls.io/repos/github/scoop-group/TiSR.jl/badge.svg?branch=main)](https://coveralls.io/github/scoop-group/TiSR.jl?branch=main)
-
-# [![Build Status](https://github.com/viktmar/TiSR.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/viktmar/TiSR.jl/actions/workflows/CI.yml?query=branch%3Amain)
-# [![Build Status](https://travis-ci.com/viktmar/TiSR.jl.svg?branch=main)](https://travis-ci.com/viktmar/TiSR.jl)
-# [![Build Status](https://ci.appveyor.com/api/projects/status/github/viktmar/TiSR.jl?svg=true)](https://ci.appveyor.com/project/viktmar/TiSR-jl)
-# [![Coverage](https://codecov.io/gh/viktmar/TiSR.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/viktmar/TiSR.jl)
-# [![Coverage](https://coveralls.io/repos/github/viktmar/TiSR.jl/badge.svg?branch=main)](https://coveralls.io/github/viktmar/TiSR.jl?branch=main)
-
-
-
 This code base is based on the work of the project "Machine Learning and Optimal Experimental Design for Thermodynamic Property Modeling" in the DFG priority program [SPP2331](https://chemengml.org/).
 It implements a NSGA-II genetic algorithm for symbolic regression and is aimed at the development of thermodynamic equations of state.
 The project and the code are a work-in-progress and there are many more features planned.
