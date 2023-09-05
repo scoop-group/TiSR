@@ -2,8 +2,8 @@
 using OrderedCollections
 
 
-include("../options.jl")
-include("../node_n_eval_n_utilities.jl")
+include("../src/options.jl")
+include("../src/node_n_eval_n_utilities.jl")
 
 function hardcoded_equations(ops)
     eqs_dict = OrderedDict{String, Node}()

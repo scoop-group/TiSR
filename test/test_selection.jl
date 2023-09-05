@@ -4,7 +4,7 @@ using Random
 using StaticArrays
 using StatsBase: wsample
 
-include("../selection.jl")
+include("../src/selection.jl")
 
 @testset "non_dominated_sort" begin
     x = 1.:10.

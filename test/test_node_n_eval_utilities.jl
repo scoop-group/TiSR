@@ -7,8 +7,8 @@ using Random
 using ForwardDiff
 
 include("hardcoded_equations.jl")
-include("../options.jl")
-include("../node_n_eval_n_utilities.jl")
+include("../src/options.jl")
+include("../src/node_n_eval_n_utilities.jl")
 
 # make some preparations # ------------------------------------------------------------------------
 ln_abs(x) = log(abs(x))
