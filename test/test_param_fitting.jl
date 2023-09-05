@@ -1,7 +1,6 @@
 
 using Test
 using OrderedCollections
-using BenchmarkTools
 using Statistics
 using DataFrames
 
