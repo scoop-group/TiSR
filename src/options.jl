@@ -152,6 +152,7 @@ function fitting_params(;
     early_stop_iter          = 0,
     t_lim                    = Inf,
     rel_f_tol_5_iter         = 1e-2 * 0.01,
+    lasso_factor             = 1e-7,
     pre_residual_processing! = (x, ind) -> x,
     residual_processing      = (x, ind) -> x,
 )
@@ -160,15 +161,18 @@ function fitting_params(;
     max_iter < 5             && @warn "max_iter may be too low"
     early_stop_iter == 0     && @warn "no early stopping may lead to overfitting"
     0 < early_stop_iter <= 2 && @warn "early stopping may be too strict -> higher values may produce better results"
+    lasso_factor < 1.0       && @warn "lasso_factor seems to large"
 
     @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter"
     @assert 0 <= rel_f_tol_5_iter < 1.0 "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
+    @assert lasso_factor >= 0           "lasso factor must me >= 0"
 
     nam_tup = (
         max_iter                 = max_iter,
         early_stop_iter          = early_stop_iter,
         rel_f_tol_5_iter         = rel_f_tol_5_iter,
         t_lim                    = t_lim,
+        lasso_factor             = lasso_factor,
         pre_residual_processing! = pre_residual_processing!,
         residual_processing      = residual_processing,
     )

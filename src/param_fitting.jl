@@ -74,6 +74,10 @@ function residual_after_fitting(node, data, ops, list_of_param)
         res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1])
         res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
         res  .= abs.(res)
+
+        if ops.fitting.lasso_factor > 0.0
+            push!(res, sum(abs, x) * ops.fitting.lasso_factor)
+        end
         return res
     end
 
@@ -119,19 +123,17 @@ end
     is monotonically increasing for early_stop_iter-iterations, the fitting is stopped.
 """
 function early_stop_check(trace, node, list_of_param, data, ops; n=5)
-    test_res = abs.(ops.fitting.residual_processing(
-        fitting_residual(
-            trace[end].metadata["x"],
-            node,
-            list_of_param,
-            data,
-            ops.data_descript.split_inds[2],
-            ops
-        )[1],
-        ops.data_descript.split_inds[2]
-    ) .* view(ops.data_descript.fit_weights, ops.data_descript.split_inds[2]))
+    x = trace[end].metadata["x"]
+    res_test = fitting_residual(x, node, list_of_param, data, ops.data_descript.split_inds[2], ops)[1]
+    res_test .= ops.fitting.residual_processing(res_test, ops.data_descript.split_inds[2])
+    res_test .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[2])
+    res_test .= abs.(res_test)
 
-    trace[end].metadata["test_residual_norm"] = sum(abs2, test_res)
+    if ops.fitting.lasso_factor > 0.0
+        push!(res_test, sum(abs, x) * ops.fitting.lasso_factor)
+    end
+
+    trace[end].metadata["test_residual_norm"] = sum(abs2, res_test)
 
     length(trace) <= n + 1 && return false
     return issorted(trace[i].metadata["test_residual_norm"] for i in length(trace)-n:length(trace))

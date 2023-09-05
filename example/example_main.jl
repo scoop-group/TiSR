@@ -57,6 +57,7 @@ ops, data = Options(
     fitting=fitting_params(
         early_stop_iter = 5,
         max_iter        = 30,
+        lasso_factor    = 1e-5,
     ),
 );
 

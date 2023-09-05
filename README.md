@@ -109,6 +109,7 @@ ops, data = Options(
         early_stop_iter          = 0,              # -> how many iterations to account for early stopping regularization (0 -> turned off) (to use, the data needs to be partitioned into at least 2 parts. The early stopping evaluation is performed on the second partition.)
         t_lim                    = Inf,            # -> time limit for parameter fitting of individual (0.1 ... 5)
         rel_f_tol_5_iter         = 1e-2 * 0.01,    # -> relative tolerance for parameter fitting of individual -> considered converged if improvement over 5 iterations is smaller than this
+        lasso_factor             = 1e-7,           # -> factor for the lasso regularization -> pushing parameter values to 0 (0 -> turned off) (1e-7 ... 1e-4)
         pre_residual_processing! = (x, ind) -> x,  # -> processing of the equation output before the residual is calculated. Must be an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./= data[end][inds]"
         residual_processing      = (x, ind) -> x,  # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./ data[end][inds]"
     ),
