@@ -133,19 +133,19 @@ end
     eq4(data) = @. exp((((data[1] * 0.28282828) + pow_abs(data[8], 0.9984357489357)) * sin(((data[4] * 19.9832754918) - (data[9] / 9.42394578e11)))))
     eq5(data) = @. exp(((sin(((data[4] * 19.9832754918) - (data[9] / 9.42394578e11))) + pow_abs(data[8], 0.9984357489357)) * sin(((data[4] * 19.9832754918) - (data[9] / 9.42394578e11)))))
 
-    @test eq1(data) == eval_equation(eqs_dict.vals[1], data, ops, data[1][1])[1]
-    @test eq2(data) == eval_equation(eqs_dict.vals[2], data, ops, data[1][1])[1]
-    @test eq3(data) == eval_equation(eqs_dict.vals[3], data, ops, data[1][1])[1]
-    @test eq4(data) == eval_equation(eqs_dict.vals[4], data, ops, data[1][1])[1]
-    @test eq5(data) == eval_equation(eqs_dict.vals[5], data, ops, data[1][1])[1]
+    @test eq1(data) == eval_equation(eqs_dict.vals[1], data, ops)[1]
+    @test eq2(data) == eval_equation(eqs_dict.vals[2], data, ops)[1]
+    @test eq3(data) == eval_equation(eqs_dict.vals[3], data, ops)[1]
+    @test eq4(data) == eval_equation(eqs_dict.vals[4], data, ops)[1]
+    @test eq5(data) == eval_equation(eqs_dict.vals[5], data, ops)[1]
 
     # @btime eq1(data);
     # @btime eq2(data);
     # @btime eq3(data);
 
-    # t1 = @benchmark eval_equation(eqs_dict_.vals[1], data, ops, data[1][1])[1];
-    # t2 = @benchmark eval_equation(eqs_dict_.vals[2], data, ops, data[1][1])[1];
-    # t3 = @benchmark eval_equation(eqs_dict_.vals[3], data, ops, data[1][1])[1];
+    # t1 = @benchmark eval_equation(eqs_dict_.vals[1], data, ops)[1];
+    # t2 = @benchmark eval_equation(eqs_dict_.vals[2], data, ops)[1];
+    # t3 = @benchmark eval_equation(eqs_dict_.vals[3], data, ops)[1];
     # Ts = [t1, t2, t3]
     # println("Execution times of the three hardcoded equations -> ", [round(mean(t.times) * 1e-3, sigdigits=3) for t in Ts], "μs")
 end

@@ -41,7 +41,7 @@ pow_abs(x, y) = abs(x)^y
     i = 0
     while i < 50
         node = grow_equation(rand(3:7), ops)
-        data[end], valid = eval_equation(node, data, ops, data[end][end])
+        data[end], valid = eval_equation(node, data, ops)
 
         valid || continue
 
@@ -59,7 +59,7 @@ pow_abs(x, y) = abs(x)^y
 
         residual, valid = residual_after_fitting(node, data, ops, list_of_param)
 
-        mse_after = mean(abs2, eval_equation(node, data, ops, data[end][end])[1] .- data[end])
+        mse_after = mean(abs2, eval_equation(node, data, ops)[1] .- data[end])
 
         impr = (mse_before - mse_after) / mse_before
 
