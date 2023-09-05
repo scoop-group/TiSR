@@ -161,7 +161,7 @@ function fitting_params(;
     max_iter < 5             && @warn "max_iter may be too low"
     early_stop_iter == 0     && @warn "no early stopping may lead to overfitting"
     0 < early_stop_iter <= 2 && @warn "early stopping may be too strict -> higher values may produce better results"
-    lasso_factor < 1.0       && @warn "lasso_factor seems to large"
+    lasso_factor > 1.0       && @warn "lasso_factor seems to large"
 
     @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter"
     @assert 0 <= rel_f_tol_5_iter < 1.0 "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
