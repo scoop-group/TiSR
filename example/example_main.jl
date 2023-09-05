@@ -51,7 +51,7 @@ ops, data = Options(
         max_compl       = 30,
         pow_abs_param   = true,
         prevent_doubles = 1e-2,
-        t_lim           = 60 * 1.0,
+        t_lim           = 60 * 2.0,
         multithreadding = true,
     ),
     fitting=fitting_params(
@@ -96,9 +96,26 @@ hall_of_fame[col][perm]
 hall_of_fame["compl"][perm]
 hall_of_fame["node"][perm]#[1:5]
 
+# show the Pareto front # --------------------------------------------------------------------------
+
+using UnicodePlots
+
+scatterplot(
+    hall_of_fame["compl"],
+    hall_of_fame["mare"],
+    xlabel="complexity",
+    ylabel="mean rel. dev."
+)
+
+
 # ==================================================================================================
 # write pareto optimal ones to excel
 # ==================================================================================================
 write_to_excel(hall_of_fame, population, prog_dict, ops)
+
+
+# make a unicode graph for the results
+
+
 
 
