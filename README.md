@@ -10,18 +10,19 @@ For more details on past and future uses, a paper accompanying this code is avai
 # Getting started
 
 This package is currently not registered at the Julia package registry. 
-First, clone this repository and make sure to do it recursively, as there is a submodule.
-Thereafter, install all the dependencies, which are loaded in the [TiSR.jl](src/TiSR.jl) file.
-If you keep trying to load the module, you will be prompted for each package to install it. 
 
-A more detailed example is provided in [example_main.jl](example/example_main.jl).
-However, you may also start with the following minimal example:
-
+To install the package, run the following in a Julia REPL:
 
 ```julia
+import Pkg
+Pkg.add(url="https://github.com/scoop-group/TiSR")
+```
 
-include("src/TiSR.jl") # evaluate the module
-using .TiSR            # load the module
+A more detailed example on how to use it is provided in [example_main.jl](example/example_main.jl).
+However, you may also start with the following minimal example:
+
+```julia
+using TiSR
 
 # create synthetic data
 data_matr = rand(1000, 3)
