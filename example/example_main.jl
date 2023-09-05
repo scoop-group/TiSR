@@ -107,15 +107,10 @@ scatterplot(
     ylabel="mean rel. dev."
 )
 
-
 # ==================================================================================================
 # write pareto optimal ones to excel
 # ==================================================================================================
 write_to_excel(hall_of_fame, population, prog_dict, ops)
-
-
-# make a unicode graph for the results
-
 
 
 
