@@ -75,9 +75,9 @@ end
     to a node
 """
 string_to_node(str::String, ops) = string_to_node(Meta.parse(str), ops)
-string_to_node(eq::SymbolicUtils.BasicSymbolic{Number}, ops) = string_to_node(SymbolicUtils.Code.toexpr(eq), ops)
+string_to_node(eq::SymbolicUtils.BasicSymbolic{T}, ops) where {T <: Number} = string_to_node(SymbolicUtils.Code.toexpr(eq), ops)
 
-function string_to_node(expr::Union{Expr,Symbol,Number}, ops)
+function string_to_node(expr::Union{Expr,Symbol,T}, ops) where {T <: Number}
     prefix_arr = expr_to_prefix_str(expr)
     node = prefix_string_to_equation(prefix_arr, ops)[1]
     return node

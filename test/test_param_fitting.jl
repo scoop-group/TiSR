@@ -75,3 +75,11 @@ pow_abs(x, y) = abs(x)^y
     # @test median(imp[2] for imp in improvements) < 1e-3  # norm2 of parameter estimate
 end
 
+@testset "lasso_regression" begin
+
+
+
+
+end
+
+
