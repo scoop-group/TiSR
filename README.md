@@ -7,19 +7,19 @@
 [![Coverage](https://coveralls.io/repos/github/viktmar/TiSR.jl/badge.svg?branch=main)](https://coveralls.io/github/viktmar/TiSR.jl?branch=main)
 
 
-This code base is based on the work of the project "Machine Learning and Optimal Experimental Design for Thermodynamic Property Modeling" in the DFG priority program SPP2331.
+This code base is based on the work of the project "Machine Learning and Optimal Experimental Design for Thermodynamic Property Modeling" in the DFG priority program [SPP2331](https://chemengml.org/).
 It implements a NSGA-II genetic algorithm for symbolic regression and is aimed at the development of thermodynamic equations of state.
 The project and the code are a work-in-progress and there are many more features planned.
-For more details on past and future uses, a paper accompanying this code is available at arxiv.com.
+For more details on past and future uses, a paper accompanying this code is available at [arxiv](https://arxiv.org/).
 
 # Getting started
 
-This package is currently not registered.
+This package is currently not registered at the Julia package registry. 
 First, clone this repository and make sure to do it recursively, as there is a submodule.
-Thereafter, install all the dependencies, which are loaded in the TiSR.jl file.
+Thereafter, install all the dependencies, which are loaded in the [TiSR.jl](src/TiSR.jl) file.
 If you keep trying to load the module, you will be prompted for each package to install it. 
 
-A more detailed example is provided in example/example_main.jl.
+A more detailed example is provided in [example_main.jl](example/example_main.jl).
 However, you may also start with the following minimal example:
 
 
@@ -142,5 +142,5 @@ ops, data = Options(
 
 # Funding
 
-This work was funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) within the Priority Programme SPP 2331: "Machine Learning in Chemical Engineering" - project no. 466528284 
+This work was funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) within the Priority Programme SPP 2331: "Machine Learning in Chemical Engineering" - project no. 466528284 - HE~6077/14-1 and RI~2482/10-1
 
