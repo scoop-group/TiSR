@@ -69,6 +69,7 @@ function crowding_distance_selection(arr, inds, n_select)
     dists = crowding_distance(arr[inds, :])
     dists .= max.(dists, 1e-20)                                                                        # wsmample cannot work with 0 or nan
     replace!(dists, NaN => 1e-20)
+    replace!(dists, Inf => 1e20)
     wsample(inds, dists, n_select, replace=false)
 end
 

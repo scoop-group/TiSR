@@ -56,13 +56,14 @@ end
     containing equation elements in prefix notation (and converts n-ary to binary).
 """
 expr_to_prefix_str(expr::Expr) = expr_to_prefix_str(expr.args)
+expr_to_prefix_str(expr::T) where {T <: Rational} = [string(Float64(expr))]
 expr_to_prefix_str(expr) = [string(expr)]
 
 function expr_to_prefix_str(expr::Vector)
     arr = String[]
     for (i, ex) in enumerate(expr)
         if i > 1 && length(expr) - i > 1  # required to convert n-ary to binary
-            push!(arr, expr_to_prefix_str(expr[1]))
+            append!(arr, expr_to_prefix_str(expr[1]))
         end
 
         ret = expr_to_prefix_str(ex)
