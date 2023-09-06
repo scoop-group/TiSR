@@ -20,6 +20,7 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
+SymbolicUtils = "1"
 julia = "1"
 
 [extras]
