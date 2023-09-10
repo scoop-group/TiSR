@@ -56,7 +56,7 @@ end
 
 """ Check for illegal nestings in existing nodes.
 """
-check_legel(node, ops; unaweights=Float64[ops.p_unaops...], binweights=Float64[ops.p_binops...]) = check_legel_(node, ops, unaweights, binweights)
+check_legal(node, ops; unaweights=Float64[ops.p_unaops...], binweights=Float64[ops.p_binops...]) = check_legal_(node, ops, unaweights, binweights)
 
 function check_legal_(node, ops, unaweights, binweights)
     isempty(ops.illegal_dict) && return true
@@ -89,7 +89,7 @@ function check_legal_(node, ops, unaweights, binweights)
 end
 
 """ Adjust the weight-vectors for the operator selection probability of the grow_equation and
-    check_legel function to prevent illegal nestings according to illegal_dict.
+    check_legal function to prevent illegal nestings according to illegal_dict.
 """
 function adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
     for fun in ill_nexts

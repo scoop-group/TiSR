@@ -34,7 +34,7 @@ mutable struct Individual   #{T}
 
         indiv = new(node)
 
-        if !isempty(ops.illegal_dict) && !check_legel(node, ops)
+        if !isempty(ops.illegal_dict) && !check_legal(node, ops)
             indiv.valid = false
             return indiv
         end
