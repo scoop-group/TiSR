@@ -15,13 +15,9 @@ using TiSR
 # file_path = ""
 #
 # df = CSV.read(file_path, DataFrame)
-#
-# # reduce
-# maxes = maximum(Matrix(df), dims=1)
-# df ./= maxes
-#
-# # set variables for algorithm
-# data = Matrix(df)
+
+# set variables for algorithm
+# data_matr = Matrix(df)
 
 # or with synthetic data # -------------------------------------------------------------------------
 data_matr = rand(1000, 3)
@@ -46,7 +42,7 @@ ops, data = Options(
     ),
     general=general_params(
         n_gens          = typemax(Int64),
-        pop_size        = 200,
+        pop_size        = 500,
         max_compl       = 30,
         pow_abs_param   = true,
         prevent_doubles = 1e-2,

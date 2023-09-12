@@ -90,6 +90,7 @@ function generational_loop(data, ops ;start_pop=Node[])
                 remove_doubles_across_islands!(population, ops)
             else
                 for isle in 1:ops.general.num_islands
+                    remove_doubles_by_structure!(population[isle])
                     remove_doubles!(population[isle], ops)
                 end
             end

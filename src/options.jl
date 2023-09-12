@@ -222,9 +222,15 @@ function data_descript(
 )
     eachind = collect(1:size(data, 1))
 
-    @assert sum(parts) == 1.0    "sum of the parts should be 1.0"
-    length(parts) > 1 && parts[1] < parts[2] && @warn "more test data than training data"
-    @assert length(fit_weights) == size(data, 1) "size of fit_weights don't match data"
+    @assert sum(parts) == 1.0                         "sum of the parts should be 1.0      "
+    length(parts) > 1 && parts[1] < parts[2] && @warn "more test data than training data   "
+    @assert length(fit_weights) == size(data, 1)      "size of fit_weights don't match data"
+    @assert all(fit_weights .> 0.0)                   "fit_weights must be larger than 0   "
+
+    if !all(1e-10 .< fit_weights .< 1e10)
+        @warn "some fit_weights are outside 1e-10 < fit_weights < 1e10 -> will be limited to these bounds"
+        fit_weights = clamp.(fit_weights, 1e-10, 1e10)
+    end
 
     # make a random data split
     shuffle!(eachind)

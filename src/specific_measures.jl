@@ -13,13 +13,6 @@ function recursive_compl(
         :-       => (lef, rig) -> lef + rig,
         :*       => (lef, rig) -> (lef * rig) + 1.0,
         :/       => (lef, rig) -> (lef * rig) + 1.0,
-        :sin     => lef        -> 2.0^lef,
-        :cos     => lef        -> 2.0^lef,
-        :tan     => lef        -> 2.0^lef,
-        :exp     => lef        -> 2.0^lef,
-        :log     => lef        -> 2.0^lef,
-        :ln_abs  => lef        -> 2.0^lef,
-        :abs     => lef        -> 2.0^lef,
         :^       => (lef, rig) -> (lef * rig) + 1.0, # 2.0^(lef + rig) ?
         :pow_abs => (lef, rig) -> (lef * rig) + 1.0, # 2.0^(lef + rig) ?
     )
@@ -33,9 +26,7 @@ function recursive_compl(
 
     elseif node.ari == 1
         compl_lef = recursive_compl(node.lef, ops)
-        cur_op = Symbol(ops.unaops[node.ind])
-
-        compl = compl_dict[cur_op](compl_lef)
+        compl = 2.0^compl_lef
 
     elseif node.ari == 0
         compl = 2.0

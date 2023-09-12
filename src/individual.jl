@@ -150,3 +150,31 @@ function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, op
     foreach(isle -> sort!(unique_inds[isle]), 1:ops.general.num_islands)
     foreach(isle -> keepat!(individs[isle], unique_inds[isle]), 1:ops.general.num_islands)
 end
+
+
+function remove_doubles_by_structure!(indivs::Vector{Individual})
+
+    i = 1
+    while i < length(indivs)
+        indiv = indivs[i]
+        doubles_inds = findall(
+            isapprox(indiv.node, indivs[ii].node, rtol=Inf)
+            for ii in i+1:length(indivs)
+        ) .+ i
+
+        if !isempty(doubles_inds)
+            push!(doubles_inds, i)
+            sort!(doubles_inds)
+            _, min_ind = findmin(
+                indivs[d_ind].ms_processed_e
+                for d_ind in doubles_inds
+            )
+            deleteat!(doubles_inds, min_ind)
+            deleteat!(indivs, doubles_inds)
+        else
+            i += 1
+        end
+    end
+end
+
+
