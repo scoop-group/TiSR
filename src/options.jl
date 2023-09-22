@@ -89,6 +89,7 @@ function general_params(;
     init_tree_depth                = 4,
     max_compl                      = 50,
     pow_abs_param                  = false,
+    always_drastic_simplify        = true,
     prevent_doubles                = 1e-5,
     prevent_doubles_across_islands = false,
     multithreadding                = false
@@ -116,6 +117,7 @@ function general_params(;
         init_tree_depth                = init_tree_depth,
         max_compl                      = max_compl,
         pow_abs_param                  = pow_abs_param,
+        always_drastic_simplify        = always_drastic_simplify,
         prevent_doubles                = prevent_doubles,
         prevent_doubles_across_islands = prevent_doubles_across_islands,
         t_lim                          = t_lim,

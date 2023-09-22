@@ -58,16 +58,15 @@ end
     Like: (x + param) + param -> x + param, (x * param) / param -> x * param
     Idea from SymbolicRegression.jl
 """
-function simplify_binary_across_1_level!(
-    node,
-    ops;
-    equiv_ops = Dict(
+
+global const simplify_binary_across_1_level_dict = Dict(
         :+ => (:+, :-),
         :- => (:+, :-),
         :* => (:*, :/),
         :/ => (:*, :/),
-    )
 )
+
+function simplify_binary_across_1_level!(node, ops)
     if node.ari >= 1
         simplify_binary_across_1_level!(node.lef, ops)
         if node.ari == 2
@@ -82,7 +81,7 @@ function simplify_binary_across_1_level!(
         par_op_str = Symbol(ops.binops[node.ind])
         chi_op_str = Symbol(ops.binops[node_1.ind])
 
-        if par_op_str in keys(equiv_ops) && chi_op_str in equiv_ops[par_op_str]
+        if par_op_str in keys(simplify_binary_across_1_level_dict) && chi_op_str in simplify_binary_across_1_level_dict[par_op_str]
             if xor(node_1.lef.ari == -1, node_1.rig.ari == -1)
                 node_2 = getfield(node_1, node_1.lef.ari == -1 ? :rig : :lef)
                 node_2_param = getfield(node_1, node_1.lef.ari == -1 ? :lef : :rig)
@@ -102,29 +101,56 @@ end
     Like x + 1e-5 -> x, x * 1e-5 -> 1e-5
     In the latter example, the 1e-5 will again be detected and removed on the level above.
 """
-function drastic_simplify!(node, ops; threshold=1e-4)
+function drastic_simplify!(node, ops; threshold=1e-1, potential=false)
+
+    pot = false
 
     if node.ari >= 1
-        drastic_simplify!(node.lef, ops, threshold = threshold)
+        pot_l = drastic_simplify!(node.lef, ops, threshold=threshold, potential=potential)
+        pot = pot || pot_l
         if node.ari == 2
-            drastic_simplify!(node.rig, ops, threshold = threshold)
+            pot_r = drastic_simplify!(node.rig, ops, threshold=threshold, potential=potential)
+            pot = pot || pot_r
         end
     end
 
-    if node.ari == 2 && (node.lef.ari == -1 || node.rig.ari == -1)
-        node_1 = getfield(node, node.lef.ari == 2 ? :lef : :rig)
-        node_1_param = getfield(node, node.lef.ari == 2 ? :rig : :lef)
+    node.ari == 2 || return pot
 
-        if node_1_param.ari == -1 && node_1_param.val < threshold
-            op = ops.binops[node.ind]
+    op = ops.binops[node.ind]
 
+    if (node.lef.ari == -1 || node.rig.ari == -1)
+        node_1 = getfield(node, node.lef.ari != -1 ? :lef : :rig)
+        node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
+
+        if abs(node_1_param.val) < threshold # if parameter 0.0
             if op in (+, -)
+                potential && return true
                 copy_node_wo_copy!(node, node_1)
             elseif (op == *)
+                potential && return true
                 copy_node_wo_copy!(node, node_1_param)
+            elseif (op == ^) && node.rig.ari == -1
+                potential && return true
+                node.rig.val = 1.0
+                copy_node_wo_copy!(node, node.rig)
+            elseif (op == /) && node.lef.ari == -1
+                potential && return true
+                copy_node_wo_copy!(node, node.lef)
+            end
+        elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
+            if op == * # 1.0 * x -> x
+                potential && return true
+                copy_node_wo_copy!(node, node_1)
+            elseif node.rig.ari == -1 && op == / # x / 1.0 -> x
+                copy_node_wo_copy!(node, node_1)
+                potential && return true
+            elseif (op == ^) && node.rig.ari == -1
+                potential && return true
+                copy_node_wo_copy!(node, node.lef)
             end
         end
     end
+    return pot || false
 end
 
 # ==================================================================================================

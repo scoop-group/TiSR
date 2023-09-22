@@ -5,10 +5,7 @@
     - personally (VM), I think variables deserve less complexity than parameters
     - which complexity to use: { (lef * rig) + 1.0 } vs. { 2.0^(lef + rig) }
 """
-function recursive_compl(
-    node::Node,
-    ops;
-    compl_dict = Dict(
+global const recursive_compl_dict = Dict(
         :+       => (lef, rig) -> lef + rig,
         :-       => (lef, rig) -> lef + rig,
         :*       => (lef, rig) -> (lef * rig) + 1.0,
@@ -16,13 +13,14 @@ function recursive_compl(
         :^       => (lef, rig) -> (lef * rig) + 1.0, # 2.0^(lef + rig) ?
         :pow_abs => (lef, rig) -> (lef * rig) + 1.0, # 2.0^(lef + rig) ?
     )
-)
+
+function recursive_compl(node::Node, ops)
     if node.ari == 2
         compl_lef = recursive_compl(node.lef, ops)
         compl_rig = recursive_compl(node.rig, ops)
         cur_op = Symbol(ops.binops[node.ind])
 
-        compl = compl_dict[cur_op](compl_lef, compl_rig)
+        compl = recursive_compl_dict[cur_op](compl_lef, compl_rig)
 
     elseif node.ari == 1
         compl_lef = recursive_compl(node.lef, ops)

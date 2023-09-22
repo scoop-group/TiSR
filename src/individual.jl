@@ -22,6 +22,8 @@ mutable struct Individual   #{T}
 
     valid::Bool
 
+    Individual() = new()
+
     function Individual(node, data, ops)
         for _ in 1:3
             simplify_unary_of_param!(node)
@@ -63,6 +65,16 @@ Base.show(io::IO, indiv::Individual) = println(io, "Indiv($(node_to_string(indiv
 """
 function Base.isapprox(indiv1::Individual, indiv2::Individual; rtol=5)
     Base.isapprox(indiv1.mae, indiv2.mae, rtol=rtol) && Base.isapprox(indiv1.mse, indiv2.mse, rtol=rtol)
+end
+
+function Base.copy(indiv::Individual)
+    new = Individual()
+    for field_ in fieldnames(Individual)
+        if isdefined(indiv, field_)
+            setfield!(new, field_, getfield(indiv, field_))
+        end
+    end
+    return new
 end
 
 # ==================================================================================================

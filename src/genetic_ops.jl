@@ -28,7 +28,7 @@ function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, no
                 adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
             end
 
-            next_node.lef =     grow_equation_(rem_depth - 1, ops, unaweights, binweights, true)
+            next_node.lef =     grow_equation_(rem_depth - 1, ops, copy(unaweights), copy(binweights), true)
         else
             op_ind = findfirst(x -> (sum(unaweights) + sum(binweights[1:x])) >= rand_, 1:length(ops.binops))
             next_node = Node(2, op_ind)
@@ -45,9 +45,9 @@ function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, no
             if ops.general.pow_abs_param && cur_fun in (:pow_abs, :^)
                 next_node.rig = Node(rand())
             elseif next_node.lef.ari == -1
-                next_node.rig = grow_equation_(rem_depth - 1, ops, unaweights, binweights, true)
+                next_node.rig = grow_equation_(rem_depth - 1, ops, copy(unaweights), copy(binweights), true)
             else
-                next_node.rig = grow_equation_(rem_depth - 1, ops, unaweights, binweights, false)
+                next_node.rig = grow_equation_(rem_depth - 1, ops, copy(unaweights), copy(binweights), false)
             end
         end
     end
@@ -69,13 +69,13 @@ function check_legal_(node, ops, unaweights, binweights)
         ill_nexts = get(ops.illegal_dict, cur_fun, ())
         adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
 
-        legal = check_legal_(node.lef, ops, unaweights, binweights)
+        legal = check_legal_(node.lef, ops, copy(unaweights), copy(binweights))
 
         !legal && return false
 
         cur_fun in (:pow_abs, :^) && ops.general.pow_abs_param && node.rig.ari > -1 && return false
 
-        return check_legal_(node.rig, ops, unaweights, binweights)
+        return check_legal_(node.rig, ops, copy(unaweights), copy(binweights))
 
     elseif node.ari == 1
         (unaweights[node.ind] == 0.0) && return false
@@ -84,7 +84,7 @@ function check_legal_(node, ops, unaweights, binweights)
         ill_nexts = get(ops.illegal_dict, cur_fun, ())
         adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
 
-        return check_legal_(node.lef, ops, unaweights, binweights)
+        return check_legal_(node.lef, ops, copy(unaweights), copy(binweights))
     end
 end
 
@@ -176,6 +176,20 @@ function apply_genetic_operations!(
 )
     eachind = collect(eachindex(nodes))
 
+    if ops.general.always_drastic_simplify
+        drastic_inds = findall(drastic_simplify!(n, ops, potential=true, threshold=1e-3) for n in nodes)
+        drastic_nodes = [copy_node(nodes[i]) for i in drastic_inds]
+        foreach(n -> drastic_simplify!(n, ops, potential=false, threshold=1e-3), drastic_nodes)
+
+        for _ in 1:3
+            simplify_unary_of_param!.(drastic_nodes)
+            simplify_binary_of_param!.(drastic_nodes)
+            simplify_binary_across_1_level!.(drastic_nodes, Ref(ops))
+        end
+
+        append!(nodes, drastic_nodes)
+    end
+
     while !isempty(eachind)
         node = nodes[popfirst!(eachind)]
 
@@ -188,7 +202,7 @@ function apply_genetic_operations!(
 
         elseif rand_mutation < ops.mutation[8]
             try
-                simplify_w_symbolic_utils!( node, ops; through_polyform=rand() < 0.2)               # add as parameter?
+                simplify_w_symbolic_utils!(node, ops; through_polyform=rand() < 0.2)               # add as parameter?
             catch
             end
 

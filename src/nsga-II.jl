@@ -49,7 +49,7 @@ function generational_loop(data, ops ;start_pop=Node[])
             if gen > 1.0
                 shuffle!(population[isle])
 
-                for i in 1:(2 * ops.general.pop_per_isle  - length(population[isle]))
+                for i in 1:max(length(population[isle]), (2 * ops.general.pop_per_isle  - length(population[isle])))
                     push!(new_nodes[isle], copy_node(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
                 end
 
@@ -152,10 +152,11 @@ function generational_loop(data, ops ;start_pop=Node[])
 # hall of fame
 # ==================================================================================================
         for isle in 1:ops.general.num_islands
-            append!(hall_of_fame, deepcopy(population[isle]))
+            append!(hall_of_fame, copy.(population[isle])) # deepcopy quite expansive
         end
 
         remove_doubles!(hall_of_fame, ops)
+        remove_doubles_by_structure!(hall_of_fame)
 
         selection_inds = non_dominated_sort(
             [getfield.(hall_of_fame, obj) for obj in ops.selection.hall_of_fame_objectives]
