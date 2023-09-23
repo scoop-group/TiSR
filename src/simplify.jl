@@ -148,6 +148,10 @@ function drastic_simplify!(node, ops; threshold=1e-1, potential=false)
                 potential && return true
                 copy_node_wo_copy!(node, node.lef)
             end
+        elseif (op == /) && node.rig.ari == -1 && abs(1 / node_1_param.val) < threshold
+            potential && return true
+            node_1_param.val = 0.0
+            copy_node_wo_copy!(node, node_1_param)
         end
     end
     return pot || false
