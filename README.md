@@ -15,7 +15,7 @@ To get started, install Julia 1.9 and run the following in a Julia REPL:
 
 ```julia
 import Pkg
-Pkg.add(url="https://github.com/scoop-group/TiSR")
+Pkg.add(url="https://github.com/scoop-group/TiSR#main")
 ```
 
 A more detailed example on how to use it is provided in [example_main.jl](example/example_main.jl).
@@ -132,7 +132,7 @@ ops, data = Options(
     unaops         = (exp, log, sin, cos, abs),  # -> unary function set to choose from
     p_unaops       = (1.0, 1.0, 1.0, 1.0, 1.0),  # -> probabilites for selection of each unary functions (same length as provided unaops) (dont need to add up to 1, adjusted accordingly)
 
-    illegal_dict = Dict(), # -> May be set to a dict to specify nestings of functions that are removed, if they appear.
+    illegal_dict = Dict(), # -> May be set to a dict to specify nestings of unary functions that are removed, if they appear.
                            #    For example: illegal_dict = Dict(:sin => (sin, cos),
 );                         #                                     :cos => (sin, cos))
 ```
