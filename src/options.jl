@@ -42,6 +42,9 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
             @assert length(data_descript.split_inds) > 1 "Data split required for early stopping"
         end
 
+        # relative reference offset
+        any(abs(d) < 0.1 for d in data[end]) && @warn "some target data < 0.1 -> 0.1 is used as lower bound for the relative measures like mare"
+
         # resulting parameters
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
         selection = (;selection..., n_pareto_select_per_isle = n_pareto_select_per_isle)
