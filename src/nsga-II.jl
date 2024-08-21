@@ -152,7 +152,7 @@ function generational_loop(data, ops ;start_pop=Node[])
 # hall of fame
 # ==================================================================================================
         for isle in 1:ops.general.num_islands
-            append!(hall_of_fame, copy.(population[isle])) # deepcopy quite expansive
+            append!(hall_of_fame, deepcopy.(population[isle])) # deepcopy quite expansive
         end
 
         remove_doubles!(hall_of_fame, ops)

@@ -96,55 +96,42 @@ end
 # ==================================================================================================
 # equation utilities
 # ==================================================================================================
-Base.show(io::IO, node::Node) = println(io, node_to_string(node, __operators; sigdigits=3, unique_nodes=true))
+
+""" How to display nodes.
+"""
+Base.show(io::IO, node::Node) = println(io, node_to_string(node, __operators; sigdigits=3))
 
 """ Convert a node to a string. This is also used to display nodes.
-    - unique_nodes = true makes sense for directed acyclic graphs. Then, reused nodes are surrounded
-      by curly braces {}
 """
-node_to_string(node::Node, ops; sigdigits=15, unique_nodes=false, node_list=Node[]) = node_to_string_(node, ops, sigdigits, unique_nodes, node_list)[1]
+node_to_string(node::Node, ops; sigdigits=15) = node_to_string_(node, ops, sigdigits)[1]
 
-function node_to_string_(node::Node, ops, sigdigits, unique_nodes, node_list)
-
-    p_lef, p_rig = "(", ")"
-    p_seen_lef, p_seen_rig = "", ""
-
-    if unique_nodes
-        if (node in node_list)
-            p_seen_lef, p_seen_rig = "{", "}"
-        else
-            push!(node_list, node)
-        end
-    end
-
+function node_to_string_(node::Node, ops, sigdigits)
 
     if node.ari == 2
         op = string(ops.binops[node.ind])
-        lef, node_list = node_to_string_(node.lef, ops, sigdigits, unique_nodes, node_list)
-        rig, node_list = node_to_string_(node.rig, ops, sigdigits, unique_nodes, node_list)
+        lef = node_to_string_(node.lef, ops, sigdigits)
+        rig = node_to_string_(node.rig, ops, sigdigits)
 
         if op in ("+", "-", "*", "/", "^")
-            str = p_seen_lef * p_lef * lef * op * rig * p_rig * p_seen_rig
+            return "($lef $op $rig)"
         else
-            str = p_seen_lef * op * p_lef * lef * ", " * rig * p_rig * p_seen_rig
+            return "$op($lef, $rig)"
         end
 
     elseif node.ari == 1
         op = string(ops.unaops[node.ind])
-        lef, node_list = node_to_string_(node.lef, ops, sigdigits, unique_nodes, node_list)
-
-        str = p_seen_lef * op * p_lef * lef * p_rig * p_seen_rig
+        lef = node_to_string_(node.lef, ops, sigdigits)
+        return "$op($lef)"
 
     elseif node.ari == 0
-        str = "v" * string(node.ind)
+        return "v$(string(node.ind))"
 
     elseif node.ari == -1
-        str = string(round(extract_from_dual(node.val), sigdigits=sigdigits))
+        return string(round(extract_from_dual(node.val), sigdigits=sigdigits))
+    else
+        throw("node arity $(node.ari) cannot be printed")
     end
-
-    return str, node_list
 end
-
 
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
@@ -157,6 +144,8 @@ function copy_node(node::Node)::Node
         return Node(copy(node.ind), copy_node(node.lef))
     elseif node.ari == 2
         return Node(copy(node.ind), copy_node(node.lef), copy_node(node.rig))
+    else 
+        throw("node arity $(node.ari) cannot be copied")
     end
 end
 
@@ -183,29 +172,6 @@ function count_nodes(node::Node)::Float64
     end
 end
 
-
-""" Count all sub-nodes of a node, but do not count the same instance twice
-    -> in case of directed acyclic graphs
-"""
-count_nodes_unique(node::Node; node_list=Node[]) = count_nodes_unique_(node, node_list)[1]
-
-function count_nodes_unique_(node::Node, node_list)::Tuple{Float64,Vector{Node}}
-    compl = 1.0
-    if !(node in node_list)
-        push!(node_list, node)
-        if node.ari >= 1
-            compl_l, node_list = count_nodes_unique_(node.lef, node_list)
-            compl += compl_l
-        end
-
-        if node.ari == 2
-            compl_r, node_list = count_nodes_unique_(node.rig, node_list)
-            compl += compl_r
-        end
-    end
-    return compl, node_list
-end
-
 """ Return the maximal depth of the tree. Interrupts in case the minim tree depth is reached.
 """
 function maxim_tree_depth(node::Node; depth=0, minim=typemax(Int64))
@@ -222,7 +188,6 @@ function maxim_tree_depth(node::Node; depth=0, minim=typemax(Int64))
     end
     return depth
 end
-
 
 """ Compares two nodes and returns true if they are approx. same.
 """
@@ -256,17 +221,9 @@ function list_of_param_nodes(node; list=Node[])
         if node.ari == 2
             list = list_of_param_nodes(node.rig; list=list)
         end
-    elseif node.ari == -1 && !(node in list)
+    elseif node.ari == -1
         push!(list, node)
     end
     return list
 end
-
-
-""" Recursive functions using multiple dispatch to extract a value from arbitrarily
-    nested dual numbers.
-"""
-extract_from_dual(v::AbstractFloat) = v
-extract_from_dual(v::Number) = extract_from_dual(v.value)
-
 

@@ -46,7 +46,7 @@ mutable struct Individual   #{T}
         indiv.valid || return indiv
 
         indiv.age = 0.0
-        indiv.compl = count_nodes_unique(node)
+        indiv.compl = count_nodes(node)
         indiv.recursive_compl = recursive_compl(node, ops)
         indiv.n_params = length(list_of_param_nodes(node))
 
@@ -190,3 +190,11 @@ function remove_doubles_by_structure!(indivs::Vector{Individual})
 end
 
 
+""" Iterates over all nodes in eqs and performs hoist_mutation until each one conforms to
+    max_compl.
+"""
+function trim_to_max_compl!(node, ops)
+    while count_nodes(node) > ops.general.max_compl
+        hoist_mutation!(node, ops)
+    end
+end

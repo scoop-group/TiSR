@@ -174,8 +174,7 @@ function apply_genetic_operations!(
     ops;
     (one_node_muts!)=[
         insert_mutation!, point_mutation!, addterm_mutation!, # ___ below ar deeper than 2
-        hoist_mutation!, innergrow_mutation!, subtree_mutation!,
-        drastic_simplify!
+        hoist_mutation!, subtree_mutation!, drastic_simplify!
     ]
 )
     eachind = collect(eachindex(nodes))
@@ -194,23 +193,23 @@ function apply_genetic_operations!(
         append!(nodes, drastic_nodes)
     end
 
-    while !isempty(eachind)
+    while !isempty(eachind) # TODO: maybe invert -> sample mutation first and then find appropriate node(s) -> closer to selected mutation probabilities
         node = nodes[popfirst!(eachind)]
 
         until_mut = maxim_tree_depth(node, minim=3) > 2 ? length(ops.mutation) : 3
 
         rand_mutation = rand() * ops.mutation[until_mut]
 
-        if rand_mutation < ops.mutation[7]
-            one_node_muts![findfirst(i -> rand_mutation < ops.mutation[i], 1:7)](node, ops)
+        if rand_mutation < ops.mutation[6]
+            one_node_muts![findfirst(i -> rand_mutation < ops.mutation[i], 1:6)](node, ops)
 
-        elseif rand_mutation < ops.mutation[8]
+        elseif rand_mutation < ops.mutation[7]
             try
                 simplify_w_symbolic_utils!(node, ops; through_polyform=rand() < 0.2)               # add as parameter?
             catch
             end
 
-        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[9]
+        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[8]
             ind = findfirst(i -> maxim_tree_depth(nodes[i], minim=3) > 2, eachind)
             if isnothing(ind)
                 point_mutation!(node, ops)
@@ -246,14 +245,14 @@ function point_mutation!(node, ops)
     node_elect = random_node(node, mode=0)
 
     if node_elect.ari == 2
-        node_elect.ind = wsample(1:length(ops.binops), collect(ops.p_binops))
+        node_elect.ind = wsample(1:length(ops.binops), collect(ops.p_binops)) # TODO: unnecessary collect
 
-        if ops.general.pow_abs_param && Symbol(ops.binops[node_elect.ind]) in (:pow_abs, :^)
+        if ops.general.pow_abs_param && Symbol(ops.binops[node_elect.ind]) in (:pow_abs, :^) # TODO: move this to grammar check
             node_elect.rig = Node(rand())
         end
 
     elseif node_elect.ari == 1
-        node_elect.ind = wsample(1:length(ops.unaops), collect(ops.p_unaops))
+        node_elect.ind = wsample(1:length(ops.unaops), collect(ops.p_unaops)) # TODO: unnecessary collect
 
     elseif node_elect.ari == 0
         node_elect.ind = rand(1:ops.data_descript.n_vars)
@@ -262,8 +261,6 @@ function point_mutation!(node, ops)
         node_elect.val *= rand_mult(;minn=0.5, maxx=2.0)
     end
 end
-
-rand_mult(;minn=0.5, maxx=2.0) = (rand() * (maxx - minn) + minn) * rand((1.0, -1.0))
 
 """ Inserts or prepend an operation.
 """
@@ -298,41 +295,6 @@ function hoist_mutation!(node, ops)
     setfield!(node_elect, lefrig1, sub2)
 end
 
-""" Checks whether node1 is a parent of node2. This is required for the inner_grow_mutation to
-    prevent cycles.
-"""
-function isparent(node1, node2)
-    node1 === node2 && return true
-    it_is = false
-
-    if node2.ari >= 1
-        it_is = isparent(node1, node2.lef)
-    end
-
-    if !it_is && node2.ari == 2
-        it_is = isparent(node1, node2.rig)
-    end
-
-    return it_is
-end
-
-""" Chooses two random nodes of a tree, such that node1 is not a parent to node2, and replaces
-    a subtree of node1 with node2. -> directed acyclic graph
-"""
-function innergrow_mutation!(node, ops)
-    let node1, node2
-        same_branch = true
-        while same_branch
-            node1 = random_node(node, mode=1)
-            node2 = random_node(node, mode=1)
-            same_branch = isparent(node1, node2)
-        end
-
-        lefrig = mutate_left(node1, ops, 1) ? :lef : :rig
-        setfield!(node1, lefrig, node2)
-    end
-end
-
 """ Combines two nodes to create two new ones.
 """
 function crossover_mutation!(node1, node2, ops)
@@ -347,22 +309,13 @@ function crossover_mutation!(node1, node2, ops)
     setfield!(node_elect2, lefrig2, copy_node(temp))
 end
 
-""" Iterates over all nodes in eqs and performs hoist_mutation until each one conforms to
-    max_compl.
-"""
-function trim_to_max_compl!(node, ops)
-    while count_nodes_unique(node) > ops.general.max_compl
-        hoist_mutation!(node, ops)
-    end
-end
-
 # redundand mutations # ----------------------------------------------------------------------------
-""" Replaces a subtree of a random node.
+""" Replaces a subtree of a random subtree.
 """
 function subtree_mutation!(node, ops; subtree_depth=3) # TODO: mabe rand depth
     node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, ops, 1) ? :lef : :rig
-    setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops, method = "full"))
+    setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))
 end
 
 """ Adds a top-level term.
@@ -371,6 +324,6 @@ function addterm_mutation!(node, ops; subtree_depth=2)
     orig_node = copy_node(node)
     copy_node_wo_copy!(node, Node(2, findfirst(isequal(+), ops.binops)))
     node.lef = orig_node
-    node.rig = grow_equation(subtree_depth, ops, method = "full")
+    node.rig = grow_equation(subtree_depth, ops)
 end
 

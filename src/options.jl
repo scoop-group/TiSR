@@ -191,7 +191,6 @@ end
 function mutation_params(;
     p_crossover        = 4.0,
     p_point            = 0.5,
-    p_innergrow        = 0.0,
     p_insert           = 0.2,
     p_hoist            = 0.2,
     p_subtree          = 0.2,
@@ -206,7 +205,6 @@ function mutation_params(;
         p_point,
         p_add_term,
         p_hoist,
-        p_innergrow,
         p_subtree,
         p_drastic_simplify,
         p_simplify,

@@ -45,5 +45,6 @@ include("nsga-II.jl")
 include("individual.jl")
 include("write_to_excel.jl")
 include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
+include("misc_helpers.jl")
 
 end # module
