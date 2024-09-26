@@ -36,12 +36,12 @@ function fit_n_eval!(indiv, data, ops)
     end
 
     # calculate statistics for the residual # ------------------------------------------------------
-    if (valid = valid && isfinite(sum(residual)))
+    if valid && isfinite(sum(residual))
         indiv.mae = mean(abs, residual)
         indiv.max_ae = maximum(abs, residual)
         indiv.mse = mean(abs2, residual)
 
-        indiv.minus_r2 = -r_squared(data[end] .- residual, data[end])
+        indiv.minus_r2 = get_minus_r2(data[end] .- residual, data[end])
 
         relative_ref = any(d == 0 for d in data[end]) ? max.(abs.(data[end]), 0.1) : data[end]
 

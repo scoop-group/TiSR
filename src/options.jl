@@ -15,24 +15,57 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
     selection::F
     fitting::G
     mutation::H
-    illegal_dict::I
+    grammar::I
     data_descript::J
 
-    function Options(;
-        general       = general_params(),
-        p_unaops      = (1.0, 1.0, 1.0, 0.0, 0.0),
-        unaops        = (exp, log, sin, cos, abs),
-        p_binops      = (1.0, 1.0, 1.0, 1.0, 1.0),
-        binops        = (+,   -,   *,   /,   ^  ),
-        selection     = selection_params(),
-        fitting       = fitting_params(),
-        mutation      = mutation_params(),
-        illegal_dict  = Dict(),
-        data_descript = data_descript(),
+    function Options(
+        data::Matrix;
+        fit_weights::Vector   = ones(size(data, 1)),
+        parts::Vector         = [1.0],
+        general               = general_params(),
+        p_unaops              = (1.0, 1.0, 1.0, 1.0, 1.0),
+        unaops                = (exp, log, sin, cos, abs),
+        p_binops              = (1.0, 1.0, 1.0, 1.0, 1.0),
+        binops                = (+,   -,   *,   /,   ^  ),
+        selection             = selection_params(),
+        fitting               = fitting_params(),
+        mutation              = mutation_params(),
+        grammar               = grammar_params(),
     )
+        # convert to vectors of vectors
+        data_vect = [data[:, i] for i in 1:size(data, 2)]
 
-        data_descript, data = data_descript
+        # prepare data # ---------------------------------------------------------------------------
+        @assert eltype(data) <: AbstractFloat "data must be float type "
+        @assert size(data, 2) > 1             "data has only one column"
+        !any(length(unique(d)) == 1 for d in data_vect) || @warn "data containts rows, which are constant"
 
+        @assert length(fit_weights) == size(data, 1) "fit_weights seems to have too many or to few entries"
+        @assert all(fit_weights .>= 0.0)             "fit_weights must be larger than 0"
+
+        # data splitting # -------------------------------------------------------------------------
+        @assert length(parts) > 0  "parts must have at least one float entry"
+        @assert sum(parts) == 1.0  "sum of the parts should be 1.0"
+        @assert all(parts .>= 0)   "data split parts have to be >= 0"
+        length(parts) < 3 || @warn "only two of the data split parts are used, while all data is used to calculate the final measures" # TODO: use 3rd place to calculate test measures
+
+        # split inds # -----------------------------------------------------------------------------
+        eachind = collect(1:size(data, 1))
+        shuffle!(eachind) # TODO: don't shuffle if not needed?
+
+        start_inds = cumsum([ceil(Int64, size(data_vect, 1) * p) for p in parts])
+        pushfirst!(start_inds, 1)
+        split_inds = [eachind[start_inds[i]:start_inds[i+1]] for i in 1:length(parts)]
+
+        data_descript = (
+            data_type             = eltype(data_vect[1]),
+            n_vars                = length(data_vect) - 1,
+            n_points              = length(data_vect[1]),
+            split_inds            = split_inds,
+            fit_weights           = fit_weights,
+        )
+
+        #-------------------------------------------------------------------------------------------
         @assert length(unaops) == length(p_unaops) "unaops tuple and its wights must be the same length"
         @assert length(binops) == length(p_binops) "binops tuple and its wights must be the same length"
 
@@ -49,7 +82,7 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
         selection = (;selection..., n_pareto_select_per_isle = n_pareto_select_per_isle)
 
-        global __operators = (unaops = unaops, binops = binops) # required to Base.show() Nodes
+        global __operators = (unaops = unaops, binops = binops) # required for Base.show() Nodes
 
         return new{typeof(general),
                    typeof(unaops),
@@ -59,7 +92,7 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
                    typeof(selection),
                    typeof(fitting),
                    typeof(mutation),
-                   typeof(illegal_dict),
+                   typeof(grammar),
                    typeof(data_descript)}(
                        general,
                        unaops,
@@ -69,9 +102,9 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
                        selection,
                        fitting,
                        mutation,
-                       illegal_dict,
+                       grammar,
                        data_descript
-                   ), data
+        ), data_vect
     end
 end
 
@@ -85,48 +118,40 @@ end
 function general_params(;
     n_gens                         = typemax(Int64),
     t_lim                          = 60. * 5.,
-    pop_size                       = 100,
-    num_islands                    = 4,
-    migration_interval             = 50,
-    n_migrations                   = 5,
-    init_tree_depth                = 4,
-    max_compl                      = 50,
-    pow_abs_param                  = false,
-    always_drastic_simplify        = true,
+    pop_size                       = 500,
+    num_islands                    = 10,
+    migration_interval             = 30,
+    n_migrations                   = 1, # TODO: remove n_migrations
+    always_drastic_simplify        = 1e-7, # TODO: make a float
     prevent_doubles                = 1e-5,
     prevent_doubles_across_islands = false,
     multithreadding                = false
 )
-    @assert num_islands >= 1        "num_islands should be at least 1"
-    @assert migration_interval >= 1 "migration_interval should be at least 1"
-    @assert n_migrations >= 1       "num_islands should be at least 1"
-    @assert init_tree_depth > 2     "init_tree_depth should be 3 or higher"
+    @assert num_islands > 0              "num_islands should be at least 1       "
+    @assert migration_interval > 0       "migration_interval should be at least 1"
+    @assert n_migrations > 0             "num_islands should be at least 1       "
+    @assert always_drastic_simplify >= 0 "always_drastic_simplify must be >= 0   "
 
-    init_tree_depth > 6     && @warn "a high init_tree_depth may lead to high calculation times"
-    prevent_doubles > 1e-3  && @warn "a high prevent_doubles may filter non-equal individuals"
-    prevent_doubles < 1e-14 && @warn "a low prevent_doubles may not detect equal individuals"
-    max_compl > 100         && @warn "a high max_compl may lead to high calculation times"
+    prevent_doubles > 1e-3  && @warn        "a high prevent_doubles may filter non-equal individuals"
+    prevent_doubles < 1e-14 && @warn        "a low prevent_doubles may not detect equal individuals "
+    always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                     "
 
     # resulting parameters
     pop_per_isle = ceil(Int64, pop_size / num_islands)
 
-    nam_tup = (
+    return (
+        n_gens                         = n_gens,
         pop_size                       = pop_size,
         pop_per_isle                   = pop_per_isle,
-        n_gens                         = n_gens,
         num_islands                    = num_islands,
         migration_interval             = migration_interval,
         n_migrations                   = n_migrations,
-        init_tree_depth                = init_tree_depth,
-        max_compl                      = max_compl,
-        pow_abs_param                  = pow_abs_param,
         always_drastic_simplify        = always_drastic_simplify,
         prevent_doubles                = prevent_doubles,
         prevent_doubles_across_islands = prevent_doubles_across_islands,
         t_lim                          = t_lim,
         multihreadding                 = multithreadding,
     )
-    return nam_tup
 end
 
 function selection_params(;
@@ -136,20 +161,17 @@ function selection_params(;
     ratio_pareto_tournament_selection = 0.7,
     tournament_size                   = 5,
 )
-
-    @assert 2   <= tournament_size                          "tournament size must be greater than 1"
+    @assert tournament_size > 1                             "tournament size must be greater than 1"
     @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
     @assert typeof(tournament_selection_fitness) == Vector{Tuple{Float64, Symbol}}
 
-    sel_params = (
+    return (
         hall_of_fame_objectives           = hall_of_fame_objectives,
         selection_objectives              = selection_objectives,
         tournament_selection_fitness      = tournament_selection_fitness,
         tournament_size                   = tournament_size,
         ratio_pareto_tournament_selection = ratio_pareto_tournament_selection
     )
-
-    return sel_params
 end
 
 function fitting_params(;
@@ -161,18 +183,16 @@ function fitting_params(;
     pre_residual_processing! = (x, ind) -> x,
     residual_processing      = (x, ind) -> x,
 )
-
-    t_lim < 1e-1             && @warn "t_lim may be too low"
-    max_iter < 5             && @warn "max_iter may be too low"
-    early_stop_iter == 0     && @warn "no early stopping may lead to overfitting"
-    0 < early_stop_iter <= 2 && @warn "early stopping may be too strict -> higher values may produce better results"
-    lasso_factor > 1.0       && @warn "lasso_factor seems to large"
+    t_lim > 1e-1             || @warn "fitting t_lim may be too low"
+    max_iter >= 5            || @warn "max_iter may be too low"
+    lasso_factor < 1.0       || @warn "lasso_factor seems to large"
+    0 < early_stop_iter < 5  && @warn "early stopping may be too strict -> higher values may produce better results"
 
     @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter"
     @assert 0 <= rel_f_tol_5_iter < 1.0 "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
-    @assert lasso_factor >= 0           "lasso factor must me >= 0"
+    @assert lasso_factor >= 0           "lasso factor must be >= 0"
 
-    nam_tup = (
+    return (
         max_iter                 = max_iter,
         early_stop_iter          = early_stop_iter,
         rel_f_tol_5_iter         = rel_f_tol_5_iter,
@@ -181,7 +201,31 @@ function fitting_params(;
         pre_residual_processing! = pre_residual_processing!,
         residual_processing      = residual_processing,
     )
-    return nam_tup
+end
+
+""" Returns the equation grammar related parameters.
+"""
+function grammar_params(;
+    illegal_dict       = Dict(),
+    max_compl          = 30,
+    max_nodes_per_term = Inf,
+    init_tree_depth    = 4,
+)
+    # TODO: check typeof illegal_dict if not empty
+
+    @assert max_compl > 3          "max_compl must be larger than 3"
+    @assert init_tree_depth > 2    "init_tree_depth should be 3 or higher"
+    @assert max_nodes_per_term > 1 "max_nodes_per_term must be larger than 1"
+
+    max_compl > 100         && @warn "a high max_compl may lead to high calculation times"
+    init_tree_depth > 6     && @warn "a high init_tree_depth may lead to high calculation times"
+
+    return (
+        illegal_dict       = illegal_dict,
+        init_tree_depth    = init_tree_depth,
+        max_compl          = max_compl,
+        max_nodes_per_term = max_nodes_per_term,
+    )
 end
 
 """ Returns a Tuple of the normalized cumulative sum of probabilities of the various
@@ -194,11 +238,11 @@ function mutation_params(;
     p_insert           = 0.2,
     p_hoist            = 0.2,
     p_subtree          = 0.2,
-    p_add_term         = 0.1,
-    p_simplify         = 0.5,
-    p_drastic_simplify = 0.5,
+    p_add_term         = 0.2,
+    p_simplify         = 0.2,
+    p_drastic_simplify = 0.2,
 )
-    p_crossover *= 0.5 # because it searches for a second one, if hit
+    p_crossover *= 0.5 # because it consumes a second one, if hit
 
     mut_params = (
         p_insert,
@@ -211,80 +255,6 @@ function mutation_params(;
         p_crossover,
     )
 
-    return cumsum(mut_params ./ sum(mut_params))
-end
-
-""" Performs a random data split according to parts variable. Then, the data_descript function
-    below is called.
-"""
-function data_descript(
-    data::Matrix;
-    arbitrary_name = "",
-    parts::Vector  = [1.0],
-    fit_weights    = ones(size(data, 1)),
-)
-    eachind = collect(1:size(data, 1))
-
-    @assert sum(parts) == 1.0                         "sum of the parts should be 1.0      "
-    length(parts) > 1 && parts[1] < parts[2] && @warn "more test data than training data   "
-    @assert length(fit_weights) == size(data, 1)      "size of fit_weights don't match data"
-    @assert all(fit_weights .> 0.0)                   "fit_weights must be larger than 0   "
-
-    if !all(1e-10 .< fit_weights .< 1e10)
-        @warn "some fit_weights are outside 1e-10 < fit_weights < 1e10 -> will be limited to these bounds"
-        fit_weights = clamp.(fit_weights, 1e-10, 1e10)
-    end
-
-    # make a random data split
-    shuffle!(eachind)
-    start_inds = cumsum([round(Int64, size(data, 1) * p) for p in parts])
-    pushfirst!(start_inds, 1)
-    split_inds = [eachind[start_inds[i]:start_inds[i+1]] for i in 1:length(parts)]
-
-    return data_descript(
-        data,
-        split_inds,
-        arbitrary_name = arbitrary_name,
-        fit_weights    = fit_weights
-    )
-end
-
-""" Takes the data prepares it for the algorithm. The split_inds variable is a vector of vectors
-    of Int64, which specifies which rows to use for fitting (split_inds[1]) and which to use for
-    Early Stopping (split_inds[2]) if turned on.
-"""
-function data_descript(
-    data::Matrix,
-    split_inds::Vector{Vector{Int64}};
-    arbitrary_name = "",
-    fit_weights    = ones(size(data, 1)),
-)
-    @assert eltype(data) <: AbstractFloat "Data is not of float type"
-
-    # convert to vectors of vectors
-    data = [data[:, i] for i in 1:size(data, 2)]
-
-    @assert !any(length(unique(d)) == 1 for d in data)                  "data containts rows, which are constant"
-    @assert length(unique(reduce(vcat, split_inds))) == length(data[1]) "split_inds seems to have too many or to few entries"
-    @assert length(fit_weights) == length(data[1])                      "fit_weights seems to have too many or to few entries"
-    @assert typeof(arbitrary_name) <: String                            "arbitrary_name must be a string"
-
-    @assert length(data) > 1                                            "data has only one column"
-
-    length(split_inds) > 2 && @warn   "Only the first and the second data split are used. The remainder are ignored during fitting but the final measures are calculated for all data."
-
-    data_type = eltype(data[1])
-    n_vars    = length(data) - 1
-    n_points  = length(data[1])
-
-    nam_tup = (
-        arbitrary_name        = arbitrary_name,
-        data_type             = data_type,
-        split_inds            = split_inds,
-        n_vars                = n_vars,
-        n_points              = n_points,
-        fit_weights           = fit_weights,
-    )
-    return nam_tup, data
+    return cumsum(mut_params ./ sum(mut_params)) # TODO: change to do that where its needed
 end
 

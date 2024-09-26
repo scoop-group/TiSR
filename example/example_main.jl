@@ -26,7 +26,6 @@ data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 +
 
 # prepare remainder for settings # -----------------------------------------------------------------
 fit_weights = 1 ./ data_matr[:, end] # weights to minimize relative deviation
-arbitrary_name = ""
 parts = [0.8, 0.2]
 
 # ==================================================================================================
@@ -34,25 +33,28 @@ parts = [0.8, 0.2]
 # ==================================================================================================
 
 ops, data = Options(
-    data_descript=data_descript(
-        data_matr;
-        arbitrary_name = arbitrary_name,
-        parts          = parts,
-        fit_weights    = fit_weights
+    data_matr,
+    fit_weights                 = fit_weights,
+    parts                       = parts,
+    general                     = general_params(
+        n_gens                  = typemax(Int64),
+        t_lim                   = 60 * 1.0,
+        pop_size                = 500,
+        prevent_doubles         = 1e-3,
+        multithreadding         = true,
+        always_drastic_simplify = 1e-7, # TODO: make a float
     ),
-    general=general_params(
-        n_gens          = typemax(Int64),
-        pop_size        = 500,
-        max_compl       = 30,
-        pow_abs_param   = true,
-        prevent_doubles = 1e-2,
-        t_lim           = 60 * 2.0,
-        multithreadding = true,
+    grammar                     = grammar_params(
+        max_compl               = 30,
+        max_nodes_per_term      = 10,
+        illegal_dict            = Dict(
+            :^ => (lef = (), rig = (+, -, *, /, ^, exp, log, sin, cos, abs)),
+        ),
     ),
-    fitting=fitting_params(
-        early_stop_iter = 5,
-        max_iter        = 30,
-        lasso_factor    = 1e-7,
+    fitting                     = fitting_params(
+        early_stop_iter         = 5,
+        max_iter                = 15,
+        lasso_factor            = 1e-7,
     ),
 );
 

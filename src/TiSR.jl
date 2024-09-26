@@ -10,9 +10,8 @@ export Options,
     selection_params,
     fitting_params,
     mutation_params,
-    data_descript,
+    grammar_params,
     residual_after_fitting,
-
     list_of_param_nodes,
     node_to_symbolic
 
@@ -20,18 +19,18 @@ export Options,
 using Statistics
 using Random
 using Dates
-import Base: isapprox, show
+import Base: isapprox, show, deepcopy
 
 using ForwardDiff
 using OrderedCollections
-using StatsBase: wsample
+using StatsBase: wsample, sample, corspearman
 using SymbolicUtils
 using SymbolicUtils.Code
 using StaticArrays
+using LinearAlgebra
 
 using DataFrames
 using XLSX
-
 
 include("options.jl")
 include("node_n_eval_n_utilities.jl")
@@ -46,5 +45,6 @@ include("individual.jl")
 include("write_to_excel.jl")
 include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
 include("misc_helpers.jl")
+include("grammar.jl")
 
 end # module

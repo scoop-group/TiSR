@@ -1,112 +1,37 @@
 
-""" Builds the equations from top down using "full"-method. Parameters of unary operators are
-    prevented and power to parameters are enforced (if specified in ops). The probability of the
-    operators are adapted in case a particular nesting is prohibited according to illegal_dict.
+""" Builds the equations using either the full-method (method = :full) or a
+    probabilistic, assymetric grow method (method = :asym).
 """
 grow_equation(
     rem_depth::Int, ops::Options;
-    unaweights=Float64[ops.p_unaops...], binweights=Float64[ops.p_binops...],
-    no_param=false, method = "not full"
-)::Node = grow_equation_(rem_depth, ops, unaweights, binweights, no_param, method)
+    unaweights = ops.p_unaops, binweights = ops.p_binops,
+    method = :asym
+)::Node = grow_equation_(rem_depth, ops, unaweights, binweights, method)
 
-function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, no_param, method)::Node
-
-    if rem_depth <= 1 || (method != "full" && rand() < 0.3^rem_depth)
-        if !no_param && rand(Bool)
-            next_node = Node(rand())
+function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, method)::Node
+    if rem_depth <= 1 || (method == :asym && rand() < 0.3^rem_depth)
+        if rand(Bool)
+            next_node = Node(rand())                           # parameter
         else
-            next_node = Node(rand(1:ops.data_descript.n_vars))
+            next_node = Node(rand(1:ops.data_descript.n_vars)) # variable
         end
     else
+        rand_ = rand() * (sum(unaweights; init=0.0) + sum(binweights; init=0.0))
 
-        rand_ = rand() * (sum(unaweights) + sum(binweights))
-
-        if length(ops.unaops) > 0 && rand_ <= sum(unaweights)
-            op_ind = findfirst(x -> sum(unaweights[1:x]) >= rand_, 1:length(ops.unaops))
+        if length(ops.unaops) > 0 && rand_ <= sum(unaweights; init=0.0)
+            op_ind = findfirst(x -> sum(unaweights[1:x]; init=0.0) >= rand_, 1:length(ops.unaops))
             next_node = Node(1, op_ind)
 
-            if length(keys(ops.illegal_dict)) > 0
-                cur_fun = Symbol(ops.unaops[op_ind])
-                ill_nexts = get(ops.illegal_dict, cur_fun, ())
-
-                adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
-            end
-
-            next_node.lef =     grow_equation_(rem_depth - 1, ops, copy(unaweights), copy(binweights), true, method)
+            next_node.lef = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method)
         else
-            op_ind = findfirst(x -> (sum(unaweights) + sum(binweights[1:x])) >= rand_, 1:length(ops.binops))
+            op_ind = findfirst(x -> (sum(unaweights; init=0.0) + sum(binweights[1:x]; init=0.0)) >= rand_, 1:length(ops.binops))
             next_node = Node(2, op_ind)
 
-            cur_fun = Symbol(ops.binops[op_ind])
-
-            if length(keys(ops.illegal_dict)) > 0
-                ill_nexts = get(ops.illegal_dict, cur_fun, ())
-
-                adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
-            end
-
-            next_node.lef =     grow_equation_(rem_depth - 1, ops, unaweights, binweights, false, method)
-            if ops.general.pow_abs_param && cur_fun in (:pow_abs, :^)
-                next_node.rig = Node(rand())
-            elseif next_node.lef.ari == -1
-                next_node.rig = grow_equation_(rem_depth - 1, ops, copy(unaweights), copy(binweights), true, method)
-            else
-                next_node.rig = grow_equation_(rem_depth - 1, ops, copy(unaweights), copy(binweights), false, method)
-            end
+            next_node.lef = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method)
+            next_node.rig = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method)
         end
     end
     return next_node
-end
-
-""" Check for illegal nestings in existing nodes.
-"""
-check_legal(node, ops; unaweights=Float64[ops.p_unaops...], binweights=Float64[ops.p_binops...]) = check_legal_(node, ops, unaweights, binweights)
-
-function check_legal_(node, ops, unaweights, binweights)
-    isempty(ops.illegal_dict) && return true
-    node.ari <= 0 && return true
-
-    if node.ari == 2
-        (binweights[node.ind] == 0.0) && return false
-
-        cur_fun = Symbol(ops.binops[node.ind])
-        ill_nexts = get(ops.illegal_dict, cur_fun, ())
-        adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
-
-        legal = check_legal_(node.lef, ops, copy(unaweights), copy(binweights))
-
-        !legal && return false
-
-        cur_fun in (:pow_abs, :^) && ops.general.pow_abs_param && node.rig.ari > -1 && return false
-
-        return check_legal_(node.rig, ops, copy(unaweights), copy(binweights))
-
-    elseif node.ari == 1
-        (unaweights[node.ind] == 0.0) && return false
-
-        cur_fun = Symbol(ops.unaops[node.ind])
-        ill_nexts = get(ops.illegal_dict, cur_fun, ())
-        adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
-
-        return check_legal_(node.lef, ops, copy(unaweights), copy(binweights))
-    end
-end
-
-""" Adjust the weight-vectors for the operator selection probability of the grow_equation and
-    check_legal function to prevent illegal nestings according to illegal_dict.
-"""
-function adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
-    for fun in ill_nexts
-        ind = findfirst(isequal(fun), ops.unaops)
-        if !isnothing(ind)
-            unaweights[ind] = 0.0
-        end
-
-        ind = findfirst(isequal(fun), ops.binops)
-        if !isnothing(ind)
-            binweights[ind] = 0.0
-        end
-    end
 end
 
 # ==================================================================================================
@@ -179,10 +104,10 @@ function apply_genetic_operations!(
 )
     eachind = collect(eachindex(nodes))
 
-    if ops.general.always_drastic_simplify
-        drastic_inds = findall(drastic_simplify!(n, ops, potential=true, threshold=1e-3) for n in nodes)
-        drastic_nodes = [copy_node(nodes[i]) for i in drastic_inds]
-        foreach(n -> drastic_simplify!(n, ops, potential=false, threshold=1e-3), drastic_nodes)
+    if !iszero(ops.general.always_drastic_simplify)
+        drastic_inds = findall(drastic_simplify!(n, ops, potential=true, threshold=ops.general.always_drastic_simplify) for n in nodes)
+        drastic_nodes = [deepcopy(nodes[i]) for i in drastic_inds]
+        foreach(n -> drastic_simplify!(n, ops, potential=false, threshold=ops.general.always_drastic_simplify), drastic_nodes)
 
         for _ in 1:3
             simplify_unary_of_param!.(drastic_nodes)
@@ -223,17 +148,30 @@ end
 
 """ Helper function, which decidies whether a mutation is applied to the left or right child node.
 """
-function mutate_left(node, ops, min_depth)
-    (node.ari == 1                                                                    # -> definetly lef, if ari == 1
-     ||
-     (node.ari == 2 &&
-      ((ops.general.pow_abs_param && Symbol(ops.binops[node.ind]) in (:pow_abs, :^))  # -> definetly lef, if pow_abs_param
-       ||
-       !(maxim_tree_depth(node.rig, minim=min_depth + 2) >= min_depth))               # -> definetly lef, if rig not enough
-      ||
-      (rand(Bool) && maxim_tree_depth(node.lef, minim=min_depth + 2) >= min_depth)    # -> maybe lef, if lef enough
-    )
-    )
+function mutate_left(node, min_depth)
+    if node.ari == 1
+        return true
+    else
+        suff_depth_lef = maxim_tree_depth(node.lef, minim=min_depth + 2) >= min_depth
+        suff_depth_rig = maxim_tree_depth(node.rig, minim=min_depth + 2) >= min_depth
+
+        if suff_depth_lef && suff_depth_rig
+            return rand(Bool)
+        elseif suff_depth_lef
+            return true
+        else 
+            return false
+        end
+    end
+
+    # (node.ari == 1
+    #  ||
+    #  (node.ari == 2 &&
+    #   (!(maxim_tree_depth(node.rig, minim=min_depth + 2) >= min_depth))
+    #   ||
+    #   (rand(Bool) && maxim_tree_depth(node.lef, minim=min_depth + 2) >= min_depth)
+    # )
+    # )
 end
 
 # ==================================================================================================
@@ -246,10 +184,6 @@ function point_mutation!(node, ops)
 
     if node_elect.ari == 2
         node_elect.ind = wsample(1:length(ops.binops), collect(ops.p_binops)) # TODO: unnecessary collect
-
-        if ops.general.pow_abs_param && Symbol(ops.binops[node_elect.ind]) in (:pow_abs, :^) # TODO: move this to grammar check
-            node_elect.rig = Node(rand())
-        end
 
     elseif node_elect.ari == 1
         node_elect.ind = wsample(1:length(ops.unaops), collect(ops.p_unaops)) # TODO: unnecessary collect
@@ -265,17 +199,17 @@ end
 """ Inserts or prepend an operation.
 """
 function insert_mutation!(node, ops; subtree_depth=2)
-    new_node = grow_equation(subtree_depth, ops, method = "full")
-    lefrig1 = mutate_left(new_node, ops, 1) ? :lef : :rig
+    new_node = grow_equation(subtree_depth, ops, method = :full)
+    lefrig1 = mutate_left(new_node, 1) ? :lef : :rig
 
     if rand(1:count_nodes(node)) == 1
-        orig_node = copy_node(node)
+        orig_node = deepcopy(node)
         copy_node_wo_copy!(node, new_node)
 
         setfield!(node, lefrig1, orig_node)
     else
         node_elect = random_node(node, mode=1)
-        lefrig2 = mutate_left(node_elect, ops, 1) ? :lef : :rig
+        lefrig2 = mutate_left(node_elect, 1) ? :lef : :rig
 
         setfield!(new_node, lefrig1, getfield(node_elect, lefrig2))
         setfield!(node_elect, lefrig2, new_node)
@@ -287,10 +221,10 @@ end
 function hoist_mutation!(node, ops)
     node_elect = random_node(node, mode=2)
 
-    lefrig1 = mutate_left(node_elect, ops, 2) ? :lef : :rig
+    lefrig1 = mutate_left(node_elect, 2) ? :lef : :rig
     sub1 = getfield(node_elect, lefrig1)
 
-    lefrig2 = mutate_left(sub1, ops, 1) ? :lef : :rig
+    lefrig2 = mutate_left(sub1, 1) ? :lef : :rig
     sub2 = getfield(sub1, lefrig2)
     setfield!(node_elect, lefrig1, sub2)
 end
@@ -301,27 +235,27 @@ function crossover_mutation!(node1, node2, ops)
     node_elect1 = random_node(node1, mode=1)
     node_elect2 = random_node(node2, mode=1)
 
-    lefrig1 = mutate_left(node_elect1, ops, 2) ? :lef : :rig
-    lefrig2 = mutate_left(node_elect2, ops, 2) ? :lef : :rig
+    lefrig1 = mutate_left(node_elect1, 2) ? :lef : :rig
+    lefrig2 = mutate_left(node_elect2, 2) ? :lef : :rig
 
     temp = getfield(node_elect1, lefrig1)
-    setfield!(node_elect1, lefrig1, copy_node(getfield(node_elect2, lefrig2)))
-    setfield!(node_elect2, lefrig2, copy_node(temp))
+    setfield!(node_elect1, lefrig1, deepcopy(getfield(node_elect2, lefrig2)))
+    setfield!(node_elect2, lefrig2, deepcopy(temp))
 end
 
 # redundand mutations # ----------------------------------------------------------------------------
 """ Replaces a subtree of a random subtree.
 """
-function subtree_mutation!(node, ops; subtree_depth=3) # TODO: mabe rand depth
+function subtree_mutation!(node, ops; subtree_depth=3)
     node_elect = random_node(node, mode=1)
-    lefrig = mutate_left(node_elect, ops, 1) ? :lef : :rig
+    lefrig = mutate_left(node_elect, 1) ? :lef : :rig
     setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))
 end
 
 """ Adds a top-level term.
 """
 function addterm_mutation!(node, ops; subtree_depth=2)
-    orig_node = copy_node(node)
+    orig_node = deepcopy(node)
     copy_node_wo_copy!(node, Node(2, findfirst(isequal(+), ops.binops)))
     node.lef = orig_node
     node.rig = grow_equation(subtree_depth, ops)

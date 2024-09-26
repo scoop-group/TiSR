@@ -103,10 +103,9 @@ Base.show(io::IO, node::Node) = println(io, node_to_string(node, __operators; si
 
 """ Convert a node to a string. This is also used to display nodes.
 """
-node_to_string(node::Node, ops; sigdigits=15) = node_to_string_(node, ops, sigdigits)[1]
+node_to_string(node::Node, ops; sigdigits=15) = node_to_string_(node, ops, sigdigits)
 
 function node_to_string_(node::Node, ops, sigdigits)
-
     if node.ari == 2
         op = string(ops.binops[node.ind])
         lef = node_to_string_(node.lef, ops, sigdigits)
@@ -128,24 +127,45 @@ function node_to_string_(node::Node, ops, sigdigits)
 
     elseif node.ari == -1
         return string(round(extract_from_dual(node.val), sigdigits=sigdigits))
-    else
-        throw("node arity $(node.ari) cannot be printed")
     end
 end
 
+""" Encode the equation to a string where each operation is only one char. For string distance 
+    purposes.
+"""
+function encode_single_char(node::Node, ops)
+    if node.ari == 2
+        op_num = node.ind + length(ops.unaops)
+        lef = encode_single_char(node.lef, ops)
+        rig = encode_single_char(node.rig, ops)
+        return "$(Char(96 + op_num))($lef,$rig)"
+
+    elseif node.ari == 1
+        op_num = node.ind
+        lef = encode_single_char(node.lef, ops)
+        return "$(Char(96 + op_num))($lef)"
+
+    elseif node.ari == 0
+        return "V$(string(node.ind))"
+
+    elseif node.ari == -1
+        # only last character should suffice for comparison
+        return string(round(extract_from_dual(node.val), sigdigits=1))[end] 
+    end
+end
+
+
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
-function copy_node(node::Node)::Node
+function Base.deepcopy(node::Node)::Node
     if node.ari == -1
         return Node(copy(node.val))
     elseif node.ari == 0
         return Node(copy(node.ind))
     elseif node.ari == 1
-        return Node(copy(node.ind), copy_node(node.lef))
+        return Node(copy(node.ind), Base.deepcopy(node.lef))
     elseif node.ari == 2
-        return Node(copy(node.ind), copy_node(node.lef), copy_node(node.rig))
-    else 
-        throw("node arity $(node.ari) cannot be copied")
+        return Node(copy(node.ind), Base.deepcopy(node.lef), Base.deepcopy(node.rig))
     end
 end
 

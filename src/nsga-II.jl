@@ -50,13 +50,13 @@ function generational_loop(data, ops ;start_pop=Node[])
                 shuffle!(population[isle])
 
                 for i in 1:max(length(population[isle]), (2 * ops.general.pop_per_isle  - length(population[isle])))
-                    push!(new_nodes[isle], copy_node(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
+                    push!(new_nodes[isle], deepcopy(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
                 end
 
                 apply_genetic_operations!(new_nodes[isle], ops)
             else
                 while length(new_nodes[isle]) + length(population[isle]) < 2 * ops.general.pop_per_isle
-                    push!(new_nodes[isle], grow_equation(ops.general.init_tree_depth, ops))
+                    push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops))
                 end
             end
 

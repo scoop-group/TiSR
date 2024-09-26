@@ -16,7 +16,6 @@ end
     sheet2   -> progress
     sheet3/4 -> hall_of_fame / population
     The equations strings are saved raw and rounded to 3 significant digits.
-    The exel is saved into /output using the date and time, and the given arbitrary_name.
 """
 function write_to_excel(
     hall_of_fame,
@@ -30,8 +29,8 @@ function write_to_excel(
     hall_of_fame_ = deepcopy(hall_of_fame)
 
     for dict in [hall_of_fame_, population_]
-        dict["eqs_orig"] = node_to_string.(dict["node"], Ref(ops), unique_nodes=true)
-        dict["eqs_orig_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits=3, unique_nodes=true)
+        dict["eqs_orig"] = node_to_string.(dict["node"], Ref(ops))
+        dict["eqs_orig_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits=3)
 
         delete!(dict, "node")
 
@@ -43,7 +42,7 @@ function write_to_excel(
     end
 
     # write to excel # -----------------------------------------------------------------------------
-    excel_path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * ops.data_descript.arbitrary_name
+    excel_path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM"))
 
     XLSX.openxlsx(excel_path * ".xlsx", mode="w") do xf
         sheet = xf[1]

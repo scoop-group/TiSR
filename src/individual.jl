@@ -31,12 +31,13 @@ mutable struct Individual   #{T}
             simplify_binary_across_1_level!(node, ops)
         end
 
-        trim_to_max_compl!(node, ops)
+        trim_to_max_nodes_per_term!(node, ops)
+        trim_to_max_compl!(node, ops.grammar.max_compl, ops)
         reorder_add_n_mul!(node, ops)
 
         indiv = new(node)
 
-        if !isempty(ops.illegal_dict) && !check_legal(node, ops)
+        if !isempty(ops.grammar.illegal_dict) && !check_legal_function_nesting(node, ops)
             indiv.valid = false
             return indiv
         end
@@ -53,6 +54,7 @@ mutable struct Individual   #{T}
         return indiv
     end
 end
+
 
 # ==================================================================================================
 # some helpers
@@ -193,8 +195,8 @@ end
 """ Iterates over all nodes in eqs and performs hoist_mutation until each one conforms to
     max_compl.
 """
-function trim_to_max_compl!(node, ops)
-    while count_nodes(node) > ops.general.max_compl
+function trim_to_max_compl!(node, max_compl, ops)
+    while count_nodes(node) > max_compl
         hoist_mutation!(node, ops)
     end
 end

@@ -77,7 +77,6 @@ For a demo on how to use the code, please find the example_main.jl file.
 ops, data = Options(
     data_descript = data_descript(
         data_matr;                                  # -> nxm matrix containing the n data points, m-1 variables and the output
-        arbitrary_name = "",                        # -> a name for the current run used in for the output file
         parts          = [1.0],                     # -> how to split the data. e.g. [1.0] -> (no split) or [0.8, 0.2]
         fit_weights    = ones(size(data_matr, 1)),  # -> weights for the data fitting -> residual .* weight
     ),
