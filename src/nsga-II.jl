@@ -46,7 +46,12 @@ function generational_loop(data, ops ;start_pop=Node[])
 # genetic operations
 # ==================================================================================================
             # create new children # ----------------------------------------------------------------
-            if gen > 1.0
+            while length(new_nodes[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
+                push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops))
+            end
+
+            # perform mutations # ------------------------------------------------------------------
+            if length(population[isle]) > 0.4 * ops.general.pop_per_isle
                 shuffle!(population[isle])
 
                 for i in 1:max(length(population[isle]), (2 * ops.general.pop_per_isle  - length(population[isle])))
@@ -54,10 +59,6 @@ function generational_loop(data, ops ;start_pop=Node[])
                 end
 
                 apply_genetic_operations!(new_nodes[isle], ops)
-            else
-                while length(new_nodes[isle]) + length(population[isle]) < 2 * ops.general.pop_per_isle
-                    push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops))
-                end
             end
 
             # grow them up # -----------------------------------------------------------------------
@@ -83,14 +84,13 @@ function generational_loop(data, ops ;start_pop=Node[])
         end # for isle in 1:ops.general.num_islands
 
 # ==================================================================================================
-# remove apperently same by MAE and MSE
+# remove apperently same by rounded MAE and MSE
 # ==================================================================================================
-        if ops.general.prevent_doubles > 0
+        if ops.general.prevent_doubles_sigdigits > 0
             if ops.general.prevent_doubles_across_islands
                 remove_doubles_across_islands!(population, ops)
             else
                 for isle in 1:ops.general.num_islands
-                    remove_doubles_by_structure!(population[isle])
                     remove_doubles!(population[isle], ops)
                 end
             end
@@ -100,22 +100,32 @@ function generational_loop(data, ops ;start_pop=Node[])
 # selection
 # ==================================================================================================
         for isle in 1:ops.general.num_islands
+            isempty(population[isle]) && continue
 
             selection_inds = Int64[]
 
+            indiv_obj_vals = [
+                Float64[
+                    round(getfield(indiv, obj), sigdigits=ops.selection.population_niching_sigdigits)
+                    for obj in ops.selection.selection_objectives
+                ]
+                for indiv in population[isle]
+            ]
+
+            # Pareto selection # -------------------------------------------------------------------
             if ops.selection.n_pareto_select_per_isle > 0
-                append!(selection_inds, non_dominated_sort(
-                [
-                        getfield.(population[isle], obj)
-                        for obj in ops.selection.selection_objectives
-                    ],
+                selected = non_dominated_sort(
+                    indiv_obj_vals,
                     n_select=ops.selection.n_pareto_select_per_isle,
-                    first_front=false)
+                    first_front=false
                 )
+
+                append!(selection_inds, selected)
             end
 
+            # tournament selection # ---------------------------------------------------------------
             if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
-                append!(selection_inds, tournament_selection(
+                selected = tournament_selection(
                 (
                     reduce(+, scale .* getfield.(population[isle], field)
                         for (scale, field) in ops.selection.tournament_selection_fitness)
@@ -124,7 +134,8 @@ function generational_loop(data, ops ;start_pop=Node[])
                     tournament_size=ops.selection.tournament_size,
                     n_select = ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle
                 )
-                )
+
+                append!(selection_inds, selected)
             end
 
             sort!(selection_inds)
@@ -139,6 +150,8 @@ function generational_loop(data, ops ;start_pop=Node[])
                 emmigrate_island = rand(1:ops.general.num_islands)
                 immigrate_island = mod1(emmigrate_island + rand((1, -1)), ops.general.num_islands)
 
+                !isempty(population[emmigrate_island]) || continue
+
                 push!(
                     population[immigrate_island],
                     deepcopy(
@@ -152,15 +165,18 @@ function generational_loop(data, ops ;start_pop=Node[])
 # hall of fame
 # ==================================================================================================
         for isle in 1:ops.general.num_islands
-            append!(hall_of_fame, deepcopy.(population[isle])) # deepcopy quite expansive
+            append!(hall_of_fame, deepcopy.(population[isle]))
         end
 
-        remove_doubles!(hall_of_fame, ops)
-        remove_doubles_by_structure!(hall_of_fame)
+        indiv_obj_vals = [
+            Float64[
+                round(getfield(indiv, obj), sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
+                for obj in ops.selection.hall_of_fame_objectives
+            ]
+            for indiv in hall_of_fame
+        ]
 
-        selection_inds = non_dominated_sort(
-            [getfield.(hall_of_fame, obj) for obj in ops.selection.hall_of_fame_objectives]
-            ; first_front=true)
+        selection_inds = non_dominated_sort(indiv_obj_vals; first_front=true)
 
         keepat!(hall_of_fame, selection_inds)
 

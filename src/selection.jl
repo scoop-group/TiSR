@@ -9,11 +9,13 @@ dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], 
     vector. If the keysword first_front=true, only the unfiltered first front is returned.
 """
 function non_dominated_sort(rows; n_select=200, first_front=false)
-    arr = reduce(hcat, rows)
-
     fronts = Vector{Int64}[]
-    individs = SVector{size(arr, 2)}.(eachrow(arr))
+    individs = SVector{length(rows[1])}.(rows)
     indices = collect(eachindex(individs))
+
+    # remove doubles
+    indices = unique(i -> individs[i], 1:length(individs))
+    keepat!(individs, indices)
 
     if first_front
         n_select = 1
@@ -30,11 +32,13 @@ function non_dominated_sort(rows; n_select=200, first_front=false)
     end
 
     if !first_front && (too_many = cur_num - n_select) > 0
+        arr = reduce(hcat, rows)'
         to_select = length(fronts[end]) - too_many
         inds = crowding_distance_selection(arr, fronts[end], to_select)
         deleteat!(fronts, length(fronts))
         push!(fronts, inds)
     end
+
     reduce(vcat, fronts)
 end
 

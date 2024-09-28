@@ -98,3 +98,12 @@ function trim_to_max_nodes_per_term!(node, ops)
         trim_to_max_compl!(node, ops.grammar.max_nodes_per_term, ops)
     end
 end
+
+""" Iterates over all nodes in eqs and performs hoist_mutation until each one conforms to
+    max_compl.
+"""
+function trim_to_max_compl!(node, max_compl, ops)
+    while count_nodes(node) > max_compl
+        hoist_mutation!(node, ops)
+    end
+end

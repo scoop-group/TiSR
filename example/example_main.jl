@@ -32,29 +32,30 @@ parts = [0.8, 0.2]
 # options -> specify some custom settings, where the default setting is unsatisfactory
 # ==================================================================================================
 
-ops, data = Options(
+ops, data                              =  Options(
     data_matr,
-    fit_weights                 = fit_weights,
-    parts                       = parts,
-    general                     = general_params(
-        n_gens                  = typemax(Int64),
-        t_lim                   = 60 * 1.0,
-        pop_size                = 500,
-        prevent_doubles         = 1e-3,
-        multithreadding         = true,
-        always_drastic_simplify = 1e-7, # TODO: make a float
+    fit_weights                        =  fit_weights,
+    parts                              =  parts,
+    general                            =  general_params(
+        n_gens                         =  typemax(Int64),
+        t_lim                          =  60 * 1.0,
+        pop_size                       =  500,
+        prevent_doubles_sigdigits      =  2,
+        prevent_doubles_across_islands =  true,
+        multithreadding                =  true,
+        always_drastic_simplify        =  1e-7,
     ),
-    grammar                     = grammar_params(
-        max_compl               = 30,
-        max_nodes_per_term      = 10,
-        illegal_dict            = Dict(
-            :^ => (lef = (), rig = (+, -, *, /, ^, exp, log, sin, cos, abs)),
-        ),
+    grammar                            =  grammar_params(
+        max_compl                      =  30,
+        # max_nodes_per_term             =  10,
+        # illegal_dict                   =  Dict(
+        #     :^ => (lef = (), rig = (+, -, *, /, ^, exp, log, sin, cos, abs)),
+        # ),
     ),
-    fitting                     = fitting_params(
-        early_stop_iter         = 5,
-        max_iter                = 15,
-        lasso_factor            = 1e-7,
+    fitting                            =  fitting_params(
+        early_stop_iter                =  5,
+        max_iter                       =  15,
+        lasso_factor                   =  1e-7,
     ),
 );
 
@@ -109,6 +110,4 @@ scatterplot(
 # write pareto optimal ones to excel
 # ==================================================================================================
 write_to_excel(hall_of_fame, population, prog_dict, ops)
-
-
 

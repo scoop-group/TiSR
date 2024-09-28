@@ -122,9 +122,9 @@ function general_params(;
     num_islands                    = 10,
     migration_interval             = 30,
     n_migrations                   = 1, # TODO: remove n_migrations
-    always_drastic_simplify        = 1e-7, # TODO: make a float
-    prevent_doubles                = 1e-5,
-    prevent_doubles_across_islands = false,
+    always_drastic_simplify        = 1e-7,
+    prevent_doubles_sigdigits      = 2,
+    prevent_doubles_across_islands = true,
     multithreadding                = false
 )
     @assert num_islands > 0              "num_islands should be at least 1       "
@@ -132,8 +132,8 @@ function general_params(;
     @assert n_migrations > 0             "num_islands should be at least 1       "
     @assert always_drastic_simplify >= 0 "always_drastic_simplify must be >= 0   "
 
-    prevent_doubles > 1e-3  && @warn        "a high prevent_doubles may filter non-equal individuals"
-    prevent_doubles < 1e-14 && @warn        "a low prevent_doubles may not detect equal individuals "
+    prevent_doubles_sigdigits < 2 && @warn "a low prevent_doubles_sigdigits may filter non-equal individuals"
+    prevent_doubles_sigdigits > 5 && @warn "a low prevent_doubles_sigdigits may not detect equal individuals "
     always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                     "
 
     # resulting parameters
@@ -147,7 +147,7 @@ function general_params(;
         migration_interval             = migration_interval,
         n_migrations                   = n_migrations,
         always_drastic_simplify        = always_drastic_simplify,
-        prevent_doubles                = prevent_doubles,
+        prevent_doubles_sigdigits      = prevent_doubles_sigdigits,
         prevent_doubles_across_islands = prevent_doubles_across_islands,
         t_lim                          = t_lim,
         multihreadding                 = multithreadding,
@@ -157,6 +157,8 @@ end
 function selection_params(;
     hall_of_fame_objectives           = [:ms_processed_e, :compl, :mare],
     selection_objectives              = [:ms_processed_e, :compl, :age],
+    hall_of_fame_niching_sigdigits    = 2,
+    population_niching_sigdigits       = 2,
     tournament_selection_fitness      = [(1.0, :ms_processed_e), (1e-5, :compl)],
     ratio_pareto_tournament_selection = 0.7,
     tournament_size                   = 5,
@@ -165,9 +167,17 @@ function selection_params(;
     @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
     @assert typeof(tournament_selection_fitness) == Vector{Tuple{Float64, Symbol}}
 
+    @assert hall_of_fame_niching_sigdigits > 0 "hall_of_fame_niching_sigdigits must be larger than 0"
+    @assert population_niching_sigdigits   > 0 "population_niching_sigdigits must be larger than 0"
+
+    0 < hall_of_fame_niching_sigdigits < 5 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
+    0 < population_niching_sigdigits    < 5 || @warn "population_niching_sigdigits should be between 0 and 5"
+
     return (
         hall_of_fame_objectives           = hall_of_fame_objectives,
         selection_objectives              = selection_objectives,
+        hall_of_fame_niching_sigdigits    = hall_of_fame_niching_sigdigits,
+        population_niching_sigdigits      = population_niching_sigdigits,
         tournament_selection_fitness      = tournament_selection_fitness,
         tournament_size                   = tournament_size,
         ratio_pareto_tournament_selection = ratio_pareto_tournament_selection

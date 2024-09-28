@@ -44,7 +44,7 @@ ops, data = Options(
         pop_size        = 200,
         max_compl       = 30,
         pow_abs_param   = true,
-        prevent_doubles = 1e-2,
+        prevent_doubles_sigdigits = 1e-2,
         t_lim           = 60 * 2.0,                  # will run for 2 minutes
         multithreadding = true,
     ),
@@ -91,8 +91,8 @@ ops, data = Options(
         init_tree_depth                = 4,              # -> initial tree depth (with full method)
         max_compl                      = 50,             # -> max allowed complexity. Individuals exceeding it, are trimmed with repeated hoist mutations rather than removed.
         pow_abs_param                  = false,          # -> allows only parameter terminals as power -> (x - 5)^3 is allowed, but 3^(x - 5) is not.
-        prevent_doubles                = 1e-4,           # -> remove similar indivuduals in an island if their MAE and MSE are BOTH withing specified relative tolerance -> 0 is off; 1e-2 ... 1e-8
-        prevent_doubles_across_islands = false,          # -> depends on the prevent_doubles setting above. Applies it across islands  -> true / false
+        prevent_doubles_sigdigits      = 2,              # -> filters indivuduals in an island if their rounded MAE and MSE are the same -> 0 is off; 2 ... 5
+        prevent_doubles_across_islands = false,          # -> depends on the prevent_doubles_sigdigits setting above. Applies it across islands  -> true / false
         multithreadding                = false           # -> whether to use multithreadding for the most expensive computations. Not always faster  -> depends on how expensive fitting is for the problem at hand.
     ),
 

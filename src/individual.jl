@@ -82,77 +82,59 @@ end
 # ==================================================================================================
 # different remove doubles -> maybe combine somehow with views?
 # ==================================================================================================
-""" Removes similar individual from vector of individuals. The individuals are considered
-    similar, if they have a similar MAE and MSE. Of those, the one with the least complexity is
-    chosen.
-    CAVEAT: The current approach uses as the current best_of_cluster, which is replaced if a
-    shorter similar one is found, rather than first searching for all similar ones and then
-    choosing the one with the least complexity. This may lead to moving clusters, which should
-    not be a problem, if the rtol is chosen small enough.
+""" Removes similar individual from a population isle. The individuals are considered similar,
+    if their MSE and MAE rounded to ops.general.prevent_doubles_sigdigits significant digits are 
+    the same. Of those, the one with the least complexity remains in the population.
 """
 function remove_doubles!(individs::Vector{Individual}, ops)
-    eachind = collect(eachindex(individs))
-    unique_inds = Int64[]
 
-    while !isempty(eachind)
-        best_of_cluster = popfirst!(eachind)
+    indiv_obj_vals = [
+        Float64[
+            round(getfield(indiv, obj), sigdigits=ops.general.prevent_doubles_sigdigits)
+            for obj in [:mse, :mae, :compl]
+        ]
+        for indiv in individs
+    ]
 
-        i = 1
-        while i <= length(eachind)
-            if isapprox(
-                individs[best_of_cluster],
-                individs[eachind[i]],
-                rtol=ops.general.prevent_doubles
-            )
-                next_ind = popat!(eachind, i)
-                if individs[next_ind].compl < individs[best_of_cluster].compl
-                    best_of_cluster = next_ind
-                end
-            else
-                i += 1
-            end
+    unique_inds = collect(eachindex(individs))
+
+    _remove_doubles_helper!(indiv_obj_vals, unique_inds)
+
+    i = 1
+    while i < length(indiv_obj_vals)
+        while i < length(indiv_obj_vals) && indiv_obj_vals[i][1:2] == indiv_obj_vals[i+1][1:2]
+            deleteat!(unique_inds, i+1)
+            deleteat!(indiv_obj_vals, i+1)
         end
-        push!(unique_inds, best_of_cluster)
+        i += 1
     end
+
     sort!(unique_inds)
     keepat!(individs, unique_inds)
 end
 
-""" Removes similar individual from vector of vector of individuals. The individuals are
-    considered similar, if they have a similar MAE and MSE. Of those, the one with the least
-    complexity is chosen.
-    CAVEAT: The current approach uses as the current best_of_cluster, which is replaced if a
-    shorter similar one is found, rather than first searching for all similar ones and then
-    choosing the one with the least complexity. This may lead to moving clusters, which should
-    not be a problem, if the rtol is chosen small enough.
+""" Removes similar individual across all islands. The individuals are considered similar,
+    if their MSE and MAE rounded to ops.general.prevent_doubles_sigdigits significant digits are 
+    the same. Of those, the one with the least complexity remains in the population.
 """
 function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, ops)
-    get_indiv = (individs, nest_ind) -> individs[nest_ind[1]][nest_ind[2]]
 
-    eachind = [(isle, ind) for isle in 1:ops.general.num_islands for ind in eachindex(individs[isle])]
-    unique_inds = Tuple{Int64, Int64}[]
+    indiv_obj_vals = [
+        Float64[
+            round(getfield(indiv, obj), sigdigits=ops.general.prevent_doubles_sigdigits)
+            for obj in [:mse, :mae, :compl]
+        ]
+        for isle in 1:ops.general.num_islands for indiv in individs[isle]
+    ]
 
-    while !isempty(eachind)
-        best_of_cluster = popfirst!(eachind)
+    unique_inds = [
+        (isle, ind)
+        for isle in 1:ops.general.num_islands for ind in eachindex(individs[isle])
+    ]
 
-        i = 1
-        while i <= length(eachind)
-            if isapprox(
-                get_indiv(individs, best_of_cluster),
-                get_indiv(individs, eachind[i]),
-                rtol=ops.general.prevent_doubles
-            )
-                next_ind = popat!(eachind, i)
-                if get_indiv(individs, next_ind).compl < get_indiv(individs, best_of_cluster).compl
-                    best_of_cluster = next_ind
-                end
-            else
-                i += 1
-            end
-        end
-        push!(unique_inds, best_of_cluster)
-    end
+    _remove_doubles_helper!(indiv_obj_vals, unique_inds)
 
+    # apply the unique_inds # ---------------------------------------------------------------------
     unique_inds = [
         [
             unique_inds[i][2]
@@ -165,38 +147,22 @@ function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, op
     foreach(isle -> keepat!(individs[isle], unique_inds[isle]), 1:ops.general.num_islands)
 end
 
+""" Helper function while for remove_doubles! and remove_doubles_across_islands!, which performs 
+    the comparisons and modifies the unique_inds.
+"""
+function _remove_doubles_helper!(indiv_obj_vals, unique_inds)
 
-function remove_doubles_by_structure!(indivs::Vector{Individual})
+    perm = sortperm(indiv_obj_vals)
+    indiv_obj_vals .= indiv_obj_vals[perm]
+    unique_inds    .= unique_inds[perm]
 
     i = 1
-    while i < length(indivs)
-        indiv = indivs[i]
-        doubles_inds = findall(
-            isapprox(indiv.node, indivs[ii].node, rtol=Inf)
-            for ii in i+1:length(indivs)
-        ) .+ i
-
-        if !isempty(doubles_inds)
-            push!(doubles_inds, i)
-            sort!(doubles_inds)
-            _, min_ind = findmin(
-                indivs[d_ind].ms_processed_e
-                for d_ind in doubles_inds
-            )
-            deleteat!(doubles_inds, min_ind)
-            deleteat!(indivs, doubles_inds)
-        else
-            i += 1
+    while i < length(indiv_obj_vals)
+        while i < length(indiv_obj_vals) && indiv_obj_vals[i][1:2] == indiv_obj_vals[i+1][1:2]
+            deleteat!(unique_inds, i+1)
+            deleteat!(indiv_obj_vals, i+1)
         end
+        i += 1
     end
 end
 
-
-""" Iterates over all nodes in eqs and performs hoist_mutation until each one conforms to
-    max_compl.
-"""
-function trim_to_max_compl!(node, max_compl, ops)
-    while count_nodes(node) > max_compl
-        hoist_mutation!(node, ops)
-    end
-end
