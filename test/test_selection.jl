@@ -1,3 +1,5 @@
+# TODO: redo all tests for restructured non_dominated_sort parameters
+# TODO: test niching
 
 @testset "non_dominated_sort" begin
     x = 1.0:10.0

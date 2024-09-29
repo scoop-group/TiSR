@@ -47,7 +47,7 @@ function generational_loop(data, ops ;start_pop=Node[])
 # ==================================================================================================
             # create new children # ----------------------------------------------------------------
             while length(new_nodes[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
-                push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops))
+                push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops, method=:asym))
             end
 
             # perform mutations # ------------------------------------------------------------------
@@ -86,8 +86,8 @@ function generational_loop(data, ops ;start_pop=Node[])
 # ==================================================================================================
 # remove apperently same by rounded MAE and MSE
 # ==================================================================================================
-        if ops.general.prevent_doubles_sigdigits > 0
-            if ops.general.prevent_doubles_across_islands
+        if ops.general.remove_doubles_sigdigits > 0
+            if ops.general.remove_doubles_across_islands
                 remove_doubles_across_islands!(population, ops)
             else
                 for isle in 1:ops.general.num_islands
@@ -146,19 +146,18 @@ function generational_loop(data, ops ;start_pop=Node[])
 # migration
 # ==================================================================================================
         if gen % ops.general.migration_interval == 0
-            for _ in 1:ops.general.n_migrations
-                emmigrate_island = rand(1:ops.general.num_islands)
-                immigrate_island = mod1(emmigrate_island + rand((1, -1)), ops.general.num_islands)
+            emmigrate_island = rand(1:ops.general.num_islands)
+            immigrate_island = mod1(emmigrate_island + rand((1, -1)), ops.general.num_islands)
 
-                !isempty(population[emmigrate_island]) || continue
+            !isempty(population[emmigrate_island]) || continue
 
-                push!(
-                    population[immigrate_island],
-                    deepcopy(
-                        rand(population[emmigrate_island])
-                    )
+            push!(
+                population[immigrate_island],
+                popat!(
+                    population[emmigrate_island],
+                    rand(1:length(population[emmigrate_island]))
                 )
-            end
+            )
         end
 
 # ==================================================================================================

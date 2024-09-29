@@ -10,7 +10,8 @@ grow_equation(
 
 function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, method)::Node
     if rem_depth <= 1 || (method == :asym && rand() < 0.3^rem_depth)
-        if rand(Bool)
+
+        if rand() < (3 / (ops.data_descript.n_vars + 3))       # parameter 3x likely
             next_node = Node(rand())                           # parameter
         else
             next_node = Node(rand(1:ops.data_descript.n_vars)) # variable
@@ -98,7 +99,7 @@ function apply_genetic_operations!(
     nodes,
     ops;
     (one_node_muts!)=[
-        insert_mutation!, point_mutation!, addterm_mutation!, # ___ below ar deeper than 2
+        insert_mutation!, point_mutation!, addterm_mutation!, insert_times_param_mutation!, # ___ below ar deeper than 2
         hoist_mutation!, subtree_mutation!, drastic_simplify!
     ]
 )
@@ -125,16 +126,16 @@ function apply_genetic_operations!(
 
         rand_mutation = rand() * ops.mutation[until_mut]
 
-        if rand_mutation < ops.mutation[6]
-            one_node_muts![findfirst(i -> rand_mutation < ops.mutation[i], 1:6)](node, ops)
+        if rand_mutation < ops.mutation[7]
+            one_node_muts![findfirst(i -> rand_mutation < ops.mutation[i], 1:7)](node, ops)
 
-        elseif rand_mutation < ops.mutation[7]
+        elseif rand_mutation < ops.mutation[8]
             try
                 simplify_w_symbolic_utils!(node, ops; through_polyform=rand() < 0.2)               # add as parameter?
             catch
             end
 
-        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[8]
+        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[9]
             ind = findfirst(i -> maxim_tree_depth(nodes[i], minim=3) > 2, eachind)
             if isnothing(ind)
                 point_mutation!(node, ops)
@@ -246,7 +247,8 @@ end
 # redundand mutations # ----------------------------------------------------------------------------
 """ Replaces a subtree of a random subtree.
 """
-function subtree_mutation!(node, ops; subtree_depth=3)
+function subtree_mutation!(node, ops; subtree_depth=0)
+    subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
     node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
     setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))
@@ -254,10 +256,23 @@ end
 
 """ Adds a top-level term.
 """
-function addterm_mutation!(node, ops; subtree_depth=2)
+function addterm_mutation!(node, ops; subtree_depth=0)
+    subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
     orig_node = deepcopy(node)
     copy_node_wo_copy!(node, Node(2, findfirst(isequal(+), ops.binops)))
     node.lef = orig_node
     node.rig = grow_equation(subtree_depth, ops)
 end
 
+""" Adds a *parameter to a random subnode.
+"""
+function insert_times_param_mutation!(node, ops)
+    node_elect = random_node(node, mode=1)
+    lefrig = mutate_left(node_elect, 1) ? :lef : :rig
+
+    times_param_node = Node(2, findfirst(isequal(+), ops.binops))
+    times_param_node.lef = TiSR.Node(1.0)
+    times_param_node.rig = getfield(node_elect, lefrig)
+
+    setfield!(node_elect, lefrig, times_param_node)
+end

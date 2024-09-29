@@ -44,7 +44,7 @@ ops, data = Options(
         pop_size        = 200,
         max_compl       = 30,
         pow_abs_param   = true,
-        prevent_doubles_sigdigits = 1e-2,
+        remove_doubles_sigdigits = 1e-2,
         t_lim           = 60 * 2.0,                  # will run for 2 minutes
         multithreadding = true,
     ),
@@ -86,13 +86,12 @@ ops, data = Options(
         t_lim                          = 60. * 5.,       # -> time limit for the algorithm
         pop_size                       = 100,            # -> number of individuals selected for next generation
         num_islands                    = 4,              # -> numer of parallel islands
-        migration_interval             = 50,             # -> generation interval, in which n_migrations indivuduals are copied to other islands. (Ring topology)
-        n_migrations                   = 5,              # -> number of indivuduals which are copied to other islands
+        migration_interval             = 50,             # -> generation interval, in which an indivudual is moved to other islands. (ring topology)
         init_tree_depth                = 4,              # -> initial tree depth (with full method)
         max_compl                      = 50,             # -> max allowed complexity. Individuals exceeding it, are trimmed with repeated hoist mutations rather than removed.
         pow_abs_param                  = false,          # -> allows only parameter terminals as power -> (x - 5)^3 is allowed, but 3^(x - 5) is not.
-        prevent_doubles_sigdigits      = 2,              # -> filters indivuduals in an island if their rounded MAE and MSE are the same -> 0 is off; 2 ... 5
-        prevent_doubles_across_islands = false,          # -> depends on the prevent_doubles_sigdigits setting above. Applies it across islands  -> true / false
+        remove_doubles_sigdigits       = 2,              # -> filters indivuduals in an island if their rounded MAE and MSE are the same -> 0 is off; 2 ... 5
+        remove_doubles_across_islands  = false,          # -> depends on the remove_doubles_sigdigits setting above. Applies it across islands  -> true / false
         multithreadding                = false           # -> whether to use multithreadding for the most expensive computations. Not always faster  -> depends on how expensive fitting is for the problem at hand.
     ),
 

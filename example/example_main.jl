@@ -19,10 +19,25 @@ using TiSR
 # set variables for algorithm
 # data_matr = Matrix(df)
 
-# or with synthetic data # -------------------------------------------------------------------------
-data_matr = rand(1000, 3)
-data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
-# -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2)
+# # or with synthetic data # -------------------------------------------------------------------------
+# data_matr = rand(100, 3)
+# data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
+# # -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2)
+
+
+data_matr = rand(1000, 9)
+
+data_matr[:, 1:2] .*= 1000
+data_matr[:, 3:8] .-= 0.5 
+data_matr[:, 3:8] .*= 100
+
+data_matr[:, end] .= @. (
+                        1e-5 * data_matr[:, 1] * data_matr[:, 2] / ( 
+                          (data_matr[:, 3] - data_matr[:, 4])^2 
+                        + (data_matr[:, 5] - data_matr[:, 6])^2 
+                        + (data_matr[:, 7] - data_matr[:, 8])^2
+                       )^0.5
+                     )
 
 # prepare remainder for settings # -----------------------------------------------------------------
 fit_weights = 1 ./ data_matr[:, end] # weights to minimize relative deviation
@@ -32,30 +47,51 @@ parts = [0.8, 0.2]
 # options -> specify some custom settings, where the default setting is unsatisfactory
 # ==================================================================================================
 
+pow_abs(x, y) = abs(x)^y
+pow2(x) = x^2
+
+# TODO: subtree depth? -> minimum viable complexity -> or multiple apply_genetic_ops?
+# TODO: change p_insert_times_param back to 0 for now?
+# TODO: maybe don't remove all constants in drastic_simplify?
+
 ops, data                              =  Options(
     data_matr,
     fit_weights                        =  fit_weights,
-    parts                              =  parts,
-    general                            =  general_params(
-        n_gens                         =  typemax(Int64),
-        t_lim                          =  60 * 1.0,
-        pop_size                       =  500,
-        prevent_doubles_sigdigits      =  2,
-        prevent_doubles_across_islands =  true,
-        multithreadding                =  true,
-        always_drastic_simplify        =  1e-7,
+    p_binops                           = (1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+    binops                             = (+,   -,   *,   /,   ^, pow_abs),
+    p_unaops                           = (1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0),
+    unaops                             = (exp, log, sin, cos, abs, pow2, sqrt),
+    parts                              = parts,
+    general                            = general_params(
+        n_gens                         = typemax(Int64),
+        t_lim                          = 60 * 10.0,
+        pop_size                       = 500,
+        remove_doubles_sigdigits       = 3,
+        remove_doubles_across_islands  = true,
+        multithreadding                = true,
+        always_drastic_simplify        = 1e-7,
     ),
-    grammar                            =  grammar_params(
-        max_compl                      =  30,
-        # max_nodes_per_term             =  10,
-        # illegal_dict                   =  Dict(
-        #     :^ => (lef = (), rig = (+, -, *, /, ^, exp, log, sin, cos, abs)),
+    selection                          = selection_params(
+        hall_of_fame_niching_sigdigits = 2,
+        population_niching_sigdigits   = 3,
+        selection_objectives           = [:ms_processed_e, :minus_abs_spearman, :compl, :age],
+    ),
+    grammar                            = grammar_params(
+        max_compl                      = 30,
+        # max_nodes_per_term             = 10,
+        # illegal_dict                   = Dict(
+        #     :^                         => (lef = (), rig = (+, -, *, /, ^, pow_abs, exp, log, sin, cos, abs, pow2, sqrt)),
+        #     :pow_abs                   => (lef = (), rig = (+, -, *, /, ^, pow_abs, exp, log, sin, cos, abs, pow2, sqrt)),
+        #     :exp                       => (lef = (exp, log), rig = ()),
+        #     :log                       => (lef = (exp, log), rig = ()),
+        #     :sin                       => (lef = (sin, cos), rig = ()),
+        #     :cos                       => (lef = (sin, cos), rig = ()),
         # ),
     ),
-    fitting                            =  fitting_params(
-        early_stop_iter                =  5,
-        max_iter                       =  15,
-        lasso_factor                   =  1e-7,
+    fitting                            = fitting_params(
+        early_stop_iter                = 0,
+        max_iter                       = 15,
+        lasso_factor                   = 1e-7,
     ),
 );
 
@@ -92,8 +128,14 @@ hall_of_fame, population, prog_dict = generational_loop(data, ops);
 col = "mare"
 perm = sortperm(hall_of_fame[col])
 hall_of_fame[col][perm]
-hall_of_fame["compl"][perm]
+hall_of_fame["mare"][perm]
 hall_of_fame["node"][perm]#[1:5]
+
+
+for n in sort(string.(population["node"]), by=length)
+    println(n)
+end
+
 
 # show the Pareto front # --------------------------------------------------------------------------
 

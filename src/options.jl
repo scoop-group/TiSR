@@ -121,19 +121,17 @@ function general_params(;
     pop_size                       = 500,
     num_islands                    = 10,
     migration_interval             = 30,
-    n_migrations                   = 1, # TODO: remove n_migrations
     always_drastic_simplify        = 1e-7,
-    prevent_doubles_sigdigits      = 2,
-    prevent_doubles_across_islands = true,
+    remove_doubles_sigdigits       = 3,
+    remove_doubles_across_islands  = false,
     multithreadding                = false
 )
     @assert num_islands > 0              "num_islands should be at least 1       "
     @assert migration_interval > 0       "migration_interval should be at least 1"
-    @assert n_migrations > 0             "num_islands should be at least 1       "
     @assert always_drastic_simplify >= 0 "always_drastic_simplify must be >= 0   "
 
-    prevent_doubles_sigdigits < 2 && @warn "a low prevent_doubles_sigdigits may filter non-equal individuals"
-    prevent_doubles_sigdigits > 5 && @warn "a low prevent_doubles_sigdigits may not detect equal individuals "
+    remove_doubles_sigdigits < 2 && @warn "a low remove_doubles_sigdigits may filter non-equal individuals"
+    remove_doubles_sigdigits > 5 && @warn "a low remove_doubles_sigdigits may not detect equal individuals "
     always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                     "
 
     # resulting parameters
@@ -145,10 +143,9 @@ function general_params(;
         pop_per_isle                   = pop_per_isle,
         num_islands                    = num_islands,
         migration_interval             = migration_interval,
-        n_migrations                   = n_migrations,
         always_drastic_simplify        = always_drastic_simplify,
-        prevent_doubles_sigdigits      = prevent_doubles_sigdigits,
-        prevent_doubles_across_islands = prevent_doubles_across_islands,
+        remove_doubles_sigdigits       = remove_doubles_sigdigits,
+        remove_doubles_across_islands  = remove_doubles_across_islands,
         t_lim                          = t_lim,
         multihreadding                 = multithreadding,
     )
@@ -158,7 +155,7 @@ function selection_params(;
     hall_of_fame_objectives           = [:ms_processed_e, :compl, :mare],
     selection_objectives              = [:ms_processed_e, :compl, :age],
     hall_of_fame_niching_sigdigits    = 2,
-    population_niching_sigdigits       = 2,
+    population_niching_sigdigits      = 3,
     tournament_selection_fitness      = [(1.0, :ms_processed_e), (1e-5, :compl)],
     ratio_pareto_tournament_selection = 0.7,
     tournament_size                   = 5,
@@ -243,14 +240,15 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;
-    p_crossover        = 4.0,
-    p_point            = 0.5,
-    p_insert           = 0.2,
-    p_hoist            = 0.2,
-    p_subtree          = 0.2,
-    p_add_term         = 0.2,
-    p_simplify         = 0.2,
-    p_drastic_simplify = 0.2,
+    p_crossover          = 5.0,
+    p_point              = 0.5,
+    p_insert             = 0.2,
+    p_hoist              = 0.2,
+    p_subtree            = 0.2,
+    p_drastic_simplify   = 0.2,
+    p_insert_times_param = 0.1,
+    p_add_term           = 0.1,
+    p_simplify           = 0.1,
 )
     p_crossover *= 0.5 # because it consumes a second one, if hit
 
@@ -258,6 +256,7 @@ function mutation_params(;
         p_insert,
         p_point,
         p_add_term,
+        p_insert_times_param,
         p_hoist,
         p_subtree,
         p_drastic_simplify,

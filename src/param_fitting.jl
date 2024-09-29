@@ -42,6 +42,7 @@ function fit_n_eval!(indiv, data, ops)
         indiv.mse = mean(abs2, residual)
 
         indiv.minus_r2 = get_minus_r2(data[end] .- residual, data[end])
+        indiv.minus_abs_spearman = get_minus_abs_spearman(data[end] .- residual, data[end])
 
         relative_ref = any(d == 0 for d in data[end]) ? max.(abs.(data[end]), 0.1) : data[end]
 

@@ -69,6 +69,10 @@ function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{
             return arr_l, false
         end
 
+        if (ops.unaops[node.ind] == sqrt) && any(l < 0.0 for l in arr_l)
+            return arr_l, false
+        end
+
         arr_l .= ops.unaops[node.ind].(arr_l)
         return arr_l, true
     else

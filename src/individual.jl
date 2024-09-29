@@ -15,6 +15,7 @@ mutable struct Individual   #{T}
     max_ae::Float64         # T
 
     minus_r2::Float64       # T
+    minus_abs_spearman::Float64       # T
 
     mare::Float64           # T
     q75_are::Float64        # T
@@ -83,14 +84,14 @@ end
 # different remove doubles -> maybe combine somehow with views?
 # ==================================================================================================
 """ Removes similar individual from a population isle. The individuals are considered similar,
-    if their MSE and MAE rounded to ops.general.prevent_doubles_sigdigits significant digits are 
+    if their MSE and MAE rounded to ops.general.remove_doubles_sigdigits significant digits are 
     the same. Of those, the one with the least complexity remains in the population.
 """
 function remove_doubles!(individs::Vector{Individual}, ops)
 
     indiv_obj_vals = [
         Float64[
-            round(getfield(indiv, obj), sigdigits=ops.general.prevent_doubles_sigdigits)
+            round(getfield(indiv, obj), sigdigits=ops.general.remove_doubles_sigdigits)
             for obj in [:mse, :mae, :compl]
         ]
         for indiv in individs
@@ -114,14 +115,14 @@ function remove_doubles!(individs::Vector{Individual}, ops)
 end
 
 """ Removes similar individual across all islands. The individuals are considered similar,
-    if their MSE and MAE rounded to ops.general.prevent_doubles_sigdigits significant digits are 
+    if their MSE and MAE rounded to ops.general.remove_doubles_sigdigits significant digits are 
     the same. Of those, the one with the least complexity remains in the population.
 """
 function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, ops)
 
     indiv_obj_vals = [
         Float64[
-            round(getfield(indiv, obj), sigdigits=ops.general.prevent_doubles_sigdigits)
+            round(getfield(indiv, obj), sigdigits=ops.general.remove_doubles_sigdigits)
             for obj in [:mse, :mae, :compl]
         ]
         for isle in 1:ops.general.num_islands for indiv in individs[isle]
