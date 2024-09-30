@@ -8,10 +8,10 @@
 
 # make some preparations # ------------------------------------------------------------------------
 
-@testset "residual after fitting" begin  # integration test
+data = rand(100, 5)
+ops, data_vect = Options(data)
 
-    data = rand(100, 5)
-    ops, data_vect = Options(data)
+@testset "residual after fitting" begin  # integration test
 
     improvements = []
 

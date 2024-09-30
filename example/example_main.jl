@@ -48,16 +48,12 @@ parts = [0.8, 0.2]
 pow_abs(x, y) = abs(x)^y
 pow2(x) = x^2
 
-# TODO: subtree depth? -> minimum viable complexity -> or multiple apply_genetic_ops?
-# TODO: change p_insert_times_param back to 0 for now?
-# TODO: maybe don't remove all constants in drastic_simplify?
-
 ops, data                              = Options(
     data_matr,
     fit_weights                        = fit_weights,
-    p_binops                           = (1.0, 1.0, 1.0, 1.0, 0.0, 1.0),
+    p_binops                           = (1.0, 1.0, 1.0, 1.0, 1.0, 0.0),
     binops                             = (+,   -,   *,   /,   ^, pow_abs),
-    p_unaops                           = (1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0),
+    p_unaops                           = (1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0),
     unaops                             = (exp, log, sin, cos, abs, pow2, sqrt),
     parts                              = parts,
     general                            = general_params(
@@ -69,6 +65,7 @@ ops, data                              = Options(
         multithreadding                = true,
         always_drastic_simplify        = 1e-7,
         adaptive_compl_increment       = 10,
+        callback = (hall_of_fame, population, ops) -> any(i.compl < 20 && i.mare < 1e-5 for i in hall_of_fame)
     ),
     selection                          = selection_params(
         population_niching_sigdigits   = 3,
@@ -112,7 +109,7 @@ ops, data                              = Options(
 # ==================================================================================================
 # main generational loop
 # ==================================================================================================
-hall_of_fame, population, prog_dict = generational_loop(data, ops);
+hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops);
 
 # hall_of_fame, population, prog_dict = generational_loop(data, ops, start_pop=start_pop);
 

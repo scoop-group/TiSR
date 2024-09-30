@@ -17,4 +17,7 @@ include("test_param_fitting.jl")
 include("test_selection.jl")
 include("test_genetic_ops.jl")
 include("test_grammar.jl")
+include("test_individual.jl")
+include("test_nsga-II.jl")
+
 

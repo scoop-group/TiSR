@@ -32,8 +32,9 @@ function generational_loop(data, ops ;start_pop=Node[])
 # ==================================================================================================
     t_start = time()
     gen = 0.0
+    stop_msg = ""
 
-    while (gen <= ops.general.n_gens && time() - t_start < ops.general.t_lim)
+    while true
         gen += 1.0
 
         cur_max_compl = maximum(indiv.compl for indiv in hall_of_fame; init=5)
@@ -210,9 +211,52 @@ function generational_loop(data, ops ;start_pop=Node[])
                 cur_prog_dict[keep_track_of[i]] = get_for_prog[i]
             end
 
-            display(cur_prog_dict)
-            println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
+            if ops.general.print_progress
+                display(cur_prog_dict)
+                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
+            end
         end
+
+        if gen >= ops.general.n_gens
+            stop_msg = "reached maximum number of generations"
+            break
+        elseif time() - t_start >= ops.general.t_lim
+            stop_msg = "reached time limit"
+            break
+        elseif ops.general.callback(hall_of_fame, population, ops)
+            stop_msg = "callback returned true"
+            break
+        end
+    end
+
+    # final display of current KPIs # --------------------------------------------------------------
+    t_since = time() - t_start
+    cur_max_compl = maximum(indiv.compl for indiv in hall_of_fame; init=5)
+
+    get_for_prog = [t_since, gen,
+        mean(getfield.(hall_of_fame, :age)),
+        cur_max_compl,
+        mean(getfield.(hall_of_fame, :compl)),
+        mean(getfield.(hall_of_fame, :recursive_compl)),
+        mean(getfield.(hall_of_fame, :n_params)),
+        minimum(getfield.(hall_of_fame, :mae)),
+        minimum(getfield.(hall_of_fame, :mse)),
+        minimum(getfield.(hall_of_fame, :max_ae)),
+        minimum(getfield.(hall_of_fame, :minus_r2)),
+        minimum(getfield.(hall_of_fame, :minus_abs_spearman)),
+        minimum(getfield.(hall_of_fame, :mare)),
+        minimum(getfield.(hall_of_fame, :q75_are)),
+        minimum(getfield.(hall_of_fame, :max_are)),
+        minimum(getfield.(hall_of_fame, :ms_processed_e))]
+
+    for i in eachindex(keep_track_of)
+        push!(prog_dict[keep_track_of[i]], get_for_prog[i])
+        cur_prog_dict[keep_track_of[i]] = get_for_prog[i]
+    end
+
+    if ops.general.print_progress
+        display(cur_prog_dict)
+        println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
     end
 
 # ==================================================================================================
@@ -228,7 +272,7 @@ function generational_loop(data, ops ;start_pop=Node[])
         for f in fieldnames(typeof(hall_of_fame[1]))
     )
 
-    return hall_of_fame, population, prog_dict
+    return hall_of_fame, population, prog_dict, stop_msg
 end
 
 

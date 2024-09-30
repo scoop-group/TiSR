@@ -1,4 +1,5 @@
 
+# TODO: add assert for vector of vectors
 # TODO: add asserts for + and * in function set -> required for addterm and insert_param mul
 
 # ==================================================================================================
@@ -129,11 +130,14 @@ function general_params(;
     remove_doubles_across_islands = false,
     multithreadding               = false,
     adaptive_compl_increment      = Inf,
+    callback                      = (hall_of_fame, population, ops) -> false,
+    print_progress                = true,
 )
-    @assert num_islands > 0                     "num_islands should be at least 1                "
-    @assert migration_interval > 0              "migration_interval should be at least 1         "
-    @assert always_drastic_simplify >= 0        "always_drastic_simplify must be >= 0            "
-    @assert adaptive_compl_increment > 0 "adaptive_compl_increment must be larger 0"
+    @assert num_islands > 0              "num_islands should be at least 1                "
+    @assert migration_interval > 0       "migration_interval should be at least 1         "
+    @assert always_drastic_simplify >= 0 "always_drastic_simplify must be >= 0            "
+    @assert adaptive_compl_increment > 0 "adaptive_compl_increment must be larger 0       "
+    @assert callback isa Function        "callback must be a function                     "
 
     remove_doubles_sigdigits > 1   || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
     remove_doubles_sigdigits < 6   || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
@@ -155,12 +159,14 @@ function general_params(;
         t_lim                         = t_lim,
         multihreadding                = multithreadding,
         adaptive_compl_increment      = adaptive_compl_increment,
+        callback                      = callback,
+        print_progress                = print_progress,
     )
 end
 
 function selection_params(;
     hall_of_fame_objectives           = [:ms_processed_e, :compl, :mare],
-    selection_objectives              = [:ms_processed_e, :minus_abs_shearman, :compl, :age],
+    selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl, :age],
     hall_of_fame_niching_sigdigits    = 2,
     population_niching_sigdigits      = 3,
     tournament_selection_fitness      = [(1.0, :ms_processed_e), (1e-5, :compl)],
