@@ -1,20 +1,19 @@
+
 # ==================================================================================================
 # equation struct
 # ==================================================================================================
 mutable struct Node{T <: Number}
-    ari::Int64
+    ari::Int8
     val::T
-    ind::Int64
+    ind::Int8
     lef::Node{T}
     rig::Node{T}
 
-    Node(v::T_; val_type::T_=1.0)                         where {T_ <: Number} = new{T_}(-1, v)
-    Node(a::Int64, v::Number; val_type::T_=1.0)           where {T_ <: Number} = new{T_}(a, v)
-    Node(a::Int64, v::Number, i::Int64; val_type::T_=1.0) where {T_ <: Number} = new{T_}(a, v, i)
-    Node(i::Int64; val_type::T_=1.0)                      where {T_ <: Number} = new{T_}(0, 0, i)
-    Node(a::Int64, op::Int64; val_type::T_=1.0)           where {T_ <: Number} = new{T_}(a, 0, op)
-    Node(op::Int64, l::Node; val_type::T_=1.0)            where {T_ <: Number} = new{T_}(1, 0, op, l)
-    Node(op::Int64, l::Node, r::Node; val_type::T_=1.0)   where {T_ <: Number} = new{T_}(2, 0, op, l, r)
+    Node(v::T_;                         val_type::T_=1.0) where {T_ <: Number} = new{T_}(Int8(-1), T_(v))
+    Node(i::Integer;                    val_type::T_=1.0) where {T_ <: Number} = new{T_}(Int8(0),  T_(0), Int8(i))
+    Node(a::Integer,  op::Integer;      val_type::T_=1.0) where {T_ <: Number} = new{T_}(Int8(a),  T_(0), Int8(op))
+    Node(op::Integer, l::Node;          val_type::T_=1.0) where {T_ <: Number} = new{T_}(Int8(1),  T_(0), Int8(op), l)
+    Node(op::Integer, l::Node, r::Node; val_type::T_=1.0) where {T_ <: Number} = new{T_}(Int8(2),  T_(0), Int8(op), l, r)
 end
 
 """ Creates a new node with the specified type.
