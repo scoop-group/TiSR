@@ -8,8 +8,8 @@ function generational_loop(data, ops ;start_pop=Node[])
     # create dict for the simulation progression # -------------------------------------------------
     keep_track_of = [
         "time", "generation", "mean age hall_of_fame",
-        "mean compl", "mean recursive_compl", "mean n_params",
-        "min mae", "min mse", "min max_ae", "min minus_r2", "min mare", "min q75_are",
+        "cur_max_compl", "mean compl", "mean recursive_compl", "mean n_params",
+        "min mae", "min mse", "min max_ae", "min minus_r2", "min minus_abs_spearman", "min mare", "min q75_are",
         "min max_are", "min ms_processed_e"
     ]
 
@@ -35,6 +35,8 @@ function generational_loop(data, ops ;start_pop=Node[])
 
     while (gen <= ops.general.n_gens && time() - t_start < ops.general.t_lim)
         gen += 1.0
+
+        cur_max_compl = maximum(indiv.compl for indiv in hall_of_fame; init=5)
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
@@ -65,11 +67,11 @@ function generational_loop(data, ops ;start_pop=Node[])
             children[isle] = Array{Individual}(undef, length(new_nodes[isle]))
             if ops.general.multihreadding
                 Threads.@threads for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops)
+                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl)
                 end
             else
                 for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops)
+                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl)
                 end
             end
 
@@ -189,6 +191,7 @@ function generational_loop(data, ops ;start_pop=Node[])
             # current KPIs # -----------------------------------------------------------------------
             get_for_prog = [t_since, gen,
                 mean(getfield.(hall_of_fame, :age)),
+                cur_max_compl,
                 mean(getfield.(hall_of_fame, :compl)),
                 mean(getfield.(hall_of_fame, :recursive_compl)),
                 mean(getfield.(hall_of_fame, :n_params)),
@@ -196,6 +199,7 @@ function generational_loop(data, ops ;start_pop=Node[])
                 minimum(getfield.(hall_of_fame, :mse)),
                 minimum(getfield.(hall_of_fame, :max_ae)),
                 minimum(getfield.(hall_of_fame, :minus_r2)),
+                minimum(getfield.(hall_of_fame, :minus_abs_spearman)),
                 minimum(getfield.(hall_of_fame, :mare)),
                 minimum(getfield.(hall_of_fame, :q75_are)),
                 minimum(getfield.(hall_of_fame, :max_are)),

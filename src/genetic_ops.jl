@@ -152,7 +152,7 @@ end
 function mutate_left(node, min_depth)
     if node.ari == 1
         return true
-    else
+    elseif node.ari == 2
         suff_depth_lef = maxim_tree_depth(node.lef, minim=min_depth + 2) >= min_depth
         suff_depth_rig = maxim_tree_depth(node.rig, minim=min_depth + 2) >= min_depth
 
@@ -163,6 +163,8 @@ function mutate_left(node, min_depth)
         else 
             return false
         end
+    else
+        @assert false
     end
 
     # (node.ari == 1
@@ -270,7 +272,7 @@ function insert_times_param_mutation!(node, ops)
     node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
 
-    times_param_node = Node(2, findfirst(isequal(+), ops.binops))
+    times_param_node = Node(2, findfirst(isequal(*), ops.binops))
     times_param_node.lef = TiSR.Node(1.0)
     times_param_node.rig = getfield(node_elect, lefrig)
 

@@ -1,5 +1,4 @@
 
-# TODO: test insert_times_param_node
 # TODO: subtree_mutation
 # TODO: apply_genetic_operations
 
@@ -242,6 +241,35 @@ end
         dist = Levenshtein()(str1, str2)
     end
     @test all(d in (5, 6, 8, 9, 10, 11, 12) for d in distances)
+end
+
+@testset "insert_times_param_mutation!" begin
+    distances = map(1:1000) do _
+        node = TiSR.grow_equation(rand(4:7), ops, method=:full)
+
+        num_nodes_before = TiSR.count_nodes(node)
+        str1 = TiSR.encode_single_char(node, ops)
+
+        TiSR.insert_times_param_mutation!(node, ops)
+
+        num_nodes_after = TiSR.count_nodes(node)
+        str2 = TiSR.encode_single_char(node, ops)
+
+        cmap1 = countmap(str1)
+        cmap2 = countmap(str2)
+
+        # make sure no node is lost during mutation
+        for char in keys(cmap1)
+            @test cmap2[char] >= cmap1[char]
+        end
+
+        # check if more nodes after mutation
+        @test num_nodes_before < num_nodes_after
+
+        # string distance?
+        dist = Levenshtein()(str1, str2)
+    end
+    @test all(d == 5 for d in distances)
 end
 
 

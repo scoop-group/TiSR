@@ -25,7 +25,7 @@ mutable struct Individual   #{T}
 
     Individual() = new()
 
-    function Individual(node, data, ops)
+    function Individual(node, data, ops, cur_max_compl)
         for _ in 1:3
             simplify_unary_of_param!(node)
             simplify_binary_of_param!(node)
@@ -33,7 +33,11 @@ mutable struct Individual   #{T}
         end
 
         trim_to_max_nodes_per_term!(node, ops)
-        trim_to_max_compl!(node, ops.grammar.max_compl, ops)
+        trim_to_max_compl!(
+            node,
+            min(cur_max_compl + ops.general.adaptive_compl_increment, ops.grammar.max_compl),
+            ops
+        )
         reorder_add_n_mul!(node, ops)
 
         indiv = new(node)

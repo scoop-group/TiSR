@@ -1,3 +1,6 @@
+
+# TODO: add asserts for + and * in function set -> required for addterm and insert_param mul
+
 # ==================================================================================================
 # Options struct
 # ==================================================================================================
@@ -116,38 +119,42 @@ end
     parameters are also calculated and included.
 """
 function general_params(;
-    n_gens                         = typemax(Int64),
-    t_lim                          = 60. * 5.,
-    pop_size                       = 500,
-    num_islands                    = 10,
-    migration_interval             = 30,
-    always_drastic_simplify        = 1e-7,
-    remove_doubles_sigdigits       = 3,
-    remove_doubles_across_islands  = false,
-    multithreadding                = false
+    n_gens                        = typemax(Int64),
+    t_lim                         = 60. * 5.,
+    pop_size                      = 500,
+    num_islands                   = 10,
+    migration_interval            = 30,
+    always_drastic_simplify       = 1e-7,
+    remove_doubles_sigdigits      = 3,
+    remove_doubles_across_islands = false,
+    multithreadding               = false,
+    adaptive_compl_increment      = Inf,
 )
-    @assert num_islands > 0              "num_islands should be at least 1       "
-    @assert migration_interval > 0       "migration_interval should be at least 1"
-    @assert always_drastic_simplify >= 0 "always_drastic_simplify must be >= 0   "
+    @assert num_islands > 0                     "num_islands should be at least 1                "
+    @assert migration_interval > 0              "migration_interval should be at least 1         "
+    @assert always_drastic_simplify >= 0        "always_drastic_simplify must be >= 0            "
+    @assert adaptive_compl_increment > 0 "adaptive_compl_increment must be larger 0"
 
-    remove_doubles_sigdigits < 2 && @warn "a low remove_doubles_sigdigits may filter non-equal individuals"
-    remove_doubles_sigdigits > 5 && @warn "a low remove_doubles_sigdigits may not detect equal individuals "
-    always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                     "
+    remove_doubles_sigdigits > 1   || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
+    remove_doubles_sigdigits < 6   || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
+    always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                              "
+    adaptive_compl_increment > 4   || @warn "adaptive_compl_increment should be >= 5                  "
 
     # resulting parameters
     pop_per_isle = ceil(Int64, pop_size / num_islands)
 
     return (
-        n_gens                         = n_gens,
-        pop_size                       = pop_size,
-        pop_per_isle                   = pop_per_isle,
-        num_islands                    = num_islands,
-        migration_interval             = migration_interval,
-        always_drastic_simplify        = always_drastic_simplify,
-        remove_doubles_sigdigits       = remove_doubles_sigdigits,
-        remove_doubles_across_islands  = remove_doubles_across_islands,
-        t_lim                          = t_lim,
-        multihreadding                 = multithreadding,
+        n_gens                        = n_gens,
+        pop_size                      = pop_size,
+        pop_per_isle                  = pop_per_isle,
+        num_islands                   = num_islands,
+        migration_interval            = migration_interval,
+        always_drastic_simplify       = always_drastic_simplify,
+        remove_doubles_sigdigits      = remove_doubles_sigdigits,
+        remove_doubles_across_islands = remove_doubles_across_islands,
+        t_lim                         = t_lim,
+        multihreadding                = multithreadding,
+        adaptive_compl_increment      = adaptive_compl_increment,
     )
 end
 
