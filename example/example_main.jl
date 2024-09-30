@@ -54,10 +54,10 @@ pow2(x) = x^2
 # TODO: change p_insert_times_param back to 0 for now?
 # TODO: maybe don't remove all constants in drastic_simplify?
 
-ops, data                              =  Options(
+ops, data                              = Options(
     data_matr,
-    fit_weights                        =  fit_weights,
-    p_binops                           = (1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+    fit_weights                        = fit_weights,
+    p_binops                           = (1.0, 1.0, 1.0, 1.0, 0.0, 0.0),
     binops                             = (+,   -,   *,   /,   ^, pow_abs),
     p_unaops                           = (1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0),
     unaops                             = (exp, log, sin, cos, abs, pow2, sqrt),
@@ -72,7 +72,6 @@ ops, data                              =  Options(
         always_drastic_simplify        = 1e-7,
     ),
     selection                          = selection_params(
-        hall_of_fame_niching_sigdigits = 2,
         population_niching_sigdigits   = 3,
         selection_objectives           = [:ms_processed_e, :minus_abs_spearman, :compl, :age],
     ),

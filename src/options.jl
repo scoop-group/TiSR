@@ -153,7 +153,7 @@ end
 
 function selection_params(;
     hall_of_fame_objectives           = [:ms_processed_e, :compl, :mare],
-    selection_objectives              = [:ms_processed_e, :compl, :age],
+    selection_objectives              = [:ms_processed_e, :minus_abs_shearman, :compl, :age],
     hall_of_fame_niching_sigdigits    = 2,
     population_niching_sigdigits      = 3,
     tournament_selection_fitness      = [(1.0, :ms_processed_e), (1e-5, :compl)],
