@@ -1,7 +1,4 @@
 
-# TODO: add assert for vector of vectors
-# TODO: add asserts for + and * in function set -> required for addterm and insert_param mul
-
 # ==================================================================================================
 # Options struct
 # ==================================================================================================
