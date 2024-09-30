@@ -69,6 +69,14 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
             fit_weights           = fit_weights,
         )
 
+        @assert data_descript.n_vars <= 128 "TiSR cannot handle more than 128 variables out of the box"
+        @assert length(unaops) <= 128       "TiSR cannot handle more than 128 functions in the unaops out of the box"
+        @assert length(binops) <= 128       "TiSR cannot handle more than 128 functions in the binops out of the box"
+
+        # function set asserts ---------------------------------------------------------------------
+        @assert ("+" in string.(binops)) "+ is required in the function set for some mutations to work"
+        @assert ("*" in string.(binops)) "* is required in the function set for some mutations to work"
+
         #-------------------------------------------------------------------------------------------
         @assert length(unaops) == length(p_unaops) "unaops tuple and its wights must be the same length"
         @assert length(binops) == length(p_binops) "binops tuple and its wights must be the same length"
