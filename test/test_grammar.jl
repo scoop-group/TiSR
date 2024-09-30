@@ -16,7 +16,7 @@
 
         max_nodes_before = TiSR.get_max_nodes_per_term(node, ops)
 
-        @assert TiSR.count_nodes(node) == max_nodes_before
+        @test TiSR.count_nodes(node) == max_nodes_before
 
         new_node = TiSR.addterm_mutation!(node, ops, subtree_depth=4)
 
@@ -47,7 +47,7 @@
         Ref(ops)
     )
 
-    @assert TiSR.get_max_nodes_per_term.(nodes, Ref(ops)) == [6, 7, 5, 7, 7, 4, 4, 3, 6 ,5]
+    @test TiSR.get_max_nodes_per_term.(nodes, Ref(ops)) == [6, 7, 5, 7, 7, 4, 4, 3, 6 ,5]
 end
 
 # make some preparations # ------------------------------------------------------------------------
@@ -67,7 +67,7 @@ end
         max_nodes_before = TiSR.get_max_nodes_per_term(node, ops)
         TiSR.trim_to_max_nodes_per_term!(node, ops)
         max_nodes_after = TiSR.get_max_nodes_per_term(node, ops)
-        @assert max_nodes_after <= 5
+        @test max_nodes_after <= 5
     end
 end
 
@@ -80,7 +80,7 @@ end
 
     for _ in 1:1000
         node = TiSR.grow_equation(rand(4:7), ops, method=:full)
-        @assert TiSR.check_legal_function_nesting(node, ops)
+        @test TiSR.check_legal_function_nesting(node, ops)
     end
 
     # check if any invalid, inspite of illegal operation not present in function set
@@ -97,7 +97,7 @@ end
 
     for _ in 1:1000
         node = TiSR.grow_equation(rand(4:7), ops, method=:full)
-        @assert TiSR.check_legal_function_nesting(node, ops)
+        @test TiSR.check_legal_function_nesting(node, ops)
     end
 
     # make some manual checks with examples
@@ -127,5 +127,5 @@ end
         Ref(ops)
     )
 
-    @assert all([TiSR.check_legal_function_nesting(n, ops) for n in nodes] .== [0, 1, 1, 0, 0, 1, 1, 1, 1, 1])
+    @test all([TiSR.check_legal_function_nesting(n, ops) for n in nodes] .== [0, 1, 1, 0, 0, 1, 1, 1, 1, 1])
 end                                                                       

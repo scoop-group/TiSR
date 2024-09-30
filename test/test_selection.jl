@@ -1,12 +1,10 @@
-# TODO: redo all tests for restructured non_dominated_sort parameters
-# TODO: test niching
 
 @testset "non_dominated_sort" begin
     x = 1.0:10.0
     x_data = repeat(x, 10)                                                                           # generate shifted 1/x points
     y_data = reduce(vcat, [1 ./ x .+ offs for offs in 1:10])
-    data = [x_data, y_data]
-    @assert length(data) == 2 && length.(data) == [100, 100]                                         # make sure the data has the right dimensions
+    data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
+    @assert length(data) == 100 && unique(length.(data)) == [2]
 
     inds = TiSR.non_dominated_sort(data; n_select=100, first_front=false)
     @test length(unique(inds)) == 100
@@ -31,8 +29,8 @@
     # ----------------------------------------------------------------------------------------------
     x_data = repeat(1.0:10., 10)                                                                      # generate a grid of points
     y_data = sort(x_data)
-    data = [x_data, y_data]
-    @assert length(data) == 2 && length.(data) == [100, 100]
+    data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
+    @assert length(data) == 100 && unique(length.(data)) == [2]
 
     inds = TiSR.non_dominated_sort(data; n_select=100, first_front=true)
     @test length(unique(inds)) == 1                                                                  # 1 point dominates all
@@ -44,7 +42,7 @@
 
     manh_dist(p) = reduce(+, p)
 
-    s_data = [[data[1][i], data[2][i]] for i in inds]
+    s_data = data[inds]
     @test issorted([manh_dist(p) for p in s_data])                                                   # the manhattan distance should increase in for each front, as they are diagonal lines
     @test all(i in eachindex(x_data) for i in inds)
 
@@ -53,7 +51,7 @@
     @test length(unique(inds)) == num
     @test all(i in eachindex(x_data) for i in inds)
 
-    s_data = [[data[1][i], data[2][i]] for i in inds]
+    s_data = data[inds]
     @test issorted([manh_dist(p) for p in s_data])
     @test all(i in eachindex(x_data) for i in inds)
 
@@ -61,8 +59,8 @@
     x_data = repeat(1.0:10., 10)                                                                      # generate a grid of points
     y_data = sort(x_data)
     z_data = ones(size(x_data))
-    data = [x_data, y_data, z_data]
-    @assert length(data) == 3 && length.(data) == [100, 100, 100]
+    data = [[xx, yy, zz] for (xx, yy, zz) in zip(x_data, y_data, z_data)]
+    @assert length(data) == 100 && unique(length.(data)) == [3]
 
     @test length(TiSR.non_dominated_sort(data; n_select=25, first_front=false)) == 25                      # this tests whether the function can handle if one variable is the same for all points -> there was a division by 0 error in the crowing distance before
 end
@@ -150,5 +148,74 @@ end
 
         @test count(x -> x < 1, selection_better) > 90
     end
+end
+
+@testset "niching tests" begin
+    x = 11.0:20.0
+    x_data = repeat(x, 10)                                                                           # generate shifted 1/x points
+    y_data = reduce(vcat, [1 ./ x .+ offs for offs in 11:20])
+    data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
+    @assert length(data) == 100 && unique(length.(data)) == [2]
+
+    inds = TiSR.non_dominated_sort(data; n_select=100, first_front=false)
+    @test length(unique(inds)) == 100
+    @test issorted(inds)                                                                             # shold not have changed the ind positions, as 10 fronts with 10 points each are created with increasing offset -> a little quick and dirty, as within each set of 10 points, they have no particular order
+    @test all(i in eachindex(x_data) for i in inds)                                                  # return only valid inds
+
+    # add some slighty shifted data -> should be removed by roundeding and niching 
+    for i in eachindex(data)
+        push!(data, data[i] .* 1.01)
+    end
+
+    # round to 2 significant digits
+    for i in eachindex(data)
+        data[i] = round.(data[i], sigdigits=2)
+    end
+
+    sort!(data)
+
+    @assert length(unique(data)) == 100
+    inds = TiSR.non_dominated_sort(data; n_select=200, first_front=false)
+    @test length(unique(inds)) == 100 # only 100, because only 100 are unique
+
+    # now acutally the niching # -------------------------------------------------------------------
+    x = 11.0:20.0
+    x_data = repeat(x, 1)                                                                           # generate shifted 1/x points
+    y_data = reduce(vcat, [100.0./x .+ offs for offs in 0:0])
+    data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
+    @assert length(data) == 10 && unique(length.(data)) == [2]
+
+    # add data, which is slightly better in one, but significantly worse in the other objective
+    for i in 1:5
+        data_ = copy(data[1])
+        data_ .*= [0.999, 2.0].^i
+        push!(data, data_)
+    end
+
+    @assert length(data) == 15
+    @assert length(unique(data)) == 15
+
+    avg = 0.0
+    for i in 1:1000
+        inds = TiSR.non_dominated_sort(data; n_select=10, first_front=false)
+        avg += (count(>(10), inds) - avg) / i
+    end
+    @test isapprox(avg, 3.333, rtol=0.1) # is slightly higher than 5/15, because the 5 are less crowded
+
+    # round to 2 significant digits
+    for i in eachindex(data)
+        data[i] = round.(data[i], sigdigits=2)
+    end
+
+    @assert length(unique(data)) == 15
+
+    inds = TiSR.non_dominated_sort(data; n_select=10, first_front=false)
+
+    avg = 0.0
+    for i in 1:1000
+        inds = TiSR.non_dominated_sort(data; n_select=10, first_front=false)
+        avg += (count(>(10), inds) - avg) / i
+    end
+    @test isapprox(avg, 0.0, rtol=0.1)
 end
 
