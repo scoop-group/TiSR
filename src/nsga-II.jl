@@ -227,8 +227,34 @@ function generational_loop(data, ops ;start_pop=Node[])
                 display(cur_prog_dict)
                 println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
             end
+
+            if ops.general.plot_hall_of_fame
+                compl          = [indiv.compl          for indiv in hall_of_fame]
+                ms_processed_e = [indiv.ms_processed_e for indiv in hall_of_fame]
+
+                display(scatterplot(
+                    compl,
+                    ms_processed_e,
+                    yscale           = :log10,
+                    title            = "hall of fame",
+                    xlabel           = "complexity",
+                    ylabel           = "log10 of ms_processed_e",
+                    marker           = :circle,
+                    unicode_exponent = false,
+                    xlim             = (0, ops.grammar.max_compl),
+                    ylim             = (
+                        10^(floor(log10(minimum(ms_processed_e)))),
+                        10^(ceil(log10(maximum(ms_processed_e))))
+                    ),
+                ))
+            end
         end
 
+        
+
+# ==================================================================================================
+# termination criteria
+# ==================================================================================================
         if gen >= ops.general.n_gens
             stop_msg = "reached maximum number of generations"
             break

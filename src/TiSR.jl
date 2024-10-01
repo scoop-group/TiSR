@@ -31,6 +31,7 @@ using LinearAlgebra
 
 using DataFrames
 using XLSX
+using UnicodePlots
 
 include("options.jl")
 include("node_n_eval_n_utilities.jl")

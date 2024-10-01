@@ -137,6 +137,7 @@ function general_params(;
     adaptive_compl_increment      = Inf,
     callback                      = (hall_of_fame, population, ops) -> false,
     print_progress                = true,
+    plot_hall_of_fame             = true,
 )
     @assert num_islands > 0              "num_islands should be at least 1                "
     @assert migration_interval > 0       "migration_interval should be at least 1         "
@@ -170,6 +171,7 @@ function general_params(;
         adaptive_compl_increment      = adaptive_compl_increment,
         callback                      = callback,
         print_progress                = print_progress,
+        plot_hall_of_fame             = plot_hall_of_fame,
     )
 end
 

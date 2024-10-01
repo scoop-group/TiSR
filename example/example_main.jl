@@ -19,23 +19,23 @@ using TiSR
 # set variables for algorithm
 # data_matr = Matrix(df)
 
-# # or with synthetic data # -------------------------------------------------------------------------
-# # -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2) 
-# data_matr = rand(100, 3)
-# data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
+# or with synthetic data # -------------------------------------------------------------------------
+# -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2) 
+data_matr = rand(100, 3)
+data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
 
-# Netwons gravity 
-data_matr = rand(1000, 9)
-data_matr[:, 1:2] .*= 1000
-data_matr[:, 3:8] .-= 0.5 
-data_matr[:, 3:8] .*= 100
-data_matr[:, end] .= @. (
-                        1e-5 * data_matr[:, 1] * data_matr[:, 2] / ( 
-                          (data_matr[:, 3] - data_matr[:, 4])^2 
-                        + (data_matr[:, 5] - data_matr[:, 6])^2 
-                        + (data_matr[:, 7] - data_matr[:, 8])^2
-                       )^0.5
-                     )
+# # Netwons gravity 
+# data_matr = rand(1000, 9)
+# data_matr[:, 1:2] .*= 1000
+# data_matr[:, 3:8] .-= 0.5 
+# data_matr[:, 3:8] .*= 100
+# data_matr[:, end] .= @. (
+#                         1e-5 * data_matr[:, 1] * data_matr[:, 2] / ( 
+#                           (data_matr[:, 3] - data_matr[:, 4])^2 
+#                         + (data_matr[:, 5] - data_matr[:, 6])^2 
+#                         + (data_matr[:, 7] - data_matr[:, 8])^2
+#                        )^0.5
+#                      )
 
 # prepare remainder for settings # -----------------------------------------------------------------
 fit_weights = 1 ./ data_matr[:, end] # weights to minimize relative deviation
