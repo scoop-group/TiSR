@@ -295,6 +295,24 @@ function generational_loop(data, ops ;start_pop=Node[])
     return hall_of_fame, population, prog_dict, stop_msg
 end
 
+"""
+    listen_for_input(input_channel::Channel)
+
+Listens for user input in a blocking fashion and sends the input to the given channel. 
+This function runs asynchronously and continuously reads from `stdin`. If the input 
+"qq" is detected, it will send the input to the channel and terminate the listener.
+
+### Arguments
+- `input_channel::Channel`: A communication channel where user input is sent.
+
+### Behavior
+- The function reads input from the terminal using `readline(stdin)`.
+- The input is passed to the `input_channel` for further processing in a separate task.
+- If the user types "qq", the function stops, indicating the program should terminate.
+
+### Source
+Generated using OpenAI's ChatGPT. 
+"""
 function listen_for_input(input_channel::Channel)
     while true
         input = readline(stdin)  # Blocking read, but in its own task
