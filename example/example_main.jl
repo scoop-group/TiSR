@@ -111,10 +111,11 @@ ops, data                              = Options(
 # ==================================================================================================
 hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops);
 
-# # hot start with previous population (age information is lost) # -----------------------------------
-# start_pop = vcat(hall_of_fame, population)
-# start_pop = [string(n.node) for n in start_pop]
-# hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops, start_pop = start_pop);
+# hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops, start_pop);
+
+# hot start with previous population # -------------------------------------------------------------
+start_pop = vcat(hall_of_fame, population)
+hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops, start_pop);
 
 # Inspect the results # ---------------------------------------------------------------------------
 col = :mare

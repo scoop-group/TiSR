@@ -1,8 +1,41 @@
 
-function generational_loop(data, ops; start_pop=String[])
+function generational_loop(data, ops)
+    population = [Individual[] for _ in 1:ops.general.num_islands]
+    new_nodes  = [Node[] for _ in 1:ops.general.num_islands]
+    return generational_loop(data, ops, population, new_nodes)
+end
+
+function generational_loop(data, ops, start_pop::Vector{Individual})
+    population = [
+        start_pop[isle:ops.general.num_islands:end]
+        for isle in 1:ops.general.num_islands
+    ]
+    new_nodes  = [Node[] for _ in 1:ops.general.num_islands]
+    return generational_loop(data, ops, population, new_nodes)
+end
+
+function generational_loop(data, ops, start_pop::Vector{String})
+    population = [Individual[] for _ in 1:ops.general.num_islands]
+    start_pop  = Node[string_to_node(eq, ops) for eq in start_pop]
+    new_nodes  = [
+        start_pop[isle:ops.general.num_islands:end]
+        for isle in 1:ops.general.num_islands
+    ]
+    return generational_loop(data, ops, population, new_nodes)
+end
+
+function generational_loop(
+    data,
+    ops,
+    population::Vector{Vector{Individual}},
+    new_nodes::Vector{Vector{Node}}
+)
+
+    children     = [Individual[] for _ in 1:ops.general.num_islands]
+    hall_of_fame = Individual[]
 
 # ==================================================================================================
-# user interrupt
+# prepar user interrupt
 # ==================================================================================================
     # Create a channel for communication between tasks
     input_channel = Channel{String}(1)
@@ -15,8 +48,6 @@ function generational_loop(data, ops; start_pop=String[])
 # ==================================================================================================
     @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
 
-    data_type = eltype(data[1])
-
     # create dict for the simulation progression # -------------------------------------------------
     keep_track_of = [
         "time", "generation", "mean age hall_of_fame",
@@ -25,28 +56,14 @@ function generational_loop(data, ops; start_pop=String[])
         "min max_are", "min ms_processed_e"
     ]
 
-    prog_dict = OrderedDict(key => data_type[] for key in keep_track_of)
-    cur_prog_dict = OrderedDict(key => convert(data_type, 0.0) for key in keep_track_of)
-
-    # initialize data structures # -----------------------------------------------------------------
-    population =   [Individual[] for _ in 1:ops.general.num_islands]
-    children =     [Individual[] for _ in 1:ops.general.num_islands]
-    hall_of_fame = Individual[]
-
-    # convert start pop to Nodes # -----------------------------------------------------------------
-    start_pop = Node[string_to_node(eq, ops) for eq in start_pop]
-
-    # generate initial random children # -----------------------------------------------------------
-    new_nodes = [
-        start_pop[isle:ops.general.num_islands:end]
-        for isle in 1:ops.general.num_islands
-    ]
+    prog_dict     = OrderedDict(key => eltype(data[1])[]             for key in keep_track_of)
+    cur_prog_dict = OrderedDict(key => convert(eltype(data[1]), 0.0) for key in keep_track_of)
 
 # ==================================================================================================
 # start generational loop
 # ==================================================================================================
-    t_start = time()
-    gen = 0.0
+    t_start  = time()
+    gen      = 0.0
     stop_msg = ""
 
     while true
