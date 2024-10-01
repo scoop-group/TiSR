@@ -27,6 +27,11 @@ function fit_n_eval!(indiv, data, ops)
     node = indiv.node
     list_of_param = list_of_param_nodes(node)
 
+    if length(list_of_param) > length(data[1])
+        indiv.valid = false
+        return
+    end
+
     if ops.fitting.max_iter > 0 && length(list_of_param) > 0
         residual, valid = residual_after_fitting(node, data, ops, list_of_param)
 
