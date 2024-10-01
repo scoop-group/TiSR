@@ -1,11 +1,20 @@
 
 function generational_loop(data, ops ;start_pop=Node[])
 
-    @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
+# ==================================================================================================
+# user interrupt
+# ==================================================================================================
+    # Create a channel for communication between tasks
+    input_channel = Channel{String}(1)
+
+    # Start listening for user input asynchronously
+    @async listen_for_input(input_channel)
 
 # ==================================================================================================
 # some preparation
 # ==================================================================================================
+    @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
+
     data_type = eltype(data[1])
 
     # create dict for the simulation progression # -------------------------------------------------
@@ -229,6 +238,14 @@ function generational_loop(data, ops ;start_pop=Node[])
         elseif ops.general.callback(hall_of_fame, population, ops)
             stop_msg = "callback returned true"
             break
+        elseif isready(input_channel)
+            user_input = take!(input_channel)  # Get input from the channel
+            if user_input == "qq"
+                println("Detected 'qq'. Exiting...")
+                break
+            elseif length(user_input) > 0
+                println("type qq and enter to finish the equation search early")
+            end
         end
     end
 
@@ -278,4 +295,12 @@ function generational_loop(data, ops ;start_pop=Node[])
     return hall_of_fame, population, prog_dict, stop_msg
 end
 
-
+function listen_for_input(input_channel::Channel)
+    while true
+        input = readline(stdin)  # Blocking read, but in its own task
+        put!(input_channel, input)  # Send the input to the channel
+        if input == "qq"
+            break  # Exit the listener task if 'qq' is entered
+        end
+    end
+end
