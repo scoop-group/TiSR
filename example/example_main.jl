@@ -3,7 +3,15 @@
 # load TiSR module
 # ==================================================================================================
 
+
+
+# import Pkg
+# Pkg.develop(path="")
+# Pkg.resolve()
+# Pkg.instantiate()
+
 using TiSR
+
 
 # ==================================================================================================
 # preparation
@@ -44,9 +52,6 @@ parts = [0.8, 0.2]
 # ==================================================================================================
 # options -> specify some custom settings, where the default setting is unsatisfactory
 # ==================================================================================================
-
-# TODO: improve asserts and testing of illegal_dict
-
 pow_abs(x, y) = abs(x)^y
 pow2(x) = x^2
 
@@ -96,56 +101,44 @@ ops, data                              = Options(
 # ==================================================================================================
 # -> variables must be v1, v2, ... and functions must be available in the function set
 
-# using SymbolicUtils
-#
-# @syms v1 v2 v3 v4 # ....
-#
 # start_pop = [
-#     5.0 * v1 + v2^3,
-#     5.0 * log(v1) + v2^3,
+#     "5.0 * v1 + v2^3"
+#     "5.0 * log(v1) + v2^3"
 # ]
-#
-# start_pop = Node[string_to_node(eq, ops) for eq in start_pop]
 
 # ==================================================================================================
 # main generational loop
 # ==================================================================================================
 hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops);
 
-# hall_of_fame, population, prog_dict = generational_loop(data, ops, start_pop=start_pop);
-
-# hot start with previous population (age information is lost) # -----------------------------------
-# start_pop = vcat(hall_of_fame["node"], population["node"])
-# start_pop = vcat(hall_of_fame["eqs_trees"], population["eqs_trees"], start_pop)
-# hall_of_fame, population, prog_dict = generational_loop(data, ops, start_pop = start_pop);
+# # hot start with previous population (age information is lost) # -----------------------------------
+# start_pop = vcat(hall_of_fame, population)
+# start_pop = [string(n.node) for n in start_pop]
+# hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops, start_pop = start_pop);
 
 # Inspect the results # ---------------------------------------------------------------------------
-
-col = "mare"
-perm = sortperm(hall_of_fame[col])
-hall_of_fame[col][perm]
-hall_of_fame["mare"][perm]
-hall_of_fame["node"][perm]#[1:5]
-
-
-for n in sort(string.(population["node"]), by=length)
-    println(n)
-end
-
+col = :mare
+perm = sortperm(hall_of_fame, by=x -> getfield(x, col))
+hall_of_fame = hall_of_fame[perm]
+getfield.(hall_of_fame, :node)
+getfield.(hall_of_fame, :mare)
 
 # show the Pareto front # --------------------------------------------------------------------------
-
 using UnicodePlots
 
 scatterplot(
-    hall_of_fame["compl"],
-    hall_of_fame["mare"],
+    getfield.(hall_of_fame, :compl),
+    getfield.(hall_of_fame, :mare),
     xlabel="complexity",
     ylabel="mean rel. dev."
 )
 
 # ==================================================================================================
-# write pareto optimal ones to excel
+# write the results to a fwf or a excel
 # ==================================================================================================
-write_to_excel(hall_of_fame, population, prog_dict, ops)
+save_to_fwf(hall_of_fame, ops)
+
+# save_to_excel(hall_of_fame, population, prog_dict, ops)
+
+
 

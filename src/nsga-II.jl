@@ -1,5 +1,5 @@
 
-function generational_loop(data, ops ;start_pop=Node[])
+function generational_loop(data, ops; start_pop=String[])
 
 # ==================================================================================================
 # user interrupt
@@ -32,6 +32,9 @@ function generational_loop(data, ops ;start_pop=Node[])
     population =   [Individual[] for _ in 1:ops.general.num_islands]
     children =     [Individual[] for _ in 1:ops.general.num_islands]
     hall_of_fame = Individual[]
+
+    # convert start pop to Nodes # -----------------------------------------------------------------
+    start_pop = Node[string_to_node(eq, ops) for eq in start_pop]
 
     # generate initial random children # -----------------------------------------------------------
     new_nodes = [
@@ -268,6 +271,7 @@ function generational_loop(data, ops ;start_pop=Node[])
             user_input = take!(input_channel)  # Get input from the channel
             if user_input == "qq"
                 println("Detected 'qq'. Exiting...")
+                stop_msg = "user interrupt"
                 break
             elseif length(user_input) > 0
                 println("type qq and enter to finish the equation search early")
@@ -309,14 +313,6 @@ function generational_loop(data, ops ;start_pop=Node[])
 # Post-pare for return
 # ==================================================================================================
     population = reduce(vcat, population)
-
-    population = Dict(string(f) => getfield.(population, f)
-        for f in fieldnames(typeof(population[1]))
-    )
-
-    hall_of_fame = Dict(string(f) => getfield.(hall_of_fame, f)
-        for f in fieldnames(typeof(hall_of_fame[1]))
-    )
 
     return hall_of_fame, population, prog_dict, stop_msg
 end

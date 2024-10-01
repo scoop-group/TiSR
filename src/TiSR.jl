@@ -4,17 +4,14 @@ module TiSR
 export Options,
     Node,
     generational_loop,
-    write_to_excel,
-    string_to_node,
+    save_to_csv,
+    save_to_fwf,
+    save_to_excel,
     general_params,
     selection_params,
     fitting_params,
     mutation_params,
-    grammar_params,
-    residual_after_fitting,
-    list_of_param_nodes,
-    node_to_symbolic
-
+    grammar_params
 
 using Statistics
 using Random
@@ -43,7 +40,7 @@ include("string_to_node.jl")
 include("specific_measures.jl")
 include("nsga-II.jl")
 include("individual.jl")
-include("write_to_excel.jl")
+include("save_results.jl")
 include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
 include("misc_helpers.jl")
 include("grammar.jl")
