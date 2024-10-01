@@ -149,6 +149,10 @@ function general_params(;
     always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4   || @warn "adaptive_compl_increment should be >= 5                  "
 
+    if multithreadding
+        Threads.nthreads() > 1 || @warn "To acually utilize multithreadding, Julia must be started with the desired number of threads, i.e., `julia -t 4`" 
+    end
+
     # resulting parameters
     pop_per_isle = ceil(Int64, pop_size / num_islands)
 
@@ -236,11 +240,23 @@ function grammar_params(;
     max_nodes_per_term = Inf,
     init_tree_depth    = 4,
 )
-    # TODO: check typeof illegal_dict if not empty
-
     @assert max_compl > 3          "max_compl must be larger than 3"
     @assert init_tree_depth > 2    "init_tree_depth should be 3 or higher"
     @assert max_nodes_per_term > 1 "max_nodes_per_term must be larger than 1"
+
+    if !isempty(illegal_dict)
+        @assert illegal_dict isa Dict                  "illegal_dict is not formatted correctly"
+        for (k, v) in illegal_dict
+            @assert k isa String                       "illegal_dict is not formatted correctly"
+            @assert haskey(v, :lef) && haskey(v, :rig) "illegal_dict is not formatted correctly"
+            for v_ in v.lef
+                @assert v_ isa String                  "illegal_dict is not formatted correctly"
+            end
+            for v_ in v.rig
+                @assert v_ isa String                  "illegal_dict is not formatted correctly"
+            end
+        end
+    end
 
     max_compl > 100         && @warn "a high max_compl may lead to high calculation times"
     init_tree_depth > 6     && @warn "a high init_tree_depth may lead to high calculation times"

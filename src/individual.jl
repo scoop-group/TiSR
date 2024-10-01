@@ -42,7 +42,7 @@ mutable struct Individual   #{T}
 
         indiv = new(node)
 
-        if !isempty(ops.grammar.illegal_dict) && !check_legal_function_nesting(node, ops)
+        if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(node, ops)
             indiv.valid = false
             return indiv
         end

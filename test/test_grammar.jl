@@ -71,8 +71,7 @@ end
     end
 end
 
-@testset "check_legal_function_nesting" begin
-
+@testset "is_legal_nesting" begin
 
     # check if any invalid, inspite of empty illegal_dict
     data = rand(100, 10)
@@ -80,7 +79,7 @@ end
 
     for _ in 1:1000
         node = TiSR.grow_equation(rand(4:7), ops, method=:full)
-        @test TiSR.check_legal_function_nesting(node, ops)
+        @test TiSR.is_legal_nesting(node, ops)
     end
 
     # check if any invalid, inspite of illegal operation not present in function set
@@ -90,14 +89,14 @@ end
         p_binops=(1.0, 1.0, 1.0, 1.0),
         grammar=TiSR.grammar_params(;
             illegal_dict = Dict(
-                :^ => (lef = (), rig = (+, -, *, /, sin, cos)),
+                "^" => (lef = (), rig = ("+", "-", "*", "/", "sin", "cos")),
             )
         )
     )
 
     for _ in 1:1000
         node = TiSR.grow_equation(rand(4:7), ops, method=:full)
-        @test TiSR.check_legal_function_nesting(node, ops)
+        @test TiSR.is_legal_nesting(node, ops)
     end
 
     # make some manual checks with examples
@@ -105,8 +104,8 @@ end
         data,
         grammar=TiSR.grammar_params(;
             illegal_dict = Dict(
-                :^ => (lef = (), rig = (+, -, *, /, sin, cos)),
-                :/ => (lef = (), rig = (+, -)),
+                "^" => (lef = (), rig = ("+", "-", "*", "/", "sin", "cos")),
+                "/" => (lef = (), rig = ("+", "-")),
             )
         )
     )
@@ -127,5 +126,101 @@ end
         Ref(ops)
     )
 
-    @test all([TiSR.check_legal_function_nesting(n, ops) for n in nodes] .== [0, 1, 1, 0, 0, 1, 1, 1, 1, 1])
+    @test all([TiSR.is_legal_nesting(n, ops) for n in nodes] .== [0, 1, 1, 0, 0, 1, 1, 1, 1, 1])
+
+    # some more manual tests
+    nodes = TiSR.string_to_node.(
+        [
+          "exp(sin(0.533))",                                                                                 
+          "abs(abs(abs(v6)))",                                                                               
+          "abs(cos(exp(v6)))",                                                                               
+          "abs(log(exp(v4)))",                                                                               
+          "log(exp(abs(v1)))",                                                                               
+          "abs(sin((v1 ^ v2)))",                                                                             
+          "cos(abs((v4 / v2)))",                                                                             
+          "log(abs((v8 * v4)))",                                                                             
+          "(v8 - sin((v2 - v1)))",                                                                           
+           "sin(log(log(0.0358)))",                                                                          
+           "abs(log(exp(abs(v7))))",                                                                         
+           "exp(log( (cos(v9) * v9)))",                                                                      
+           "log((exp(v3) - cos(v1)))",                                                                       
+           "sin(cos(cos((v6 * v9))))",                                                                       
+           "abs(((v9 - v3) ^ sin(v3)))",                                                                     
+           "abs(abs(abs((v8 + 0.794 ))))",                                                                   
+           "sin(((v9 - v3) + (v2 - v4)))",                                                                   
+           "(cos(cos(v9)) - cos(sin(v7)))",                                                                  
+           "cos(abs(abs((0.13 - 0.658))))",                                                                  
+           "sin((log(v8) - abs(exp( v7))))",                                                                 
+           "log(sin((cos(v6) ^ (v1 ^ v5))))",                                                                
+           "(log((v3 * v2)) + abs((0.318 * v1)))",                                                           
+           "exp((abs(v9) / (v5 + (0.493 - v8))))",                                                           
+           "log( (exp(exp(v3)) ^ log((v8 * v7))))",                                                          
+           "(log(sin(exp(v4))) / cos(abs(exp(v4))))",                                                        
+           "(exp(((0.982 * v5) * (v7 / 0.137))) - v2)",                                                      
+           "sin(( cos((v9 * v4)) / abs((0.221 / v3))))",                                                     
+           "log(((sin(v5) ^ v1) + (abs(v2) + (v4 * v8))))",                                                  
+           "(log(sin(0.445)) / ((v8 - v1) / (v2 - 0.932)))",                                                 
+           "sin((log(log(v5)) + ((v3 - 0.829) + log(v4))))",                                                 
+           "log((sin(cos(0.143)) * (abs(0.832) + log(v5))))",                                                
+           "(cos(((v4 / v6) * v1)) ^ log(exp((v4 + 0.502))))",                                               
+           "sin(((abs(0.473) - (v9 / 0.265)) * log(abs(v6))))",                                              
+           "(((v2 * v1) * sin(0.429)) - ((v5 + v4) + ( v7 / v7)))",                                          
+           "(sin(((v5 * v6) ^ sin(v5))) * cos((sin(0.0645) + v7)))",                                         
+           "((cos(0.0623) / (v1 - v3)) * ((v7 * 0.177) * (v2 ^ v1)))" ,                                      
+           "((exp(log(0.67)) / cos(abs(v3))) - abs((log(v2) * exp(v7))))",                                   
+           "(exp((abs(0.562) ^ log(v5))) / cos(((v4 - v5) / (v7 ^ v4))))",                                   
+           "((((v8 - v1) / (v4 ^ v2)) + abs(log(v9))) - cos(sin(abs(v2))))",                                 
+           "((cos(exp(v7)) - (log(v5) + (0.618 * v8))) * cos(sin(exp(v8)) ))",                               
+           "(exp((cos(v9) ^ cos(v3))) ^ log(((0.119 * 0.404) + (v1 * v8))))",                                
+           "((log(log(v6)) / ((v2 * v7) / sin(v5))) + sin((sin(v6) + abs(v5))))",                            
+           "(abs(cos(log(v7))) / (exp((v3 * v7)) / ((v1 * 0.124) ^ (v3 + v3))))",                            
+           "((log((v5 - v7)) * (cos(v6) ^ cos(v6))) * ( log(v5) * (v1 / (v3 * v9))))",                       
+           "(log((cos(v2) + (v6 ^ v4))) * ((cos(v2) / (v6 / v5)) / sin((v1 * v4))))",                        
+           "(((sin(0.0138) + v2) - (abs(0.347) - abs(v9))) * exp(log((v8 - 0.594))))",                       
+           "(cos((v3 + (v4 / v1))) ^ ((log(v8) + (v2 / v3)) / ((v5 - v7) ^ exp(v6))))",                      
+           "((((v1 * v6) / cos(0.602)) + (cos(0.837) + sin(v2))) - log(log((v7 + v2))))",                    
+           "(((cos(v3) - log(0.779)) ^ (sin(0.389) / v1)) * (abs((v4 / 0.0874)) * abs((0.88 / v2))))",       
+           "((cos(log(v2)) ^ ((v1 / 0.297) / log(v8))) / (((v6 ^ v4) + (v5 * 0.131)) + log((v1 /v1))))"      
+        ],
+        Ref(ops)
+    )
+
+    # make some manual checks with examples
+    ops, data_vect = Options(
+        data,
+        grammar=TiSR.grammar_params(;
+            illegal_dict = Dict(
+                "cos" => (lef = ("sin", "cos"), rig = ())
+            )
+        )
+    )
+    
+    @test findall([!TiSR.is_legal_nesting(n, ops) for n in nodes]) == [14, 18, 35, 39, 40]
+
+    ops, data_vect = Options(
+        data,
+        grammar=TiSR.grammar_params(;
+            illegal_dict = Dict(
+                "cos" => (lef = ("sin", "cos"), rig = ()),
+                "sin" => (lef = ("sin", "cos", "PARAM"), rig = ())
+            )
+        )
+    )
+    
+    @test findall([!TiSR.is_legal_nesting(n, ops) for n in nodes]) == [1, 10, 14, 18, 21, 27, 29, 30, 31, 33, 34, 35, 39, 40, 42, 46, 49]
+
+    ops, data_vect = Options(
+        data,
+        grammar=TiSR.grammar_params(;
+            illegal_dict = Dict(
+                "cos" => (lef = ("sin", "cos"), rig = ()),
+                "sin" => (lef = ("sin", "cos", "PARAM"), rig = ()),
+                "^" => (lef = (), rig = ("+", "-", "*", "/", "sin", "cos", "VAR")),
+            )
+        )
+    )
+
+    @test findall([!TiSR.is_legal_nesting(n, ops) for n in nodes]) == [1, 6, 10, 14, 15, 18, 21, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 50]
+
 end                                                                       
+

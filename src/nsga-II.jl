@@ -1,7 +1,7 @@
 
 function generational_loop(data, ops ;start_pop=Node[])
 
-    @assert length(data) == ops.data_descript.n_vars "please use the data variable which was returned by the Options constructor."
+    @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
 
 # ==================================================================================================
 # some preparation

@@ -2,58 +2,49 @@
 """ Check for illegal nestings in existing nodes. For it, ops.illegal_dict needs 
     to be specified like thus:
 
-    ops.grammar.illegal_dict = Dict(
-        :^ => (lef = (), rig = (+, -, *, /, sin, cos)),
-        :/ => (lef = (), rig = (*, /)),
+    illegal_dict = Dict(
+        "^" =>   (lef = (),             rig = ("+", "-", "*", "/", "VAR", )),
+        "/" =>   (lef = (),             rig = ("-", "+")),
+        "log" => (lef = ("log", "exp"), rig = ()),
+        "exp" => (lef = ("exp", "log"), rig = ()),
+        "cos" => (lef = ("cos",),       rig = ())
     )
 """
-function check_legal_function_nesting(node, ops)
-    isempty(ops.grammar.illegal_dict) && return true
+is_legal_nesting(node, ops)::Bool = _is_legal_nesting(node, ops, String[])::Bool
 
-    unaweights = Float64[ops.p_unaops...]
-    binweights = Float64[ops.p_binops...]
-
-    return check_legal_function_nesting_(node, ops, unaweights, binweights)
-end
-
-function check_legal_function_nesting_(node, ops, unaweights, binweights)
+function _is_legal_nesting(node, ops, illegals)::Bool
 
     if node.ari == 2
-        iszero(binweights[node.ind]) && return false
+        cur_fun = string(ops.binops[node.ind]) # TODO: maybe avoid conversion by adding str_binops to Options
+        cur_fun in illegals && return false
 
-        cur_fun = Symbol(ops.binops[node.ind])
         ill_nexts = get(ops.grammar.illegal_dict, cur_fun, (lef = (), rig = ()))
+        illegals_rig = copy(illegals)
+        append!(illegals, ill_nexts.lef)
 
-        # left side
-        ill_nexts_lef = ill_nexts.lef
+        if !_is_legal_nesting(node.lef, ops, illegals)
+            return false
+        end
 
-        unaweights_lef = copy(unaweights)
-        binweights_lef = copy(binweights)
+        append!(illegals_rig, ill_nexts.rig)
 
-        adjust_ops_weights!(unaweights_lef, binweights_lef, ill_nexts_lef, ops)
-        check_legal_function_nesting_(node.lef, ops, unaweights_lef, binweights_lef) || return false
-
-        # right side
-        ill_nexts_rig = ill_nexts.rig
-
-        unaweights_rig = copy(unaweights)
-        binweights_rig = copy(binweights)
-
-        adjust_ops_weights!(unaweights_rig, binweights_rig, ill_nexts_rig, ops)
-        return check_legal_function_nesting_(node.rig, ops, unaweights_rig, binweights_rig)
+        return _is_legal_nesting(node.rig, ops, illegals_rig)
 
     elseif node.ari == 1
-        iszero(unaweights[node.ind]) && return false
+        cur_fun = string(ops.unaops[node.ind]) # TODO: maybe avoid conversion by adding str_unaops to Options
+        cur_fun in illegals && return false
 
-        cur_fun = Symbol(ops.unaops[node.ind])
-        ill_nexts = get(ops.grammar.illegal_dict, cur_fun, (lef = (),))
+        ill_nexts = get(ops.grammar.illegal_dict, cur_fun, (lef = (), rig = ()))
+        append!(illegals, ill_nexts.lef)
 
-        unaweights_lef = copy(unaweights)
-        binweights_lef = copy(binweights)
+        return _is_legal_nesting(node.lef, ops, illegals)
 
-        adjust_ops_weights!(unaweights_lef, binweights_lef, ill_nexts.lef, ops)
+    elseif node.ari == 0
+        return !("VAR" in illegals)
 
-        return check_legal_function_nesting_(node.lef, ops, unaweights_lef, binweights_lef)
+    elseif node.ari == -1
+        return !("PARAM" in illegals)
+
     end
     return true
 end
