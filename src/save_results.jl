@@ -1,16 +1,4 @@
 
-""" Recursive function using multiple dispatch to round numbers in an equation string and return
-    a string. It is used for the equation simplified by SymbolicUtils.
-"""
-round_equation_string(str::String; sigdigits=3) = string(round_equation_string(Meta.parse(str), sigdigits=sigdigits))
-round_equation_string(num::Number; sigdigits=3) = round(num, sigdigits=sigdigits)
-round_equation_string(else_; sigdigits=3) = else_
-
-function round_equation_string(expr::Expr; sigdigits=3)
-    map!(s -> round_equation_string(s, sigdigits=sigdigits), expr.args, expr.args)
-    expr
-end
-
 """ convert vector of individuals to a dictionary.
 """
 function convert_to_dict(individuals::Vector{Individual}, ops; sort_by="mare")

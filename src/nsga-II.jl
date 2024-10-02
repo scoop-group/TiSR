@@ -275,7 +275,6 @@ function generational_loop(
 # population shuffle
 # ==================================================================================================
         if gen % ops.general.population_shuffle_interval == 0
-            split_list(list, n) = length(list) <= n ? [list] : [list[1:n], split_list(list[n+1:end], n)...]
             population = reduce(vcat, population)
             shuffle!(population)
             population = split_list(population, ceil(Int, length(population) / ops.general.num_islands))
