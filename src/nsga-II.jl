@@ -368,4 +368,5 @@ function listen_for_input(input_channel::Channel)
             break  # Exit the listener task if 'qq' is entered
         end
     end
+    close(input_channel)
 end
