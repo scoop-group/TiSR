@@ -239,12 +239,14 @@ end
 function grammar_params(;
     illegal_dict       = Dict(),
     max_compl          = 30,
+    min_compl          = 2,
     max_nodes_per_term = Inf,
     init_tree_depth    = 4,
 )
-    @assert max_compl > 3          "max_compl must be larger than 3"
-    @assert init_tree_depth > 2    "init_tree_depth should be 3 or higher"
-    @assert max_nodes_per_term > 1 "max_nodes_per_term must be larger than 1"
+    @assert max_compl > 3             "max_compl must be larger than 3          "
+    @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
+    @assert init_tree_depth > 2       "init_tree_depth should be 3 or higher    "
+    @assert max_nodes_per_term > 1    "max_nodes_per_term must be larger than 1 "
 
     if !isempty(illegal_dict)
         @assert illegal_dict isa Dict                  "illegal_dict is not formatted correctly"
@@ -267,6 +269,7 @@ function grammar_params(;
         illegal_dict       = illegal_dict,
         init_tree_depth    = init_tree_depth,
         max_compl          = max_compl,
+        min_compl          = min_compl,
         max_nodes_per_term = max_nodes_per_term,
     )
 end

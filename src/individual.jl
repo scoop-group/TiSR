@@ -42,6 +42,11 @@ mutable struct Individual   #{T}
 
         indiv = new(node)
 
+        if count_nodes(node) < ops.grammar.min_compl
+            indiv.valid = false
+            return indiv
+        end
+
         if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(node, ops)
             indiv.valid = false
             return indiv
