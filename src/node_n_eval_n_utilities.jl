@@ -160,17 +160,19 @@ end
 
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
-function Base.deepcopy(node::Node)::Node
+function Base.copy(node::Node)::Node
     if node.ari == -1
         return Node(copy(node.val))
     elseif node.ari == 0
         return Node(copy(node.ind))
     elseif node.ari == 1
-        return Node(copy(node.ind), Base.deepcopy(node.lef))
+        return Node(copy(node.ind), Base.copy(node.lef))
     elseif node.ari == 2
-        return Node(copy(node.ind), Base.deepcopy(node.lef), Base.deepcopy(node.rig))
+        return Node(copy(node.ind), Base.copy(node.lef), Base.copy(node.rig))
     end
 end
+
+Base.deepcopy(node::Node)::Node = Base.copy(node)
 
 """ Sets all fields of node1 to the values of node2. Is useful to exchange a node without losing
     the references pointing to it.

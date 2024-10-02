@@ -13,7 +13,7 @@ ops, data_vect = Options(data)
 
 @testset "residual after fitting" begin  # integration test
 
-    improvements = []
+    improvements = Float64[]
 
     i = 0
     while i < 100
@@ -22,7 +22,7 @@ ops, data_vect = Options(data)
 
         valid || continue
 
-        list_of_param = list_of_param_nodes(node)
+        list_of_param = TiSR.list_of_param_nodes(node)
 
         length(list_of_param) > 0 || continue
 
@@ -32,21 +32,21 @@ ops, data_vect = Options(data)
 
         mse_before = mean(abs2, TiSR.fitting_residual(x0, node, list_of_param, data_vect, eachindex(data_vect[1]), ops)[1])
 
-        isnan(mse_before) && continue
+        isfinite(mse_before) || continue
 
-        residual, valid = residual_after_fitting(node, data_vect, ops, list_of_param)
+        residual, valid = TiSR.residual_after_fitting(node, data_vect, ops, list_of_param)
 
         mse_after = mean(abs2, TiSR.eval_equation(node, data_vect, ops)[1] .- data_vect[end])
 
-        impr = (mse_before - mse_after) / mse_before
+        impr = mse_after / mse_before
 
-        isnan(impr) && continue
+        isfinite(impr) || continue
 
         push!(improvements, impr)
         i += 1
     end
 
-    @test median(imp[1] for imp in improvements) > 0.9
+    @test quantile([imp for imp in improvements], 0.5) < 1e-5
 end
 
 @testset "lasso_regression" begin

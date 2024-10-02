@@ -15,8 +15,8 @@
 
     @test stop_msg == "reached maximum number of generations"
     @test maximum(prog_dict["generation"]) <= 10
-    @test maximum(population["age"]) <= 10
-    @test maximum(hall_of_fame["age"]) <= 10
+    @test maximum(i.age for i in population) <= 10
+    @test maximum(i.age for i in hall_of_fame) <= 10
 
     # test t_lim # ---------------------------------------------------------------------------------
     data = rand(100, 10)
@@ -47,7 +47,6 @@
     hall_of_fame, population, prog_dict, stop_msg = generational_loop(data_vect, ops);
     
     @assert stop_msg == "callback returned true"
-    @assert any(hall_of_fame["compl"] .<= 7 .&& hall_of_fame["mare"] .<= 1e-5)
-
+    @assert any(i.compl <= 7 && i.mare <= 1e-5 for i in hall_of_fame)
 end
 

@@ -133,7 +133,7 @@ function general_params(;
     always_drastic_simplify       = 1e-7,
     remove_doubles_sigdigits      = 3,
     remove_doubles_across_islands = false,
-    multithreading               = false,
+    multithreading                = false,
     adaptive_compl_increment      = Inf,
     callback                      = (hall_of_fame, population, ops) -> false,
     print_progress                = true,

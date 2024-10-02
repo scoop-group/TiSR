@@ -73,21 +73,19 @@ end
 """
 Base.show(io::IO, indiv::Individual) = println(io, "Indiv($(node_to_string(indiv.node, __operators; sigdigits=3)))")
 
-""" Compares two individuals and returns true if they are approx. same.
+""" copies an individual.
 """
-function Base.isapprox(indiv1::Individual, indiv2::Individual; rtol=5)
-    Base.isapprox(indiv1.mae, indiv2.mae, rtol=rtol) && Base.isapprox(indiv1.mse, indiv2.mse, rtol=rtol)
-end
-
 function Base.copy(indiv::Individual)
     new = Individual()
     for field_ in fieldnames(Individual)
         if isdefined(indiv, field_)
-            setfield!(new, field_, getfield(indiv, field_))
+            setfield!(new, field_, copy(getfield(indiv, field_)))
         end
     end
     return new
 end
+
+Base.deepcopy(indiv::Individual)::Individual = Base.copy(indiv)
 
 # ==================================================================================================
 # different remove doubles -> maybe combine somehow with views?
@@ -110,15 +108,6 @@ function remove_doubles!(individs::Vector{Individual}, ops)
 
     _remove_doubles_helper!(indiv_obj_vals, unique_inds)
 
-    i = 1
-    while i < length(indiv_obj_vals)
-        while i < length(indiv_obj_vals) && indiv_obj_vals[i][1:2] == indiv_obj_vals[i+1][1:2]
-            deleteat!(unique_inds, i+1)
-            deleteat!(indiv_obj_vals, i+1)
-        end
-        i += 1
-    end
-
     sort!(unique_inds)
     keepat!(individs, unique_inds)
 end
@@ -134,12 +123,12 @@ function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, op
             round(getfield(indiv, obj), sigdigits=ops.general.remove_doubles_sigdigits)
             for obj in [:mse, :mae, :compl]
         ]
-        for isle in 1:ops.general.num_islands for indiv in individs[isle]
+        for isle in eachindex(individs) for indiv in individs[isle]
     ]
 
     unique_inds = [
         (isle, ind)
-        for isle in 1:ops.general.num_islands for ind in eachindex(individs[isle])
+        for isle in eachindex(individs) for ind in eachindex(individs[isle])
     ]
 
     _remove_doubles_helper!(indiv_obj_vals, unique_inds)
@@ -150,11 +139,11 @@ function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, op
             unique_inds[i][2]
             for i in 1:length(unique_inds)
             if unique_inds[i][1] == isle
-        ] for isle in 1:ops.general.num_islands
+           ] for isle in eachindex(individs)
     ]
 
-    foreach(isle -> sort!(unique_inds[isle]), 1:ops.general.num_islands)
-    foreach(isle -> keepat!(individs[isle], unique_inds[isle]), 1:ops.general.num_islands)
+    foreach(isle -> sort!(unique_inds[isle]), eachindex(individs))
+    foreach(isle -> keepat!(individs[isle], unique_inds[isle]), eachindex(individs))
 end
 
 """ Helper function while for remove_doubles! and remove_doubles_across_islands!, which performs 

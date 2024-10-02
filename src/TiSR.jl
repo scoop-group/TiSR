@@ -16,7 +16,7 @@ export Options,
 using Statistics
 using Random
 using Dates
-import Base: isapprox, show, deepcopy
+import Base: isapprox, show, copy, deepcopy
 
 using ForwardDiff
 using OrderedCollections
