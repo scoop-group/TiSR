@@ -135,7 +135,7 @@ function generational_loop(
 # selection
 # ==================================================================================================
         for isle in 1:ops.general.num_islands
-            isempty(population[isle]) && continue
+            length(population[isle]) > ops.general.pop_per_isle || continue
 
             selection_inds = Int64[]
 
