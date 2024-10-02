@@ -133,7 +133,7 @@ function general_params(;
     always_drastic_simplify       = 1e-7,
     remove_doubles_sigdigits      = 3,
     remove_doubles_across_islands = false,
-    multithreadding               = false,
+    multithreading               = false,
     adaptive_compl_increment      = Inf,
     callback                      = (hall_of_fame, population, ops) -> false,
     print_progress                = true,
@@ -150,8 +150,8 @@ function general_params(;
     always_drastic_simplify < 1e-3 || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4   || @warn "adaptive_compl_increment should be >= 5                  "
 
-    if multithreadding
-        Threads.nthreads() > 1 || @warn "To acually utilize multithreadding, Julia must be started with the desired number of threads, i.e., `julia -t 4`" 
+    if multithreading
+        Threads.nthreads() > 1 || @warn "To acually utilize multithreading, Julia must be started with the desired number of threads, i.e., `julia -t 4`" 
     end
 
     # resulting parameters
@@ -167,7 +167,7 @@ function general_params(;
         remove_doubles_sigdigits      = remove_doubles_sigdigits,
         remove_doubles_across_islands = remove_doubles_across_islands,
         t_lim                         = t_lim,
-        multihreadding                = multithreadding,
+        multithreading                = multithreading,
         adaptive_compl_increment      = adaptive_compl_increment,
         callback                      = callback,
         print_progress                = print_progress,

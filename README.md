@@ -46,7 +46,7 @@ ops, data = Options(
         pow_abs_param   = true,
         remove_doubles_sigdigits = 1e-2,
         t_lim           = 60 * 2.0,                  # will run for 2 minutes
-        multithreadding = true,
+        multithreading = true,
     ),
     fitting=fitting_params(
         early_stop_iter = 5,
@@ -92,7 +92,7 @@ ops, data = Options(
         pow_abs_param                  = false,          # -> allows only parameter terminals as power -> (x - 5)^3 is allowed, but 3^(x - 5) is not.
         remove_doubles_sigdigits       = 2,              # -> filters indivuduals in an island if their rounded MAE and MSE are the same -> 0 is off; 2 ... 5
         remove_doubles_across_islands  = false,          # -> depends on the remove_doubles_sigdigits setting above. Applies it across islands  -> true / false
-        multithreadding                = false           # -> whether to use multithreadding for the most expensive computations. Not always faster  -> depends on how expensive fitting is for the problem at hand.
+        multithreading                = false           # -> whether to use multithreading for the most expensive computations. Not always faster  -> depends on how expensive fitting is for the problem at hand.
     ),
 
     selection=selection_params(
