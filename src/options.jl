@@ -166,6 +166,7 @@ function general_params(;
         pop_per_isle                  = pop_per_isle,
         num_islands                   = num_islands,
         migration_interval            = migration_interval,
+        population_shuffle_interval   = population_shuffle_interval,
         always_drastic_simplify       = always_drastic_simplify,
         remove_doubles_sigdigits      = remove_doubles_sigdigits,
         remove_doubles_across_islands = remove_doubles_across_islands,
