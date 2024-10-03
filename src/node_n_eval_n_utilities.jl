@@ -102,7 +102,7 @@ end
 
 """ How to display nodes.
 """
-Base.show(io::IO, node::Node) = println(io, node_to_string(node, __operators; sigdigits=3))
+Base.show(io::IO, node::Node) = print(io, node_to_string(node, __operators; sigdigits=3))
 
 """ Convert a node to a string. This is also used to display nodes.
 """
