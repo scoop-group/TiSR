@@ -160,15 +160,23 @@ function generational_loop(
 
             # tournament selection # ---------------------------------------------------------------
             if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
-                selected = tournament_selection(
-                (
-                    reduce(+, scale .* getfield.(population[isle], field)
-                        for (scale, field) in ops.selection.tournament_selection_fitness)
-                ),
-                    setdiff(eachindex(population[isle]), selection_inds),
-                    tournament_size=ops.selection.tournament_size,
-                    n_select = ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle
-                )
+                remaining_inds = setdiff(eachindex(population[isle]), selection_inds)
+
+                if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
+
+                    # calculate fitness
+                    indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
+                    indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
+                    indiv_obj_vals ./= median(indiv_obj_vals, dims=1)
+                    fitness          = sum(indiv_obj_vals, dims=2)
+
+                    selected = tournament_selection(fitness, remaining_inds,
+                        tournament_size = ops.selection.tournament_size,
+                        n_select        = ops.general.pop_per_isle - length(selection_inds)
+                    )
+                else
+                    selected = remaining_inds
+                end
 
                 append!(selection_inds, selected)
             end
@@ -285,12 +293,15 @@ function generational_loop(
 # ==================================================================================================
         if gen >= ops.general.n_gens
             stop_msg = "reached maximum number of generations"
+            close(input_channel)
             break
         elseif time() - t_start >= ops.general.t_lim
             stop_msg = "reached time limit"
+            close(input_channel)
             break
         elseif ops.general.callback(hall_of_fame, population, ops)
             stop_msg = "callback returned true"
+            close(input_channel)
             break
         elseif isready(input_channel)
             user_input = take!(input_channel)  # Get input from the channel

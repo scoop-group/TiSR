@@ -184,13 +184,11 @@ function selection_params(;
     selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl, :age],
     hall_of_fame_niching_sigdigits    = 2,
     population_niching_sigdigits      = 3,
-    tournament_selection_fitness      = [(1.0, :ms_processed_e), (1e-5, :compl)],
     ratio_pareto_tournament_selection = 0.7,
     tournament_size                   = 5,
 )
     @assert tournament_size > 1                             "tournament size must be greater than 1"
     @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
-    @assert typeof(tournament_selection_fitness) == Vector{Tuple{Float64, Symbol}}
 
     @assert hall_of_fame_niching_sigdigits > 0 "hall_of_fame_niching_sigdigits must be larger than 0"
     @assert population_niching_sigdigits   > 0 "population_niching_sigdigits must be larger than 0"
@@ -203,7 +201,6 @@ function selection_params(;
         selection_objectives              = selection_objectives,
         hall_of_fame_niching_sigdigits    = hall_of_fame_niching_sigdigits,
         population_niching_sigdigits      = population_niching_sigdigits,
-        tournament_selection_fitness      = tournament_selection_fitness,
         tournament_size                   = tournament_size,
         ratio_pareto_tournament_selection = ratio_pareto_tournament_selection
     )

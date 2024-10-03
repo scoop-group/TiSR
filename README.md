@@ -98,7 +98,6 @@ ops, data = Options(
     selection=selection_params(
         hall_of_fame_objectives           = [:ms_processed_e, :compl, :mare],          # -> objectives for the hall_of_fame
         selection_objectives              = [:ms_processed_e, :compl, :age],           # -> objectives for the Pareto-optimal selection part of selection
-        tournament_selection_fitness      = [(1.0, :ms_processed_e), (1e-5, :compl)],  # -> how to calculate the fitness for the tournament selection. Must be a vector as shown in the example. It is then calculated as a sum weighted be the specified scalars.
         ratio_pareto_tournament_selection = 0.7,                                       # -> ratio to which the selection should be using the Pareto-optimal selection vs. tournament selection
         tournament_size                   = 5,                                         # -> tournament size
     ),

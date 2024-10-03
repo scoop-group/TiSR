@@ -35,7 +35,10 @@ mutable struct Individual   #{T}
         trim_to_max_nodes_per_term!(node, ops)
         trim_to_max_compl!(
             node,
-            min(cur_max_compl + ops.general.adaptive_compl_increment, ops.grammar.max_compl),
+            min(
+                cur_max_compl + ops.general.adaptive_compl_increment,
+                ops.grammar.max_compl
+            ),
             ops
         )
         reorder_add_n_mul!(node, ops)
