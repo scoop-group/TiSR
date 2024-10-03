@@ -102,19 +102,19 @@ end
     @assert length(data) == 2 && length.(data) == [100, 100]
     all_inds = collect(eachindex(x_data))
 
-    compl_coef = 0.1
-    n_select = 10
+    compl_coef      = 0.1
+    n_select        = 10
     tournament_size = 100
 
     fitness = x_data .+ compl_coef .* y_data
+    fitness = 1 ./ fitness
 
     inds = TiSR.tournament_selection(
         fitness,
         all_inds;
-        tournament_size=tournament_size,
-        n_select=n_select,
-        modify_inds=false,
-        best=true
+        tournament_size = tournament_size,
+        n_select        = n_select,
+        modify          = false,
     )
 
     @test length(unique(inds)) == n_select
@@ -122,32 +122,28 @@ end
 
     fitness_select = sum(fitness[inds]) ./ length(inds)
     fitness_not_selected = sum(fitness[setdiff(all_inds, inds)]) ./ length(setdiff(all_inds, inds))
-    @test fitness_select < fitness_not_selected
+    @test fitness_select > fitness_not_selected
 
     tournament_size = 20
 
-    for best_arg in [true, false]
+    selection_better = map(1:100) do _
+        inds = TiSR.tournament_selection(
+            fitness,
+            all_inds;
+            tournament_size = tournament_size,
+            n_select        = n_select,
+            modify          = false,
+        )
 
-        selection_better = map(1:100) do _
-            inds = TiSR.tournament_selection(
-                fitness,
-                all_inds;
-                tournament_size=tournament_size,
-                n_select=n_select,
-                modify_inds=false,
-                best=best_arg
-            )
+        @test length(unique(inds)) == n_select
+        @test all(i in all_inds for i in inds)
 
-            @test length(unique(inds)) == n_select
-            @test all(i in all_inds for i in inds)
-
-            fitness_select = sum(fitness[inds]) / length(inds)
-            fitness_not_selected = sum(fitness[setdiff(all_inds, inds)]) / length(setdiff(all_inds, inds))
-            fitness_select / fitness_not_selected
-        end
-
-        @test count(x -> x < 1, selection_better) > 90
+        fitness_select = sum(fitness[inds]) / length(inds)
+        fitness_not_selected = sum(fitness[setdiff(all_inds, inds)]) / length(setdiff(all_inds, inds))
+        fitness_select / fitness_not_selected
     end
+
+    @test count(>(1), selection_better) > 90
 end
 
 @testset "niching tests" begin

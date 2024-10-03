@@ -81,12 +81,10 @@ end
 """ Tournament selection. The proprocessing of the fitness may be adapted. The inds passed into
     this function are modified and should not be used afterwards.
 """
-function tournament_selection(fitness, inds; tournament_size=5, n_select=10, modify_inds=true)
+function tournament_selection(fitness, inds; tournament_size=5, n_select=10, modify=true)
     n_select >= length(inds) && return inds
 
-    fitness .= 1.0 ./ fitness
-
-    if !modify_inds
+    if !modify
         inds = deepcopy(inds)
     end
 
@@ -94,7 +92,7 @@ function tournament_selection(fitness, inds; tournament_size=5, n_select=10, mod
 
     for _ in 1:n_select
         shuffle!(inds)
-        _, win_ind = findmax(i -> fitness[i], view(inds, 1:tournament_size))
+        _, win_ind = findmax(i -> fitness[i], view(inds, 1:min(tournament_size, length(inds))))
         push!(selected, popat!(inds, win_ind))
     end
 

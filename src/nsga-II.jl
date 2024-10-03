@@ -168,6 +168,7 @@ function generational_loop(
                     indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
                     indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
                     indiv_obj_vals ./= median(indiv_obj_vals, dims=1)
+                    indiv_obj_vals  .= 1.0 ./ indiv_obj_vals
                     fitness          = sum(indiv_obj_vals, dims=2)
 
                     selected = tournament_selection(fitness, remaining_inds,

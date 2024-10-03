@@ -193,7 +193,7 @@ function selection_params(;
     @assert hall_of_fame_niching_sigdigits > 0 "hall_of_fame_niching_sigdigits must be larger than 0"
     @assert population_niching_sigdigits   > 0 "population_niching_sigdigits must be larger than 0"
 
-    0 < hall_of_fame_niching_sigdigits < 5 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
+    0 < hall_of_fame_niching_sigdigits  < 5 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
     0 < population_niching_sigdigits    < 5 || @warn "population_niching_sigdigits should be between 0 and 5"
 
     return (
