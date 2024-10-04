@@ -30,10 +30,8 @@ function simplify_binary_of_param!(node)
     end
 
     if node.ari == 2 && node.lef.ari == -1 && node.rig.ari == -1
-        lefrig = node.lef.ari < node.rig.ari ? :lef : :rig
-
-        node.ari = getfield(getfield(node, lefrig), :ari)
-        node.val = getfield(getfield(node, lefrig), :val)
+        node.ari = -1
+        node.val = node.lef.val
     end
 end
 
@@ -50,6 +48,27 @@ function reorder_add_n_mul!(node, ops)
     if node.ari == 2 && ops.binops[node.ind] in (+, *)
         if node.rig.ari < node.lef.ari
             node.lef, node.rig = node.rig, node.lef
+        elseif node.rig.ari == node.lef.ari && node.lef.ari != -1
+            if node.rig.ind < node.lef.ind
+                node.lef, node.rig = node.rig, node.lef
+            end
+        end
+    end
+end
+
+""" Removes x - x and x / x and replaces by x, where x can be any subtree. Prevents domian errors 
+    in SymbolicUtils.
+"""
+function replace_same_subst_n_div!(node, ops)
+    if node.ari == 1
+        replace_same_subst_n_div!(node.lef, ops)
+    elseif node.ari == 2
+        if ops.binops[node.ind] in (-, /) && isapprox(node.lef, node.rig)
+            copy_node_wo_copy!(node, node.lef)
+            replace_same_subst_n_div!(node, ops)
+        else
+            replace_same_subst_n_div!(node.lef, ops)
+            replace_same_subst_n_div!(node.rig, ops)
         end
     end
 end
@@ -58,12 +77,11 @@ end
     Like: (x + param) + param -> x + param, (x * param) / param -> x * param
     Idea from SymbolicRegression.jl
 """
-
 global const simplify_binary_across_1_level_dict = Dict(
-        :+ => (:+, :-),
-        :- => (:+, :-),
-        :* => (:*, :/),
-        :/ => (:*, :/),
+    :+ => (+, -),
+    :- => (+, -),
+    :* => (*, /),
+    :/ => (*, /),
 )
 
 function simplify_binary_across_1_level!(node, ops)
@@ -79,11 +97,11 @@ function simplify_binary_across_1_level!(node, ops)
         node_1_param = getfield(node, node.lef.ari == 2 ? :rig : :lef)
 
         par_op_str = Symbol(ops.binops[node.ind])
-        chi_op_str = Symbol(ops.binops[node_1.ind])
+        chi_op_str = ops.binops[node_1.ind]
 
         if par_op_str in keys(simplify_binary_across_1_level_dict) && chi_op_str in simplify_binary_across_1_level_dict[par_op_str]
             if xor(node_1.lef.ari == -1, node_1.rig.ari == -1)
-                node_2 = getfield(node_1, node_1.lef.ari == -1 ? :rig : :lef)
+                node_2       = getfield(node_1, node_1.lef.ari == -1 ? :rig : :lef)
                 node_2_param = getfield(node_1, node_1.lef.ari == -1 ? :lef : :rig)
 
                 setfield!(node, :lef, node_1_param.ari < node_2_param.ari ? node_1_param : node_2_param)
@@ -180,16 +198,18 @@ end
 """ Simplify using SymbolicUtils. If through_polyform=true, the expressions converted into
     polynomial form and further simplified.
 """
-function simplify_w_symbolic_utils!(node::Node, ops::Options; though_polyform=false)
+function simplify_w_symbolic_utils!(node::Node, ops::Options; use_simplify=false, though_polyform=false)
     sym_eq = node_to_symbolic(node, ops)
-    simp_eq = SymbolicUtils.simplify(sym_eq)
 
-    if though_polyform
-        simp_eq = SymbolicUtils.PolyForm(simp_eq)
-        simp_eq = SymbolicUtils.simplify(simp_eq)
+    if use_simplify
+        sym_eq = SymbolicUtils.simplify(sym_eq)
+        if though_polyform
+            sym_eq = SymbolicUtils.PolyForm(sym_eq)
+            sym_eq = SymbolicUtils.simplify(sym_eq)
+        end
     end
 
-    expr = SymbolicUtils.Code.toexpr(simp_eq)
+    expr = SymbolicUtils.Code.toexpr(sym_eq)
     simp_node = string_to_node(expr, ops)
 
     reorder_add_n_mul!(simp_node, ops)

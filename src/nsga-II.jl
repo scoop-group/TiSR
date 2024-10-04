@@ -44,8 +44,10 @@ function generational_loop(
     @async listen_for_input(input_channel)
 
 # ==================================================================================================
-# some preparation
+# misc 
 # ==================================================================================================
+    null_node = Node(0.0)
+
     @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
 
     # create dict for the simulation progression # -------------------------------------------------
@@ -230,6 +232,16 @@ function generational_loop(
 
         if length(prog_dict["time"]) == 0 || t_since - prog_dict["time"][end] > 5.0
 
+            # overwrite references to trash nodes with the null node
+            for isle in population
+                for indiv in isle
+                    clean_trash_nodes!(indiv.node, null_node)
+                end
+            end
+            for indiv in hall_of_fame
+                clean_trash_nodes!(indiv.node, null_node)
+            end
+
             # current KPIs # -----------------------------------------------------------------------
             get_for_prog = [t_since, gen,
                 mean(getfield.(hall_of_fame, :age)),
@@ -382,3 +394,4 @@ function listen_for_input(input_channel::Channel)
     end
     close(input_channel)
 end
+

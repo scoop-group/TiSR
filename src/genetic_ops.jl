@@ -131,7 +131,7 @@ function apply_genetic_operations!(
 
         elseif rand_mutation < ops.mutation[8]
             try
-                simplify_w_symbolic_utils!(node, ops; through_polyform=rand() < 0.2)               # add as parameter?
+                simplify_w_symbolic_utils!(node, ops)
             catch
             end
 

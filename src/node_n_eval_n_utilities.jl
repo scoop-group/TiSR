@@ -252,3 +252,29 @@ function list_of_param_nodes(node; list=Node[])
     return list
 end
 
+""" Search and overwrite nodes, which point to nodes that are no longer required.
+"""
+function clean_trash_nodes!(node, null_node)
+
+    if node.ari == 1
+        clean_trash_nodes!(node.lef, null_node)
+
+        if isdefined(node, :rig)
+            node.rig = null_node
+        end
+
+    elseif node.ari == 2
+        clean_trash_nodes!(node.lef, null_node)
+        clean_trash_nodes!(node.rig, null_node)
+    else 
+        if isdefined(node, :lef)
+            node.lef = null_node
+        end
+
+        if isdefined(node, :rig)
+            node.rig = null_node
+        end
+    end
+end
+
+

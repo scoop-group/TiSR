@@ -26,10 +26,12 @@ mutable struct Individual   #{T}
     Individual() = new()
 
     function Individual(node, data, ops, cur_max_compl)
-        for _ in 1:3
+
+        for _ in 1:5
             simplify_unary_of_param!(node)
             simplify_binary_of_param!(node)
             simplify_binary_across_1_level!(node, ops)
+            replace_same_subst_n_div!(node, ops)
         end
 
         trim_to_max_nodes_per_term!(node, ops)
