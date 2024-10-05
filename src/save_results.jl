@@ -3,12 +3,21 @@
 """
 function convert_to_dict(individuals::Vector{Individual}, ops; sort_by="mare")
 
-    dict = Dict(string(f) => getfield.(individuals, f)
+    dict = Dict(string(f) => copy.(getfield.(individuals, f))
         for f in fieldnames(typeof(individuals[1]))
     )
 
     dict["eqs_orig"]         = node_to_string.(dict["node"], Ref(ops))
     dict["eqs_orig_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits = 3)
+
+    simplify_w_symbolic_utils!.(
+        dict["node"], Ref(ops);
+        use_simplify=false, though_polyform=false
+    )
+
+    dict["eqs_simpl"]         = node_to_string.(dict["node"], Ref(ops))
+    dict["eqs_simpl_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits = 3)
+
     delete!(dict, "node")
     delete!(dict, "valid")
 

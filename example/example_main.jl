@@ -10,9 +10,9 @@
 
 using TiSR
 
-# ==================================================================================================
-# preparation
-# ==================================================================================================
+# # ==================================================================================================
+# # preparation
+# # ==================================================================================================
 # using DataFrames
 # using CSV
 #
@@ -65,13 +65,14 @@ ops, data                             =  Options(
         t_lim                         =  60 * 10.0,
         pop_size                      =  500,
         num_islands                   =  10,
-        migration_interval            =  30,    # TODO: experiment
+        migration_interval            =  30,              # TODO: experiment
         population_shuffle_interval   =  typemax(Int64),  # TODO: experiment
-        remove_doubles_sigdigits      =  3,
-        remove_doubles_across_islands =  true, # TODO: experiment
+        island_extinction_interval    =  1000,            # TODO: experiment
+        remove_doubles_sigdigits      =  3,               # TODO: experiment
+        remove_doubles_across_islands =  true,            # TODO: experiment
         multithreading                =  true,
         always_drastic_simplify       =  1e-7,
-        adaptive_compl_increment      =  10,
+        adaptive_compl_increment      =  20, # TODO: broken # TODO: add island extiction interval parameter and experiment
         # callback                    =  (hall_of_fame, population, ops) -> any(i.compl < 30 && i.mare < 1e-5 for i in hall_of_fame)
     ),
     selection                         =  selection_params(
@@ -101,11 +102,11 @@ ops, data                             =  Options(
     mutation                          =  mutation_params(;
         p_crossover                   =  5.0,
         p_point                       =  0.5,
+        p_insert_times_param          =  0.5,
+        p_drastic_simplify            =  0.2,
         p_insert                      =  0.2,
         p_hoist                       =  0.2,
         p_subtree                     =  0.2,
-        p_drastic_simplify            =  0.2,
-        p_insert_times_param          =  0.5,
         p_add_term                    =  0.1,
         p_simplify                    =  0.1,
     )
@@ -156,5 +157,10 @@ scatterplot(
 save_to_fwf(hall_of_fame, ops)
 
 # save_to_excel(hall_of_fame, population, prog_dict, ops)
+
+
+
+
+
 
 

@@ -131,6 +131,7 @@ function general_params(;
     num_islands                   = 10,
     migration_interval            = 30,
     population_shuffle_interval   = typemax(Int64),
+    island_extinction_interval    = typemax(Int64),
     always_drastic_simplify       = 1e-7,
     remove_doubles_sigdigits      = 3,
     remove_doubles_across_islands = false,
@@ -140,18 +141,20 @@ function general_params(;
     print_progress                = true,
     plot_hall_of_fame             = true,
 )
-    @assert num_islands > 0                 "num_islands should be at least 1                "
-    @assert migration_interval > 0          "migration_interval should be at least 1         "
-    @assert always_drastic_simplify >= 0    "always_drastic_simplify must be >= 0            "
-    @assert adaptive_compl_increment > 0    "adaptive_compl_increment must be larger 0       "
-    @assert callback isa Function           "callback must be a function                     "
-    @assert population_shuffle_interval > 0 "population_shuffle_interval must be > 0         "
+    @assert num_islands > 0                 "num_islands should be at least 1         "
+    @assert migration_interval > 0          "migration_interval should be at least 1  "
+    @assert always_drastic_simplify >= 0    "always_drastic_simplify must be >= 0     "
+    @assert adaptive_compl_increment > 0    "adaptive_compl_increment must be larger 0"
+    @assert callback isa Function           "callback must be a function              "
+    @assert population_shuffle_interval > 0 "population_shuffle_interval must be > 0  "
+    @assert island_extinction_interval > 0  "island_extinction_interval must be > 0   "
 
     remove_doubles_sigdigits > 1      || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
     remove_doubles_sigdigits < 6      || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
     always_drastic_simplify < 1e-3    || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4      || @warn "adaptive_compl_increment should be >= 5                         "
     population_shuffle_interval > 500 || @warn "population_shuffle_interval seems small                         "
+    island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          " 
 
     if multithreading
         Threads.nthreads() > 1 || @warn "To acually utilize multithreading, Julia must be started with the desired number of threads, i.e., `julia -t 4`" 
@@ -167,6 +170,7 @@ function general_params(;
         num_islands                   = num_islands,
         migration_interval            = migration_interval,
         population_shuffle_interval   = population_shuffle_interval,
+        island_extinction_interval    = island_extinction_interval,
         always_drastic_simplify       = always_drastic_simplify,
         remove_doubles_sigdigits      = remove_doubles_sigdigits,
         remove_doubles_across_islands = remove_doubles_across_islands,

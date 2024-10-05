@@ -291,7 +291,6 @@ function generational_loop(
             end
         end
 
-
 # ==================================================================================================
 # population shuffle
 # ==================================================================================================
@@ -299,6 +298,30 @@ function generational_loop(
             population = reduce(vcat, population)
             shuffle!(population)
             population = split_list(population, ceil(Int, length(population) / ops.general.num_islands))
+        end
+
+
+# ==================================================================================================
+# island extinction
+# ==================================================================================================
+        if gen % ops.general.island_extinction_interval == 0
+            emmigrate_island = rand(1:ops.general.num_islands)
+
+            offsets = -trunc(Int64, 0.5 * ops.general.num_islands):trunc(Int64, 0.5 * ops.general.num_islands)
+            offsets = filter(!=(0), offsets)
+            probs   = 1 ./ abs.(offsets)
+
+            while !isempty(population[emmigrate_island])
+                immigrate_island = mod1(emmigrate_island + wsample(offsets, probs), ops.general.num_islands)
+
+                push!(
+                    population[immigrate_island],
+                    popat!(
+                        population[emmigrate_island],
+                        rand(1:length(population[emmigrate_island]))
+                    )
+                )
+            end
         end
 
 # ==================================================================================================
