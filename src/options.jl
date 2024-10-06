@@ -129,7 +129,7 @@ function general_params(;
     t_lim                         = 60. * 5.,
     pop_size                      = 500,
     num_islands                   = 10,
-    migration_interval            = 30,
+    migration_interval            = 50,
     population_shuffle_interval   = typemax(Int64),
     island_extinction_interval    = typemax(Int64),
     always_drastic_simplify       = 1e-7,
@@ -140,6 +140,7 @@ function general_params(;
     callback                      = (hall_of_fame, population, ops) -> false,
     print_progress                = true,
     plot_hall_of_fame             = true,
+    print_hall_of_fame            = true,
 )
     @assert num_islands > 0                 "num_islands should be at least 1         "
     @assert migration_interval > 0          "migration_interval should be at least 1  "
@@ -148,6 +149,10 @@ function general_params(;
     @assert callback isa Function           "callback must be a function              "
     @assert population_shuffle_interval > 0 "population_shuffle_interval must be > 0  "
     @assert island_extinction_interval > 0  "island_extinction_interval must be > 0   "
+
+    if print_hall_of_fame
+        @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
+    end
 
     remove_doubles_sigdigits > 1      || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
     remove_doubles_sigdigits < 6      || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
@@ -180,6 +185,7 @@ function general_params(;
         callback                      = callback,
         print_progress                = print_progress,
         plot_hall_of_fame             = plot_hall_of_fame,
+        print_hall_of_fame            = print_hall_of_fame,
     )
 end
 

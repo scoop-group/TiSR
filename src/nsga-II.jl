@@ -273,7 +273,7 @@ function generational_loop(
                 compl          = [indiv.compl          for indiv in hall_of_fame]
                 ms_processed_e = [indiv.ms_processed_e for indiv in hall_of_fame]
 
-                display(scatterplot(
+                plt = scatterplot(
                     compl,
                     ms_processed_e,
                     yscale           = :log10,
@@ -287,7 +287,22 @@ function generational_loop(
                         10^(floor(log10(minimum(ms_processed_e)))),
                         10^(ceil(log10(maximum(ms_processed_e))))
                     ),
-                ))
+                    compact=true
+                )
+
+                if ops.general.print_hall_of_fame
+                    sort!(hall_of_fame, by=i->i.compl)
+
+                    for i in 0:min(15, length(hall_of_fame)-1)
+                        label!(plt, :r, 15-i, replace(
+                           TiSR.node_to_string(hall_of_fame[length(hall_of_fame)-i].node, ops, sigdigits=2),
+                            " " => "", r"\d.0\b" => ""
+                        ))
+                    end
+                end
+
+                display(plt)
+
             end
         end
 

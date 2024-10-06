@@ -27,11 +27,16 @@ mutable struct Individual   #{T}
 
     function Individual(node, data, ops, cur_max_compl)
 
-        for _ in 1:5
+        # str1 = node_to_string(node, ops)
+        # while true
+        for _ in 1:3
             simplify_unary_of_param!(node)
             simplify_binary_of_param!(node)
             simplify_binary_across_1_level!(node, ops)
             replace_same_subst_n_div!(node, ops)
+            # str2 = node_to_string(node, ops)
+            # str1 == str2 && break
+            # str1 = str2
         end
 
         trim_to_max_nodes_per_term!(node, ops)
