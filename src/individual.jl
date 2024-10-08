@@ -40,14 +40,18 @@ mutable struct Individual   #{T}
         end
 
         trim_to_max_nodes_per_term!(node, ops)
-        trim_to_max_compl!(
-            node,
-            min(
-                cur_max_compl + ops.general.adaptive_compl_increment,
-                ops.grammar.max_compl
-            ),
-            ops
-        )
+
+        if count_nodes(node) > ops.grammar.max_compl
+            target_compl = rand(5:min(
+                    cur_max_compl + ops.general.adaptive_compl_increment,
+                    ops.grammar.max_compl
+            ))
+            trim_to_max_compl!(
+                node,
+                target_compl,
+                ops
+            )
+        end
         reorder_add_n_mul!(node, ops)
 
         indiv = new(node)
