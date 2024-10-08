@@ -106,9 +106,15 @@ function apply_genetic_operations!(
     eachind = collect(eachindex(nodes))
 
     if !iszero(ops.general.always_drastic_simplify)
-        drastic_inds = findall(drastic_simplify!(n, ops, potential=true, threshold=ops.general.always_drastic_simplify) for n in nodes)
+        drastic_inds = findall(
+            drastic_simplify!(n, ops, potential=true, threshold=ops.general.always_drastic_simplify) 
+            for n in nodes
+        )
         drastic_nodes = [deepcopy(nodes[i]) for i in drastic_inds]
-        foreach(n -> drastic_simplify!(n, ops, potential=false, threshold=ops.general.always_drastic_simplify), drastic_nodes)
+
+        for n in drastic_nodes
+            drastic_simplify!(n, ops, potential=false, threshold=ops.general.always_drastic_simplify)
+        end
 
         for _ in 1:3
             simplify_unary_of_param!.(drastic_nodes)
