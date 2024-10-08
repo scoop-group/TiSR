@@ -266,7 +266,7 @@ function generational_loop(
 
             if ops.general.print_progress
                 display(cur_prog_dict)
-                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
+                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
             end
 
             if ops.general.plot_hall_of_fame
@@ -275,7 +275,7 @@ function generational_loop(
 
                 plt = scatterplot(
                     compl,
-                    ms_processed_e,
+                    clamp.(ms_processed_e, 1e-30, 1e30),
                     yscale           = :log10,
                     title            = "hall of fame",
                     xlabel           = "complexity",
@@ -293,16 +293,18 @@ function generational_loop(
                 if ops.general.print_hall_of_fame
                     sort!(hall_of_fame, by=i->i.compl)
 
-                    for i in 0:min(15, length(hall_of_fame)-1)
-                        label!(plt, :r, 15-i, replace(
-                           TiSR.node_to_string(hall_of_fame[length(hall_of_fame)-i].node, ops, sigdigits=2),
-                            " " => "", r"\d.0\b" => ""
+                    inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=16)))
+                    unique!(inds_to_show)
+
+                    for (ii, i) in enumerate(inds_to_show)
+                        label!(plt, :r, ii, replace(
+                           TiSR.node_to_string(hall_of_fame[i].node, ops, sigdigits=2),
+                           " " => "", r"(\d)\.0\b" => s"\1"
                         ))
                     end
                 end
 
                 display(plt)
-
             end
         end
 
@@ -356,12 +358,12 @@ function generational_loop(
             break
         elseif isready(input_channel)
             user_input = take!(input_channel)  # Get input from the channel
-            if user_input == "qq"
-                println("Detected 'qq'. Exiting...")
+            if user_input == ":q"
+                println("Detected ':q'. Exiting...")
                 stop_msg = "user interrupt"
                 break
             elseif length(user_input) > 0
-                println("type qq and enter to finish the equation search early")
+                println("type :q and enter to finish the equation search early")
             end
         end
     end
@@ -393,7 +395,7 @@ function generational_loop(
 
     if ops.general.print_progress
         display(cur_prog_dict)
-        println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
+        println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
     end
 
 # ==================================================================================================
@@ -409,7 +411,7 @@ end
 
 Listens for user input in a blocking fashion and sends the input to the given channel. 
 This function runs asynchronously and continuously reads from `stdin`. If the input 
-"qq" is detected, it will send the input to the channel and terminate the listener.
+":q" is detected, it will send the input to the channel and terminate the listener.
 
 ### Arguments
 - `input_channel::Channel`: A communication channel where user input is sent.
@@ -417,7 +419,7 @@ This function runs asynchronously and continuously reads from `stdin`. If the in
 ### Behavior
 - The function reads input from the terminal using `readline(stdin)`.
 - The input is passed to the `input_channel` for further processing in a separate task.
-- If the user types "qq", the function stops, indicating the program should terminate.
+- If the user types ":q", the function stops, indicating the program should terminate.
 
 ### Source
 Generated using OpenAI's ChatGPT. 
@@ -426,8 +428,8 @@ function listen_for_input(input_channel::Channel)
     while true
         input = readline(stdin)  # Blocking read, but in its own task
         put!(input_channel, input)  # Send the input to the channel
-        if input == "qq"
-            break  # Exit the listener task if 'qq' is entered
+        if input == ":q"
+            break  # Exit the listener task if ':q' is entered
         end
     end
     close(input_channel)
