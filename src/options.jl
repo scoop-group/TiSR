@@ -21,7 +21,7 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
 
     function Options(
         data::Matrix;
-        fit_weights::Vector   = ones(size(data, 1)),
+        fit_weights::Vector   = 1 ./ data[:, end],
         parts::Vector         = [1.0],
         general               = general_params(),
         p_unaops              = (1.0, 1.0, 1.0, 1.0, 1.0),
@@ -129,10 +129,10 @@ function general_params(;
     t_lim                         = 60. * 5.,
     pop_size                      = 500,
     num_islands                   = 10,
-    migration_interval            = 50,
+    migration_interval            = 100,
+    island_extinction_interval    = 1000,
     population_shuffle_interval   = typemax(Int64),
-    island_extinction_interval    = typemax(Int64),
-    always_drastic_simplify       = 1e-7,
+    always_drastic_simplify       = 1e-8,
     remove_doubles_sigdigits      = 3,
     remove_doubles_across_islands = false,
     multithreading                = false,
@@ -160,6 +160,8 @@ function general_params(;
     adaptive_compl_increment > 4      || @warn "adaptive_compl_increment should be >= 5                         "
     population_shuffle_interval > 500 || @warn "population_shuffle_interval seems small                         "
     island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          " 
+
+    island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
 
     if multithreading
         Threads.nthreads() > 1 || @warn "To acually utilize multithreading, Julia must be started with the desired number of threads, i.e., `julia -t 4`" 
@@ -190,8 +192,8 @@ function general_params(;
 end
 
 function selection_params(;
-    hall_of_fame_objectives           = [:ms_processed_e, :compl, :mare],
-    selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl, :age],
+    hall_of_fame_objectives           = [:ms_processed_e, :compl],
+    selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl],
     hall_of_fame_niching_sigdigits    = 2,
     population_niching_sigdigits      = 3,
     ratio_pareto_tournament_selection = 0.7,
@@ -217,11 +219,11 @@ function selection_params(;
 end
 
 function fitting_params(;
-    max_iter                 = 20,
+    max_iter                 = 15,
     early_stop_iter          = 0,
     t_lim                    = Inf,
     rel_f_tol_5_iter         = 1e-2 * 0.01,
-    lasso_factor             = 1e-7,
+    lasso_factor             = 0.0,
     pre_residual_processing! = (x, ind) -> x,
     residual_processing      = (x, ind) -> x,
 )
@@ -295,7 +297,7 @@ function mutation_params(;
     p_insert             = 0.2,
     p_hoist              = 0.2,
     p_subtree            = 0.2,
-    p_drastic_simplify   = 0.2,
+    p_drastic_simplify   = 0.1,
     p_insert_times_param = 0.1,
     p_add_term           = 0.1,
     p_simplify           = 0.1,
