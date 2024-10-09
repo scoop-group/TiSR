@@ -113,7 +113,7 @@ ops, data = Options(
     ),
     grammar     = grammar_params(
         max_compl           = 30,     # -> max allowed complexity.
-        min_compl           = 2,      # -> min allowed complexity. -> 2
+        min_compl           = 3,      # -> min allowed complexity. -> 2 ... 3
         init_tree_depth     = 4,      # -> maximal initial tree depth. -> 3 ... 6
         max_nodes_per_term  = Inf,    # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold.
         illegal_dict        = Dict(), # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).

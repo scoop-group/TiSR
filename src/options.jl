@@ -253,7 +253,7 @@ function grammar_params(;
     illegal_dict        = Dict(),
     weighted_compl_dict = Dict{String, Float64}(),
     max_compl           = 30,
-    min_compl           = 2,
+    min_compl           = 3,
     max_nodes_per_term  = Inf,
     init_tree_depth     = 4,
 )
