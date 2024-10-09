@@ -52,6 +52,8 @@ mutable struct Individual   #{T}
                 ops
             )
         end
+
+        div_to_mul_param!(node, ops)
         reorder_add_n_mul!(node, ops)
 
         indiv = new(node)

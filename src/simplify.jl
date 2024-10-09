@@ -56,7 +56,7 @@ function reorder_add_n_mul!(node, ops)
     end
 end
 
-""" Removes x - x and x / x and replaces by x, where x can be any subtree. Prevents domian errors 
+""" Removes x - x and x / x and replaces by x, where x can be any subtree. Prevents domian errors
     in SymbolicUtils.
 """
 function replace_same_subst_n_div!(node, ops)
@@ -111,6 +111,22 @@ function simplify_binary_across_1_level!(node, ops)
     end
 end
 
+""" Convert x / param to x * param -> better for drastic simplify.
+"""
+function div_to_mul_param!(node, ops)
+    if node.ari >= 1
+        div_to_mul_param!(node.lef, ops)
+        if node.ari == 2
+            div_to_mul_param!(node.rig, ops)
+        end
+    end
+
+    if node.ari == 2 && isequal(ops.binops[node.ind], /) && node.rig.ari == -1
+        node.ind = findfirst(isequal(*), ops.binops)
+        node.rig.val = 1 / node.rig.val
+    end
+end
+
 # ==================================================================================================
 # simplify drasticly -> not neccessarily the same & used as a genetic operation
 # ==================================================================================================
@@ -124,10 +140,10 @@ function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5)
     pot = false
 
     if node.ari >= 1
-        pot_l = drastic_simplify!(node.lef, ops, threshold=threshold, potential=potential)
+        pot_l = drastic_simplify!(node.lef, ops, threshold=threshold, potential=potential, prob=prob)
         pot = pot || pot_l
         if node.ari == 2
-            pot_r = drastic_simplify!(node.rig, ops, threshold=threshold, potential=potential)
+            pot_r = drastic_simplify!(node.rig, ops, threshold=threshold, potential=potential, prob=prob)
             pot = pot || pot_r
         end
     end
