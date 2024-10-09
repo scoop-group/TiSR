@@ -229,7 +229,7 @@ function fitting_params(;
 )
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
-    lasso_factor < 1e-4      || @warn "lasso_factor seems to large"
+    lasso_factor < 1.0       || @warn "lasso_factor seems to large"
     0 < early_stop_iter < 5  && @warn "early stopping may be too strict -> higher values may produce better results"
 
     @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter"
@@ -251,7 +251,7 @@ end
 """
 function grammar_params(;
     illegal_dict        = Dict(),
-    weighted_compl_dict = Dict(),
+    weighted_compl_dict = Dict{String, Float64}(),
     max_compl           = 30,
     min_compl           = 2,
     max_nodes_per_term  = Inf,
@@ -276,9 +276,7 @@ function grammar_params(;
         end
     end
 
-    if !isempty(weighted_compl_dict)
-        @assert weighted_compl_dict isa Dict{String, Float64} "weighted_compl_dict is not formatted correctly"
-    end
+    @assert weighted_compl_dict isa Dict{String, Float64} "weighted_compl_dict is not formatted correctly"
 
     max_compl > 100         && @warn "a high max_compl may lead to high calculation times"
     init_tree_depth > 6     && @warn "a high init_tree_depth may lead to high calculation times"
