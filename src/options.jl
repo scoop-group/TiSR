@@ -229,7 +229,7 @@ function fitting_params(;
 )
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
-    lasso_factor < 1.0       || @warn "lasso_factor seems to large"
+    lasso_factor < 1e-4      || @warn "lasso_factor seems to large"
     0 < early_stop_iter < 5  && @warn "early stopping may be too strict -> higher values may produce better results"
 
     @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter"
@@ -250,11 +250,12 @@ end
 """ Returns the equation grammar related parameters.
 """
 function grammar_params(;
-    illegal_dict       = Dict(),
-    max_compl          = 30,
-    min_compl          = 2,
-    max_nodes_per_term = Inf,
-    init_tree_depth    = 4,
+    illegal_dict        = Dict(),
+    weighted_compl_dict = Dict(),
+    max_compl           = 30,
+    min_compl           = 2,
+    max_nodes_per_term  = Inf,
+    init_tree_depth     = 4,
 )
     @assert max_compl > 3             "max_compl must be larger than 3          "
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
@@ -275,15 +276,20 @@ function grammar_params(;
         end
     end
 
+    if !isempty(weighted_compl_dict)
+        @assert weighted_compl_dict isa Dict{String, Float64} "weighted_compl_dict is not formatted correctly"
+    end
+
     max_compl > 100         && @warn "a high max_compl may lead to high calculation times"
     init_tree_depth > 6     && @warn "a high init_tree_depth may lead to high calculation times"
 
     return (
-        illegal_dict       = illegal_dict,
-        init_tree_depth    = init_tree_depth,
-        max_compl          = max_compl,
-        min_compl          = min_compl,
-        max_nodes_per_term = max_nodes_per_term,
+        illegal_dict        = illegal_dict,
+        weighted_compl_dict = weighted_compl_dict,
+        init_tree_depth     = init_tree_depth,
+        max_compl           = max_compl,
+        min_compl           = min_compl,
+        max_nodes_per_term  = max_nodes_per_term,
     )
 end
 

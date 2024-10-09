@@ -64,6 +64,26 @@ end
 #     return min(floatmax(), compl)
 # end
 
+""" calculate the weighted_coml of a node. The weights for the functions and terminals are provided
+    by ops.grammar.weighted_compl_dict. Weights for variables and parameters can be set using "VAR"
+    and "PARAM", respectively. For any funciton of terminal not specified, 1.0 is assumed.
+"""
+function get_weighted_compl(node, ops) # TODO: test
+    if node.ari == 2
+        cur_fun = string(ops.binops[node.ind])
+        compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 1.0)
+        return compl + get_weighted_compl(node.lef, ops) + get_weighted_compl(node.rig, ops)
+    elseif node.ari == 1
+        cur_fun = string(ops.unaops[node.ind])
+        compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 1.0)
+        return compl + get_weighted_compl(node.lef, ops)
+    elseif node.ari == 0
+        return get(ops.grammar.weighted_compl_dict, "VAR", 1.0)
+    elseif node.ari == -1
+        return get(ops.grammar.weighted_compl_dict, "PARAM", 1.0)
+    end
+end
+
 function get_minus_r2(pred, orig)
     total_sum_of_squares = sum(abs2, orig .- mean(orig))
     sum_of_squares_pred = sum(abs2, pred .- orig)
@@ -74,3 +94,4 @@ function get_minus_abs_spearman(pred, orig)
     minus_abs_spear = -abs(corspearman(pred, orig))
     return isfinite(minus_abs_spear) ? minus_abs_spear : 0.0
 end
+

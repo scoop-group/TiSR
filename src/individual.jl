@@ -3,6 +3,7 @@ mutable struct Individual   #{T}
     node::Node
 
     compl::Float64
+    weighted_compl::Float64
     recursive_compl::Float64
     age::Float64
 
@@ -72,10 +73,17 @@ mutable struct Individual   #{T}
 
         indiv.valid || return indiv
 
-        indiv.age = 0.0
-        indiv.compl = count_nodes(node)
+        indiv.age             = 0.0
+        indiv.compl           = count_nodes(node)
+
+        if isempty(ops.grammar.weighted_compl_dict)
+            indiv.weighted_compl = indiv.compl
+        else
+            indiv.weighted_compl = get_weighted_compl(node, ops)
+        end
+
         indiv.recursive_compl = recursive_compl(node, ops)
-        indiv.n_params = length(list_of_param_nodes(node))
+        indiv.n_params        = length(list_of_param_nodes(node))
 
         return indiv
     end

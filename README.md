@@ -112,20 +112,36 @@ ops, data = Options(
         p_simplify           = 0.1,  #|-> simplify with SymbolicUtils
     ),
     grammar     = grammar_params(
-        max_compl          = 30,     # -> max allowed complexity.
-        min_compl          = 2,      # -> min allowed complexity. -> 2
-        init_tree_depth    = 4,      # -> maximal initial tree depth. -> 3 ... 6
-        max_nodes_per_term = Inf,    # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold.
-        illegal_dict       = Dict(), # -> Check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM":
-                                     #    illegal_dict = Dict(
-                                     #        "^" =>   (lef = (),             rig = ("+", "-", "*", "/", "VAR", )),
-                                     #        "/" =>   (lef = (),             rig = ("-", "+")),
-                                     #        "log" => (lef = ("log", "exp"), rig = ()),
-                                     #        "exp" => (lef = ("exp", "log"), rig = ()),
-                                     #        "cos" => (lef = ("sin", "cos"), rig = ())
-                                     #    )
+        max_compl           = 30,     # -> max allowed complexity.
+        min_compl           = 2,      # -> min allowed complexity. -> 2
+        init_tree_depth     = 4,      # -> maximal initial tree depth. -> 3 ... 6
+        max_nodes_per_term  = Inf,    # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold.
+        illegal_dict        = Dict(), # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
+        weighted_compl_dict = Dict(), # -> weights for weighted_compl calculation. For any that are not included, 1.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
     ),
 )
+
+# (1) example illegal_dict
+# illegal_dict = Dict(
+#     "^" =>   (lef = (),             rig = ("+", "-", "*", "/", "VAR", )),
+#     "/" =>   (lef = (),             rig = ("-", "+")),
+#     "log" => (lef = ("log", "exp"), rig = ()),
+#     "exp" => (lef = ("exp", "log"), rig = ()),
+#     "cos" => (lef = ("sin", "cos"), rig = ())
+# )
+ 
+# (2) example weighted_compl_dict
+# weighted_compl_dict =  Dict(
+#     "PARAM" => 1.5, "VAR" => 1.0,
+#     "+"     => 1.0, "-"   => 1.5,
+#     "*"     => 2.0, "/"   => 2.5, "^"   => 3.0,
+#     "exp"   => 2.0, "log" => 2.0, "sin" => 2.0, "cos" => 2.0,
+# )
+
+
+
+
+
 ```
 
 # Funding
