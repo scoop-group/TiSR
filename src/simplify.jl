@@ -113,7 +113,7 @@ end
 
 """ Convert x / param to x * param -> better for drastic simplify.
 """
-function div_to_mul_param!(node, ops)
+function div_to_mul_param!(node, ops) # TODO: test
     if node.ari >= 1
         div_to_mul_param!(node.lef, ops)
         if node.ari == 2
@@ -157,40 +157,51 @@ function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5)
         node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
 
         if abs(node_1_param.val) < threshold # if parameter 0.0
-            if op in (+, -)
+            if op in (+, -) # x + 0.0 -> x
                 potential && return true
                 if rand() < prob
                     copy_node_wo_copy!(node, node_1)
                 end
-            elseif (op == *)
+            elseif (op == *) # x * 0.0 -> 0.0
                 potential && return true
                 if rand() < prob
                     copy_node_wo_copy!(node, node_1_param)
                 end
-            elseif (op == ^) && node.rig.ari == -1
+            elseif (op == ^) && node.rig.ari == -1 # x^0.0 -> 1.0
                 potential && return true
                 if rand() < prob
                     node.rig.val = 1.0
                     copy_node_wo_copy!(node, node.rig)
                 end
-            elseif (op == /) && node.lef.ari == -1
+            elseif (op == ^) && node.lef.ari == -1 # 0.0^x -> 0 # TODO: new, test
+                potential && return true
+                if rand() < prob
+                    node.lef.val = 0.0
+                    copy_node_wo_copy!(node, node.lef)
+                end
+            elseif (op == /) && node.lef.ari == -1 # 0.0 / x -> 0.0
                 potential && return true
                 if rand() < prob
                     copy_node_wo_copy!(node, node.lef)
                 end
             end
         elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
-            if op == * # 1.0 * x -> x
+            if (op == *) # 1.0 * x -> x
                 potential && return true
                 if rand() < prob
                     copy_node_wo_copy!(node, node_1)
                 end
-            elseif node.rig.ari == -1 && op == / # x / 1.0 -> x
+            elseif (op == /) && node.rig.ari == -1 # x / 1.0 -> x
                 if rand() < prob
                     copy_node_wo_copy!(node, node_1)
                 end
                 potential && return true
-            elseif (op == ^) && node.rig.ari == -1
+            elseif (op == ^) && node.rig.ari == -1 # x^1.0 -> x
+                potential && return true
+                if rand() < prob
+                    copy_node_wo_copy!(node, node.lef)
+                end
+            elseif (op == ^) && node.lef.ari == -1 # 1.0^x -> 1.0 # TODO: test
                 potential && return true
                 if rand() < prob
                     copy_node_wo_copy!(node, node.lef)
