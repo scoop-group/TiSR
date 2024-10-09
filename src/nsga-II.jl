@@ -101,7 +101,7 @@ function generational_loop(
             # grow them up # -----------------------------------------------------------------------
             children[isle] = Array{Individual}(undef, length(new_nodes[isle]))
             if ops.general.multithreading
-                Threads.@threads for ii in eachindex(new_nodes[isle])
+                Threads.@threads :greedy for ii in eachindex(new_nodes[isle])
                     children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl)
                 end
             else
