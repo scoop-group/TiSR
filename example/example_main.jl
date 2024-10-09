@@ -1,8 +1,4 @@
 
-# ==================================================================================================
-# load TiSR module
-# ==================================================================================================
-
 # import Pkg
 # Pkg.develop(path=".")
 # Pkg.resolve()
@@ -42,72 +38,37 @@ data_matr = Matrix(df[!, 1:end-1])
 #                        )^0.5
 #                      )
 
-# prepare remainder for settings # -----------------------------------------------------------------
-fit_weights = 1 ./ data_matr[:, end] # weights to minimize relative deviation
-parts = [1.0]
 
 # ==================================================================================================
 # options -> specify some custom settings, where the default setting is unsatisfactory
 # ==================================================================================================
-pow_abs(x, y) = abs(x)^y
+pow(x, y) = abs(x)^y
 pow2(x) = x^2
 
-ops, data                             =  Options(
+ops, data                          = Options(
     data_matr,
-    fit_weights                       =  fit_weights,
-    p_binops                          =  (1.0, 1.0, 1.0, 1.0, 1.0, 0.0),
-    binops                            =  (+,   -,   *,   /,   ^, pow_abs),
-    p_unaops                          =  (1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0),
-    unaops                            =  (exp, log, sin, cos, abs, pow2, sqrt),
-    parts                             =  parts,
-    general                           =  general_params(
-        n_gens                        =  typemax(Int64),
-        t_lim                         =  60 * 10.0,
-        island_extinction_interval    =  1000,            # TODO: experiment
-        remove_doubles_sigdigits      =  3,               # TODO: experiment
-        remove_doubles_across_islands =  false,            # TODO: experiment
-        multithreading                =  true,
-        always_drastic_simplify       =  1e-7,
-        adaptive_compl_increment      =  20, # TODO: broken # TODO: add island extiction interval parameter and experiment
-        # callback                    =  (hall_of_fame, population, ops) -> any(i.compl < 30 && i.mare < 1e-5 for i in hall_of_fame)
+    p_binops                       = (1.0, 1.0, 1.0, 1.0, 1.0, 0.0),
+    binops                         = (+,   -,   *,   /,   ^,   pow),
+    p_unaops                       = (1.0, 1.0, 0.0, 0.0, 0.0, 0.0,  0.0),
+    unaops                         = (exp, log, sin, cos, abs, pow2, sqrt),
+    general                        = general_params(
+        n_gens                     = typemax(Int64),
+        t_lim                      = 60 * 10.0,
+        multithreading             = true,
+        migration_interval         = 100,
+        island_extinction_interval = 1000,
     ),
-    selection                         =  selection_params(
-        population_niching_sigdigits  =  3,
-        selection_objectives          =  [:ms_processed_e, :minus_abs_spearman, :compl], # , :age # TODO: experimetn age
-        hall_of_fame_objectives       =  [:ms_processed_e, :compl],
+    selection                      = selection_params(
+        hall_of_fame_objectives    = [:ms_processed_e, :compl],
+        selection_objectives       = [:ms_processed_e, :minus_abs_spearman, :compl],
     ),
-    grammar                           =  grammar_params(
-        max_compl                     =  30,
-        max_nodes_per_term            =  Inf,
-        illegal_dict                  =  Dict(
-            # # "pow_abs"             => (lef = (),              rig = ("+", "-", "*", "/", "^", "pow_abs", "pow2", "sqrt", "exp", "log", "sin", "cos", "VAR")),
-            # # "^"                   => (lef = (),              rig = ("+", "-", "*", "/", "^", "pow_abs", "pow2", "sqrt", "exp", "log", "sin", "cos", "VAR")),
-            "pow_abs"                 => (lef = (),              rig = ("+", "-", "*", "/", "^", "pow_abs", "pow2", "sqrt", "exp", "log", "sin", "cos")),
-            "^"                       => (lef = (),              rig = ("+", "-", "*", "/", "^", "pow_abs", "pow2", "sqrt", "exp", "log", "sin", "cos")),
-            "/"                       => (lef = (),              rig = ("+", "-")),
-            "sin"                     => (lef = ("sin",  "cos"), rig = ()),
-            "cos"                     => (lef = ("sin",  "cos"), rig = ()),
-            "exp"                     => (lef = ("exp",  "log"), rig = ()),
-            "log"                     => (lef = ("exp",  "log"), rig = ()),
-            "sqrt"                    => (lef = ("sqrt", "log"), rig = ()),
-        )
+    grammar                        = grammar_params(
+        max_compl                  = 30,
     ),
-    fitting                           =  fitting_params(
-        early_stop_iter               =  0,
-        max_iter                      =  15,
-        lasso_factor                  =  1e-5,
+    fitting                        = fitting_params(
+        max_iter                   = 15,
+        # lasso_factor               = 1e-3,
     ),
-    mutation                          =  mutation_params(;
-        p_crossover                   =  5.0,
-        p_point                       =  0.5,
-        p_insert_times_param          =  0.5,
-        p_drastic_simplify            =  0.2,
-        p_insert                      =  0.2,
-        p_hoist                       =  0.2,
-        p_subtree                     =  0.2,
-        p_add_term                    =  0.1,
-        p_simplify                    =  0.1,
-    )
 );
 
 # ==================================================================================================
@@ -132,9 +93,9 @@ start_pop = vcat(hall_of_fame, population)
 hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops, start_pop);
 
 # Inspect the results # ---------------------------------------------------------------------------
-df_hall_of_fame = TiSR.convert_to_dataframe(hall_of_fame, ops, sort_by="mare")
+df_hall_of_fame = TiSR.convert_to_dataframe(hall_of_fame, ops, sort_by="max_are")
 show(
-    df_hall_of_fame[:, [:eqs_orig_rounded, :mare, :max_are, :compl]],
+    df_hall_of_fame[:, [:eqs_orig_rounded, :mare, :max_are, :weighted_compl, :n_params]],
     truncate = maximum(length, df_hall_of_fame.eqs_orig_rounded)
 )
 
@@ -150,15 +111,10 @@ scatterplot(
 )
 
 # ==================================================================================================
-# write the results to a fwf or a excel
+# write the results to a fwf, csv, or a excel
 # ==================================================================================================
 save_to_fwf(hall_of_fame, ops)
 
+# save_to_csv(hall_of_fame, ops)
 # save_to_excel(hall_of_fame, population, prog_dict, ops)
-
-
-
-
-
-
 

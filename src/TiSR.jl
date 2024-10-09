@@ -25,6 +25,8 @@ using SymbolicUtils
 using SymbolicUtils.Code
 using StaticArrays
 using LinearAlgebra
+using Optim
+using LineSearches
 
 using DataFrames
 using XLSX
