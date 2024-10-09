@@ -28,16 +28,7 @@ mutable struct Individual   #{T}
 
     function Individual(node, data, ops, cur_max_compl)
 
-        str1 = node_to_string(node, ops) # TODO: avoid going through strings -> return Bool from simplify
-        while true
-            simplify_unary_of_param!(node)
-            simplify_binary_of_param!(node)
-            simplify_binary_across_1_level!(node, ops)
-            replace_same_subst_n_div!(node, ops)
-            str2 = node_to_string(node, ops)
-            str1 == str2 && break
-            str1 = str2
-        end
+        apply_simple_simplifications!(node, ops)
 
         trim_to_max_nodes_per_term!(node, ops)
 
@@ -52,6 +43,8 @@ mutable struct Individual   #{T}
                 ops
             )
         end
+
+        apply_simple_simplifications!(node, ops)
 
         div_to_mul_param!(node, ops)
         reorder_add_n_mul!(node, ops)

@@ -127,6 +127,19 @@ function div_to_mul_param!(node, ops) # TODO: test
     end
 end
 
+function apply_simple_simplifications!(node, ops)
+    str1 = node_to_string(node, ops) # TODO: avoid going through strings -> return Bool from simplify
+    while true
+        simplify_unary_of_param!(node)
+        simplify_binary_of_param!(node)
+        simplify_binary_across_1_level!(node, ops)
+        replace_same_subst_n_div!(node, ops)
+        str2 = node_to_string(node, ops)
+        str1 == str2 && break
+        str1 = str2
+    end
+end
+
 # ==================================================================================================
 # simplify drasticly -> not neccessarily the same & used as a genetic operation
 # ==================================================================================================
