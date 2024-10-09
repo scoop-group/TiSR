@@ -119,7 +119,7 @@ end
     Like x + 1e-5 -> x, x * 1e-5 -> 1e-5
     In the latter example, the 1e-5 will again be detected and removed on the level above.
 """
-function drastic_simplify!(node, ops; threshold=1e-1, potential=false)
+function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5)
 
     pot = false
 
@@ -143,33 +143,49 @@ function drastic_simplify!(node, ops; threshold=1e-1, potential=false)
         if abs(node_1_param.val) < threshold # if parameter 0.0
             if op in (+, -)
                 potential && return true
-                copy_node_wo_copy!(node, node_1)
+                if rand() < prob
+                    copy_node_wo_copy!(node, node_1)
+                end
             elseif (op == *)
                 potential && return true
-                copy_node_wo_copy!(node, node_1_param)
+                if rand() < prob
+                    copy_node_wo_copy!(node, node_1_param)
+                end
             elseif (op == ^) && node.rig.ari == -1
                 potential && return true
-                node.rig.val = 1.0
-                copy_node_wo_copy!(node, node.rig)
+                if rand() < prob
+                    node.rig.val = 1.0
+                    copy_node_wo_copy!(node, node.rig)
+                end
             elseif (op == /) && node.lef.ari == -1
                 potential && return true
-                copy_node_wo_copy!(node, node.lef)
+                if rand() < prob
+                    copy_node_wo_copy!(node, node.lef)
+                end
             end
         elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
             if op == * # 1.0 * x -> x
                 potential && return true
-                copy_node_wo_copy!(node, node_1)
+                if rand() < prob
+                    copy_node_wo_copy!(node, node_1)
+                end
             elseif node.rig.ari == -1 && op == / # x / 1.0 -> x
-                copy_node_wo_copy!(node, node_1)
+                if rand() < prob
+                    copy_node_wo_copy!(node, node_1)
+                end
                 potential && return true
             elseif (op == ^) && node.rig.ari == -1
                 potential && return true
-                copy_node_wo_copy!(node, node.lef)
+                if rand() < prob
+                    copy_node_wo_copy!(node, node.lef)
+                end
             end
         elseif (op == /) && node.rig.ari == -1 && abs(1 / node_1_param.val) < threshold
             potential && return true
             node_1_param.val = 0.0
-            copy_node_wo_copy!(node, node_1_param)
+            if rand() < prob
+                copy_node_wo_copy!(node, node_1_param)
+            end
         end
     end
     return pot || false
