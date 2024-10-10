@@ -69,7 +69,7 @@ ops, data                          =  Options(
         #     "+"                  => 1.0, "-"   => 1.5,
         #     "*"                  => 2.0, "/"   => 2.5, "^"   => 3.0,
         #     "exp"                => 2.0, "log" => 2.0, "sin" => 2.0, "cos" => 2.0,
-        # )
+        # ),
     ),
     fitting                        =  fitting_params(
         max_iter                   =  15,
