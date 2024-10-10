@@ -1,28 +1,25 @@
 
 mutable struct Individual   #{T}
     node::Node
+    age::Float64
+    valid::Bool
 
+    # complexity measures
     compl::Float64
     weighted_compl::Float64
     recursive_compl::Float64
-    age::Float64
-
     n_params::Float64
 
-    ms_processed_e::Float64 # T
-
-    mae::Float64            # T
-    mse::Float64            # T
-    max_ae::Float64         # T
-
-    minus_r2::Float64       # T
+    # fit measures -> how to split in train and test
+    ms_processed_e::Float64           # T
+    mae::Float64                      # T
+    mse::Float64                      # T
+    max_ae::Float64                   # T
+    minus_r2::Float64                 # T
     minus_abs_spearman::Float64       # T
-
-    mare::Float64           # T
-    q75_are::Float64        # T
-    max_are::Float64        # T
-
-    valid::Bool
+    mare::Float64                     # T
+    q75_are::Float64                  # T
+    max_are::Float64                  # T
 
     Individual() = new()
 
