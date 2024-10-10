@@ -44,7 +44,7 @@ function generational_loop(
     @async listen_for_input(input_channel)
 
 # ==================================================================================================
-# misc 
+# misc
 # ==================================================================================================
     null_node = Node(0.0)
 
@@ -321,16 +321,11 @@ function generational_loop(
 # island extinction
 # ==================================================================================================
         if gen % ops.general.island_extinction_interval == 0
-            # emmigrate_island = rand(1:ops.general.num_islands)                                                    # -> random extinction
-            emmigrate_island = mod1(div(Int(gen), ops.general.island_extinction_interval), ops.general.num_islands) # -> rotating extinction
+            emmigrate_island = rand(1:ops.general.num_islands)
 
-            # # both directions, decreasing with distance
-            # offsets = -trunc(Int64, 0.5 * ops.general.num_islands):trunc(Int64, 0.5 * ops.general.num_islands)
-            # offsets = filter(!=(0), offsets)
-            # probs   = 1 ./ abs.(offsets)
-
-            # only forward, decreasing with distance
-            offsets = 1:trunc(Int64, 0.75 * ops.general.num_islands)
+            # both directions, decreasing with distance
+            offsets = -trunc(Int64, 0.5 * ops.general.num_islands):trunc(Int64, 0.5 * ops.general.num_islands)
+            offsets = filter(!=(0), offsets)
             probs   = 1 ./ abs.(offsets)
 
             while !isempty(population[emmigrate_island])
@@ -414,8 +409,8 @@ end
 """
     listen_for_input(input_channel::Channel)
 
-Listens for user input in a blocking fashion and sends the input to the given channel. 
-This function runs asynchronously and continuously reads from `stdin`. If the input 
+Listens for user input in a blocking fashion and sends the input to the given channel.
+This function runs asynchronously and continuously reads from `stdin`. If the input
 ":q" is detected, it will send the input to the channel and terminate the listener.
 
 ### Arguments
@@ -427,7 +422,7 @@ This function runs asynchronously and continuously reads from `stdin`. If the in
 - If the user types ":q", the function stops, indicating the program should terminate.
 
 ### Source
-Generated using OpenAI's ChatGPT. 
+Generated using OpenAI's ChatGPT.
 """
 function listen_for_input(input_channel::Channel)
     while true

@@ -128,7 +128,7 @@ function div_to_mul_param!(node, ops) # TODO: test
 end
 
 function apply_simple_simplifications!(node, ops)
-    str1 = node_to_string(node, ops) # TODO: avoid going through strings -> return Bool from simplify
+    str1 = node_to_string(node, ops) # TODO: avoid going through strings -> return Bool from simplifes
     while true
         simplify_unary_of_param!(node)
         simplify_binary_of_param!(node)
