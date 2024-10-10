@@ -11,7 +11,7 @@ grow_equation(
 function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, method)::Node
     if rem_depth <= 1 || (method == :asym && rand() < 0.3^rem_depth)
 
-        if rand() < (3 / (ops.data_descript.n_vars + 3))       # parameter 3x likely
+        if rand() < (2 / (ops.data_descript.n_vars + 2))
             next_node = Node(rand())                           # parameter
         else
             next_node = Node(rand(1:ops.data_descript.n_vars)) # variable
