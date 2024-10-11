@@ -95,6 +95,7 @@ function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
 
     # create the split inds according to specified
     eachind = collect(1:size(data, 1))
+    shuffle!(eachind)
 
     start_inds = cumsum([ceil(Int64, size(data, 1) * p) for p in parts])
     pushfirst!(start_inds, 0)
