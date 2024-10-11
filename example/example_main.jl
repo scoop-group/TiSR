@@ -38,9 +38,6 @@ data_matr[:, end] .= @. (
                        )^0.5
                      )
 
-
-split_inds = [collect(1:10), collect(10:100)]
-
 # ==================================================================================================
 # options -> specify some custom settings, where the default setting is unsatisfactory
 # ==================================================================================================
@@ -50,12 +47,9 @@ pow2(x) = x^2
 ops, data                          = Options(
     data_matr,
     data_split                     = data_split_params(
-        # parts                      = [0.5, 0.5],
-        split_inds                 = split_inds,
+        parts                      = [0.7, 0.3],
     ),
-    p_binops                       = (1.0, 1.0, 1.0, 1.0, 1.0),#0.0,
     binops                         = (+,   -,   *,   /,   pow),#^,
-    p_unaops                       = (1.0, 1.0, 0.0, 0.0, 1.0,  1.0),
     unaops                         = (exp, log, sin, cos, pow2, sqrt),
     general                        = general_params(
         n_gens                     = typemax(Int64),
@@ -74,7 +68,7 @@ ops, data                          = Options(
     ),
     fitting                        = fitting_params(
         max_iter                   = 10,
-        # early_stop_iter          = 5,
+        early_stop_iter          = 5,
         # lasso_factor             = 1e-3,
     ),
     # mutation                     = mutation_params(;

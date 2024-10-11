@@ -5,9 +5,7 @@ pow_abs(x, y) = abs(x)^y
 data = rand(100, 5)
 ops, data_vect = Options(
     data,
-    p_binops                           = (1.0, 1.0, 1.0, 1.0, 1.0, 0.0),
-    binops                             = (+,   -,   *,   /,   ^,   pow_abs),
-    p_unaops                           = (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+    binops                             = (+,   -,   *,   /,   ^),
     unaops                             = (exp, log, sin, cos, abs, pow2, sqrt),
 )
 
@@ -163,9 +161,7 @@ end
 data = rand(100, 5)
 ops, data_vect = Options(
     data,
-    p_binops = (1.0, 1.0, 1.0, 1.0, 1.0, 0.0),
-    binops   = (+,   -,   *,   /,   ^,   pow_abs),
-    p_unaops = (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+    binops   = (+,   -,   *,   /,   ^,),
     unaops   = (exp, log, sin, cos, abs, pow2, sqrt),
 )
 

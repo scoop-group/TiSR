@@ -4,12 +4,11 @@
     There are also some safeguards, preventing certain settings combinations or warn the user,
     which may not cover all cases.
 """
-struct Options{A, B, C, D, E, F, G, H, I, J}
+struct Options{A, B, C, F, G, H, I, J}
     general::A
     unaops::B
     binops::C
-    p_unaops::D
-    p_binops::E
+
     selection::F
     fitting::G
     mutation::H
@@ -21,9 +20,7 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
         fit_weights   = 1 ./ data[:, end],
         data_split    = data_split_params(),
         general       = general_params(),
-        p_unaops      = (1.0, 1.0, 1.0, 1.0, 1.0),
         unaops        = (exp, log, sin, cos, abs),
-        p_binops      = (1.0, 1.0, 1.0, 1.0, 1.0),
         binops        = (+,   -,   *,   /,   ^  ),
         selection     = selection_params(),
         fitting       = fitting_params(),
@@ -46,9 +43,6 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
         :^ in Symbol.(binops) && @warn   "^ is only valid for positive bases. Otherwise provide a pow(abs(x), y) function with its own drawbacks."
 
         #-------------------------------------------------------------------------------------------
-        @assert length(unaops) == length(p_unaops) "unaops tuple and its wights must be the same length"
-        @assert length(binops) == length(p_binops) "binops tuple and its wights must be the same length"
-
         if fitting.early_stop_iter != 0
             @assert length(data_descript.split_inds) > 1 "Data split required for early stopping"
         end
@@ -65,8 +59,6 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
         return new{typeof(general),
                    typeof(unaops),
                    typeof(binops),
-                   typeof(p_unaops),
-                   typeof(p_binops),
                    typeof(selection),
                    typeof(fitting),
                    typeof(mutation),
@@ -75,8 +67,6 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
                        general,
                        unaops,
                        binops,
-                       p_unaops,
-                       p_binops,
                        selection,
                        fitting,
                        mutation,

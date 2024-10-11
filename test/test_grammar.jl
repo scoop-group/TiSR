@@ -5,10 +5,8 @@
     data = rand(100, 10)
     ops, data_vect = Options(
         data,
-        binops   = (+, -, *, /),
-        p_binops = (0.0, 0.0, 1.0, 1.0),
+        binops   = (*, /),
         unaops   = (),
-        p_unaops = ()
     )
 
     for _ in 1:1000

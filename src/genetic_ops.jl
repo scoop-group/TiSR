@@ -4,7 +4,7 @@
 """
 grow_equation(
     rem_depth::Int, ops::Options;
-    unaweights = ops.p_unaops, binweights = ops.p_binops,
+    unaweights = ones(length(ops.unaops)), binweights = ones(length(ops.binops)),
     method = :asym
 )::Node = grow_equation_(rem_depth, ops, unaweights, binweights, method)
 
@@ -192,10 +192,10 @@ function point_mutation!(node, ops)
     node_elect = random_node(node, mode=0)
 
     if node_elect.ari == 2
-        node_elect.ind = wsample(1:length(ops.binops), collect(ops.p_binops)) # TODO: unnecessary collect
+        node_elect.ind = rand(1:length(ops.binops))
 
     elseif node_elect.ari == 1
-        node_elect.ind = wsample(1:length(ops.unaops), collect(ops.p_unaops)) # TODO: unnecessary collect
+        node_elect.ind = rand(1:length(ops.unaops))
 
     elseif node_elect.ari == 0
         node_elect.ind = rand(1:ops.data_descript.n_vars)
