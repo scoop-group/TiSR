@@ -157,7 +157,6 @@ function general_params(;
     num_islands                   = 10,
     migration_interval            = 100,
     island_extinction_interval    = 1000,
-    population_shuffle_interval   = typemax(Int64),
     always_drastic_simplify       = 1e-8,
     remove_doubles_sigdigits      = 3,
     remove_doubles_across_islands = false,
@@ -173,7 +172,6 @@ function general_params(;
     @assert always_drastic_simplify >= 0    "always_drastic_simplify must be >= 0     "
     @assert adaptive_compl_increment > 0    "adaptive_compl_increment must be larger 0"
     @assert callback isa Function           "callback must be a function              "
-    @assert population_shuffle_interval > 0 "population_shuffle_interval must be > 0  "
     @assert island_extinction_interval > 0  "island_extinction_interval must be > 0   "
 
     if print_hall_of_fame
@@ -184,7 +182,6 @@ function general_params(;
     remove_doubles_sigdigits < 6      || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
     always_drastic_simplify < 1e-3    || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4      || @warn "adaptive_compl_increment should be >= 5                         "
-    population_shuffle_interval > 500 || @warn "population_shuffle_interval seems small                         "
     island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          " 
 
     island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
@@ -202,7 +199,6 @@ function general_params(;
         pop_per_isle                  = pop_per_isle,
         num_islands                   = num_islands,
         migration_interval            = migration_interval,
-        population_shuffle_interval   = population_shuffle_interval,
         island_extinction_interval    = island_extinction_interval,
         always_drastic_simplify       = always_drastic_simplify,
         remove_doubles_sigdigits      = remove_doubles_sigdigits,

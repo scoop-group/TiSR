@@ -309,15 +309,6 @@ function generational_loop(
         end
 
 # ==================================================================================================
-# population shuffle
-# ==================================================================================================
-        if gen % ops.general.population_shuffle_interval == 0
-            population = reduce(vcat, population)
-            shuffle!(population)
-            population = split_list(population, ceil(Int, length(population) / ops.general.num_islands))
-        end
-
-# ==================================================================================================
 # island extinction
 # ==================================================================================================
         if gen % ops.general.island_extinction_interval == 0
