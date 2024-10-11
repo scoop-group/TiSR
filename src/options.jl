@@ -1,7 +1,4 @@
 
-# ==================================================================================================
-# Options struct
-# ==================================================================================================
 """ The Options struct contains all settings. For most of its fields, there are functions with
     default arguments to make sure all fields are filled and potentially adapted to make sense.
     There are also some safeguards, preventing certain settings combinations or warn the user,
@@ -21,71 +18,43 @@ struct Options{A, B, C, D, E, F, G, H, I, J}
 
     function Options(
         data::Matrix;
-        fit_weights::Vector   = 1 ./ data[:, end],
-        parts::Vector         = [1.0],
-        general               = general_params(),
-        p_unaops              = (1.0, 1.0, 1.0, 1.0, 1.0),
-        unaops                = (exp, log, sin, cos, abs),
-        p_binops              = (1.0, 1.0, 1.0, 1.0, 1.0),
-        binops                = (+,   -,   *,   /,   ^  ),
-        selection             = selection_params(),
-        fitting               = fitting_params(),
-        mutation              = mutation_params(),
-        grammar               = grammar_params(),
+        fit_weights   = 1 ./ data[:, end],
+        data_split    = data_split_params(),
+        general       = general_params(),
+        p_unaops      = (1.0, 1.0, 1.0, 1.0, 1.0),
+        unaops        = (exp, log, sin, cos, abs),
+        p_binops      = (1.0, 1.0, 1.0, 1.0, 1.0),
+        binops        = (+,   -,   *,   /,   ^  ),
+        selection     = selection_params(),
+        fitting       = fitting_params(),
+        mutation      = mutation_params(),
+        grammar       = grammar_params(),
     )
-        # convert to vectors of vectors
-        data_vect = [data[:, i] for i in 1:size(data, 2)]
+        # prepare data and its params --------------------------------------------------------------
+        data_vect, data_descript = prepare_data(data, fit_weights)
 
-        # prepare data # ---------------------------------------------------------------------------
-        @assert eltype(data) <: AbstractFloat "data must be float type "
-        @assert size(data, 2) > 1             "data has only one column"
-        !any(length(unique(d)) == 1 for d in data_vect) || @warn "data containts rows, which are constant"
+        split_inds = _data_split_params(data, data_split...)
+        data_descript = (data_descript..., split_inds = split_inds)
 
-        @assert length(fit_weights) == size(data, 1) "fit_weights seems to have too many or to few entries"
-        @assert all(fit_weights .>= 0.0)             "fit_weights must be larger than 0"
-
-        # data splitting # -------------------------------------------------------------------------
-        @assert length(parts) > 0  "parts must have at least one float entry"
-        @assert sum(parts) == 1.0  "sum of the parts should be 1.0"
-        @assert all(parts .>= 0)   "data split parts have to be >= 0"
-        length(parts) < 3 || @warn "only two of the data split parts are used, while all data is used to calculate the final measures" # TODO: use 3rd place to calculate test measures
-
-        # split inds # -----------------------------------------------------------------------------
-        eachind = collect(1:size(data, 1))
-        shuffle!(eachind) # TODO: don't shuffle if not needed?
-
-        start_inds = cumsum([ceil(Int64, size(data_vect, 1) * p) for p in parts])
-        pushfirst!(start_inds, 1)
-        split_inds = [eachind[start_inds[i]:start_inds[i+1]] for i in 1:length(parts)]
-
-        data_descript = (
-            data_type             = eltype(data_vect[1]),
-            n_vars                = length(data_vect) - 1,
-            n_points              = length(data_vect[1]),
-            split_inds            = split_inds,
-            fit_weights           = fit_weights,
-        )
-
-        @assert data_descript.n_vars <= 128 "TiSR cannot handle more than 128 variables out of the box"
+        # ------------------------------------------------------------------------------------------
         @assert length(unaops) <= 128       "TiSR cannot handle more than 128 functions in the unaops out of the box"
         @assert length(binops) <= 128       "TiSR cannot handle more than 128 functions in the binops out of the box"
 
         # function set asserts ---------------------------------------------------------------------
         @assert ("+" in string.(binops)) "+ is required in the function set for some mutations to work"
         @assert ("*" in string.(binops)) "* is required in the function set for some mutations to work"
+        :^ in Symbol.(binops) && @warn   "^ is only valid for positive bases. Otherwise provide a pow(abs(x), y) function with its own drawbacks."
 
         #-------------------------------------------------------------------------------------------
         @assert length(unaops) == length(p_unaops) "unaops tuple and its wights must be the same length"
         @assert length(binops) == length(p_binops) "binops tuple and its wights must be the same length"
-
-        :^ in Symbol.(binops) && @warn "^ is only valid for positive bases. Otherwise provide a pow(abs(x), y) function with its own drawbacks."
 
         if fitting.early_stop_iter != 0
             @assert length(data_descript.split_inds) > 1 "Data split required for early stopping"
         end
 
         # relative reference offset
-        any(abs(d) < 0.1 for d in data[end]) && @warn "some target data < 0.1 -> 0.1 is used as lower bound for the relative measures like mare"
+        any(abs(d) < 0.1 for d in data[end]) && @warn "some target data < 0.1 -> 0.1 is used as lower bound for the relative measures like mare" # TODO: maybe lower to 1e-5?
 
         # resulting parameters
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
@@ -120,6 +89,63 @@ end
 # ==================================================================================================
 # User facing function with default parameters, precalculatons, and checks
 # ==================================================================================================
+""" Function to specify either parts for data splitting or split_inds directy.
+"""
+data_split_params(;parts=nothing, split_inds=nothing) = (parts, split_inds)
+_data_split_params(data, parts::Nothing, split_inds::Nothing) = [collect(1:size(data, 1))]
+_data_split_params(data, parts, split_inds) = throw("parts and split_inds cannot both be specified")
+
+function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
+
+    # parts assertions
+    @assert length(parts) > 0  "parts must have at least one float entry"
+    @assert sum(parts) == 1.0  "sum of the parts should be 1.0"
+    @assert all(parts .>= 0)   "data split parts have to be >= 0"
+    length(parts) < 4 || @warn "only two of the data split parts are used, while all data is used to calculate the final measures" # TODO: use 3rd place to calculate test measures
+
+    # create the split inds according to specified
+    eachind = collect(1:size(data, 1))
+
+    start_inds = cumsum([ceil(Int64, size(data, 1) * p) for p in parts])
+    pushfirst!(start_inds, 0)
+
+    split_inds = [eachind[start_inds[i]+1:start_inds[i+1]] for i in 1:length(parts)]
+
+    return _data_split_params(data, nothing, split_inds)
+end
+
+function _data_split_params(data, parts::Nothing, split_inds::Vector{Vector{Int64}})
+
+    # split_inds assertions
+    eachind = reduce(vcat, split_inds)
+
+    allunique(eachind)                       || @warn "in split_inds, some data rows are part of different splits"
+    length(unique(eachind)) == size(data, 1) || @warn "some rows in data are not part of any split"
+
+    return split_inds
+end
+
+
+function prepare_data(data, fit_weights)
+    data_vect = [data[:, i] for i in 1:size(data, 2)]
+
+    # prepare data # ---------------------------------------------------------------------------
+    @assert eltype(data) <: AbstractFloat "data must be float type "
+    @assert size(data, 2) > 1             "data has only one column"
+    @assert size(data, 2) <= 128 + 1      "TiSR cannot handle more than 128 variables out of the box"
+    !any(length(unique(d)) == 1 for d in data_vect) || @warn "data containts columns, which are constant"
+
+    @assert length(fit_weights) == size(data, 1) "fit_weights seems to have too many or to few entries"
+    @assert all(fit_weights .>= 0.0)             "fit_weights must be larger than 0"
+
+    return data_vect, (
+        data_type   = eltype(data_vect[1]),
+        n_vars      = length(data_vect) - 1,
+        n_points    = length(data_vect[1]),
+        fit_weights = fit_weights,
+    )
+end
+
 """ Returns a NamedTuple of the general parameters to be appeded to the Options.
     The default parameters can be adapted according the requirements. Some resulting
     parameters are also calculated and included.
