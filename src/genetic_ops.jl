@@ -172,23 +172,19 @@ function mutate_left(node, min_depth)
     else
         @assert false
     end
-
-    # (node.ari == 1
-    #  ||
-    #  (node.ari == 2 &&
-    #   (!(maxim_tree_depth(node.rig, minim=min_depth + 2) >= min_depth))
-    #   ||
-    #   (rand(Bool) && maxim_tree_depth(node.lef, minim=min_depth + 2) >= min_depth)
-    # )
-    # )
 end
 
 # ==================================================================================================
 # genetic operations
 # ==================================================================================================
+""" Entrace switch for the two point mutations.
+"""
+point_mutation!(node, ops) = rand(Bool) ? point_mutation1!(node, ops) : point_mutation2!(node, ops)
+
+
 """ Changes one node to another without modifying the structure of the node.
 """
-function point_mutation!(node, ops)
+function point_mutation1!(node, ops)
     node_elect = random_node(node, mode=0)
 
     if node_elect.ari == 2
@@ -202,6 +198,33 @@ function point_mutation!(node, ops)
 
     elseif node_elect.ari == -1
         node_elect.val *= rand_mult(;minn=0.5, maxx=2.0)
+    end
+end
+
+""" Changes arity 2 to 1 and vv, as well as arity 0 to -1 and vv.
+"""
+function point_mutation2!(node, ops)
+    node_elect = random_node(node, mode=0)
+
+    if node_elect.ari == 2
+        node_elect.ari = 1
+        node_elect.ind = rand(1:length(ops.unaops))
+        if rand(Bool)
+            node_elect.lef = copy(node_elect.rig)
+        end
+
+    elseif node_elect.ari == 1
+        node_elect.ari = 2
+        node_elect.ind = rand(1:length(ops.binops))
+        node_elect.rig = grow_equation(2, ops, method = :asym)
+
+    elseif node_elect.ari == 0
+        node_elect.ari = -1
+        node_elect.val = rand()
+
+    elseif node_elect.ari == -1
+        node_elect.ari = 0
+        node_elect.ind = rand(1:ops.data_descript.n_vars)
     end
 end
 
