@@ -329,7 +329,7 @@ function generational_loop(
             # both directions, decreasing with distance
             offsets = -trunc(Int64, 0.5 * ops.general.num_islands):trunc(Int64, 0.5 * ops.general.num_islands)
             offsets = filter(!=(0), offsets)
-            probs   = 1 ./ abs.(offsets)
+            probs   = (1 ./ abs.(offsets)).^2
 
             while !isempty(population[emmigrate_island])
                 immigrate_island = mod1(emmigrate_island + wsample(offsets, probs), ops.general.num_islands)
