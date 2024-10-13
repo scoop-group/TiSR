@@ -17,7 +17,7 @@ struct Options{A, B, C, F, G, H, I, J}
 
     function Options(
         data::Matrix;
-        fit_weights   = 1 ./ data[:, end],
+        fit_weights   = abs.(1 ./ data[:, end]),
         data_split    = data_split_params(),
         general       = general_params(),
         unaops        = (exp, log, sin, cos, abs),
@@ -45,6 +45,11 @@ struct Options{A, B, C, F, G, H, I, J}
         #-------------------------------------------------------------------------------------------
         if fitting.early_stop_iter != 0
             @assert length(data_descript.split_inds) > 1 "Data split required for early stopping"
+        end
+
+        if !isempty(grammar.weighted_compl_dict) && 
+            :weighted_compl in selection.selection_objectives    || @warn "weighted_compl_dict specified, but :weighted_compl not in selection_objectives"
+            :weighted_compl in selection.hall_of_fame_objectives || @warn "weighted_compl_dict specified, but :weighted_compl not in hall_of_fame_objectives"
         end
 
         # relative reference offset
