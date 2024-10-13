@@ -47,7 +47,7 @@ struct Options{A, B, C, F, G, H, I, J}
             @assert length(data_descript.split_inds) > 1 "Data split required for early stopping"
         end
 
-        if !isempty(grammar.weighted_compl_dict) && 
+        if !isempty(grammar.weighted_compl_dict)
             :weighted_compl in selection.selection_objectives    || @warn "weighted_compl_dict specified, but :weighted_compl not in selection_objectives"
             :weighted_compl in selection.hall_of_fame_objectives || @warn "weighted_compl_dict specified, but :weighted_compl not in hall_of_fame_objectives"
         end
