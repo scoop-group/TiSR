@@ -47,23 +47,18 @@ pow2(x) = x^2
 ops, data                          = Options(
     data_matr,
     data_split                     = data_split_params(
-        parts                    = [0.8, 0.2],
+        # parts                    = [0.8, 0.2],
     ),
     binops                         = (+,   -,   *,   /,   pow),#^,
     unaops                         = (exp, log, pow2, sqrt),
     general                        = general_params(
         n_gens                     = typemax(Int64),
-        pop_size                   = 600,
-        num_islands                = 12,
         t_lim                      = 60 * 60.0,
         multithreading             = true,
-        migration_interval         = 200, # TODO: now higher?
-        island_extinction_interval = 2000,
-        fitting_island_function    = isle -> floor(isle / 3) % 2 == 0,
     ),
     selection                      = selection_params(
         hall_of_fame_objectives    = [:ms_processed_e, :compl],
-        selection_objectives       = [:ms_processed_e, :minus_abs_spearman, :compl],#, :age],
+        selection_objectives       = [:ms_processed_e, :minus_abs_spearman, :compl],
     ),
     grammar                        = grammar_params(
         max_compl                  = 30,
@@ -73,17 +68,6 @@ ops, data                          = Options(
         lasso_factor               = 0.0,
         # early_stop_iter          = 5,
     ),
-    mutation                       = mutation_params(;
-        p_crossover                = 10.0,
-        p_point                    = 1.0,
-        p_insert                   = 1.0,
-        p_hoist                    = 1.0,
-        p_subtree                  = 0.5,
-        p_drastic_simplify         = 0.1,
-        p_insert_times_param       = 0.1,
-        p_add_term                 = 0.1,
-        p_simplify                 = 0.1,
-    )
 );
 
 # ==================================================================================================

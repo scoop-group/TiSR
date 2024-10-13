@@ -144,11 +144,11 @@ end
 function general_params(;
     n_gens                          = typemax(Int64),
     t_lim                           = 60. * 5.,
-    pop_size                        = 500,
-    num_islands                     = 10,
-    migration_interval              = 100,
+    pop_size                        = 600,
+    num_islands                     = 12,
+    migration_interval              = 200,
     hall_of_fame_migration_interval = 1000,
-    island_extinction_interval      = 1000,
+    island_extinction_interval      = 2000,
     fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,
     always_drastic_simplify         = 1e-8,
     remove_doubles_sigdigits        = 3,
@@ -161,10 +161,6 @@ function general_params(;
     plot_hall_of_fame               = true,
     print_hall_of_fame              = true,
 )
-    # if isnothing(max_age)
-    #     max_age                   = pop_size / num_islands
-    # end
-
     @assert num_islands > 0                     "num_islands should be at least 1                "
     @assert migration_interval > 0              "migration_interval should be at least 1         "
     @assert always_drastic_simplify >= 0        "always_drastic_simplify must be >= 0            "
@@ -245,7 +241,7 @@ function selection_params(;
 end
 
 function fitting_params(;
-    max_iter                 = 15,
+    max_iter                 = 10,
     early_stop_iter          = 0,
     t_lim                    = Inf,
     rel_f_tol_5_iter         = 1e-2 * 0.01,
@@ -322,11 +318,11 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;
-    p_crossover          = 5.0,
-    p_point              = 0.5,
-    p_insert             = 0.2,
-    p_hoist              = 0.2,
-    p_subtree            = 0.2,
+    p_crossover          = 10.0,
+    p_point              = 1.0,
+    p_insert             = 1.0,
+    p_hoist              = 1.0,
+    p_subtree            = 0.5,
     p_drastic_simplify   = 0.1,
     p_insert_times_param = 0.1,
     p_add_term           = 0.1,
@@ -348,4 +344,3 @@ function mutation_params(;
 
     return cumsum(mut_params ./ sum(mut_params)) # TODO: change to do that where its needed
 end
-
