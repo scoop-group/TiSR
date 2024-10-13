@@ -152,16 +152,16 @@ function general_params(;
     pop_size                        = 600,
     num_islands                     = 12,
     migration_interval              = 200,
-    hall_of_fame_migration_interval = 1000,
     island_extinction_interval      = 2000,
     fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,
+    hall_of_fame_migration_interval = 1000,
     always_drastic_simplify         = 1e-8,
     remove_doubles_sigdigits        = 3,
     remove_doubles_across_islands   = false,
     max_age                         = pop_size / num_islands,
-    multithreading                  = false,
     adaptive_compl_increment        = Inf,
     callback                        = (hall_of_fame, population, ops) -> false,
+    multithreading                  = false,
     print_progress                  = true,
     plot_hall_of_fame               = true,
     print_hall_of_fame              = true,
@@ -277,12 +277,12 @@ end
 """ Returns the equation grammar related parameters.
 """
 function grammar_params(;
-    illegal_dict        = Dict(),
-    weighted_compl_dict = Dict{String, Float64}(),
     max_compl           = 30,
     min_compl           = 3,
-    max_nodes_per_term  = Inf,
     init_tree_depth     = 4,
+    max_nodes_per_term  = Inf,
+    illegal_dict        = Dict(),
+    weighted_compl_dict = Dict{String, Float64}(),
 )
     @assert max_compl > 3             "max_compl must be larger than 3          "
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
