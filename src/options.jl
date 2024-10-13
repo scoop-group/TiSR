@@ -142,28 +142,37 @@ end
     parameters are also calculated and included.
 """
 function general_params(;
-    n_gens                        = typemax(Int64),
-    t_lim                         = 60. * 5.,
-    pop_size                      = 500,
-    num_islands                   = 10,
-    migration_interval            = 100,
-    island_extinction_interval    = 1000,
-    always_drastic_simplify       = 1e-8,
-    remove_doubles_sigdigits      = 3,
-    remove_doubles_across_islands = false,
-    multithreading                = false,
-    adaptive_compl_increment      = Inf,
-    callback                      = (hall_of_fame, population, ops) -> false,
-    print_progress                = true,
-    plot_hall_of_fame             = true,
-    print_hall_of_fame            = true,
+    n_gens                          = typemax(Int64),
+    t_lim                           = 60. * 5.,
+    pop_size                        = 500,
+    num_islands                     = 10,
+    migration_interval              = 100,
+    hall_of_fame_migration_interval = 1000,
+    island_extinction_interval      = 1000,
+    fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,
+    always_drastic_simplify         = 1e-8,
+    remove_doubles_sigdigits        = 3,
+    remove_doubles_across_islands   = false,
+    max_age                         = pop_size / num_islands,
+    multithreading                  = false,
+    adaptive_compl_increment        = Inf,
+    callback                        = (hall_of_fame, population, ops) -> false,
+    print_progress                  = true,
+    plot_hall_of_fame               = true,
+    print_hall_of_fame              = true,
 )
-    @assert num_islands > 0                 "num_islands should be at least 1         "
-    @assert migration_interval > 0          "migration_interval should be at least 1  "
-    @assert always_drastic_simplify >= 0    "always_drastic_simplify must be >= 0     "
-    @assert adaptive_compl_increment > 0    "adaptive_compl_increment must be larger 0"
-    @assert callback isa Function           "callback must be a function              "
-    @assert island_extinction_interval > 0  "island_extinction_interval must be > 0   "
+    # if isnothing(max_age)
+    #     max_age                   = pop_size / num_islands
+    # end
+
+    @assert num_islands > 0                     "num_islands should be at least 1                "
+    @assert migration_interval > 0              "migration_interval should be at least 1         "
+    @assert always_drastic_simplify >= 0        "always_drastic_simplify must be >= 0            "
+    @assert adaptive_compl_increment > 0        "adaptive_compl_increment must be larger 0       "
+    @assert callback isa Function               "callback must be a function                     "
+    @assert island_extinction_interval > 0      "island_extinction_interval must be > 0          "
+    @assert max_age > 1                         "max_age must be > 1                             "
+    @assert hall_of_fame_migration_interval > 0 "hall_of_fame_migration_interval must be larger 0"
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -174,6 +183,7 @@ function general_params(;
     always_drastic_simplify < 1e-3    || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4      || @warn "adaptive_compl_increment should be >= 5                         "
     island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          " 
+    max_age > 10                      || @warn "max_age seems small                                             "
 
     island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
 
@@ -185,22 +195,25 @@ function general_params(;
     pop_per_isle = ceil(Int64, pop_size / num_islands)
 
     return (
-        n_gens                        = n_gens,
-        pop_size                      = pop_size,
-        pop_per_isle                  = pop_per_isle,
-        num_islands                   = num_islands,
-        migration_interval            = migration_interval,
-        island_extinction_interval    = island_extinction_interval,
-        always_drastic_simplify       = always_drastic_simplify,
-        remove_doubles_sigdigits      = remove_doubles_sigdigits,
-        remove_doubles_across_islands = remove_doubles_across_islands,
-        t_lim                         = t_lim,
-        multithreading                = multithreading,
-        adaptive_compl_increment      = adaptive_compl_increment,
-        callback                      = callback,
-        print_progress                = print_progress,
-        plot_hall_of_fame             = plot_hall_of_fame,
-        print_hall_of_fame            = print_hall_of_fame,
+        n_gens                          = n_gens,
+        pop_size                        = pop_size,
+        pop_per_isle                    = pop_per_isle,
+        num_islands                     = num_islands,
+        migration_interval              = migration_interval,
+        hall_of_fame_migration_interval = hall_of_fame_migration_interval,
+        island_extinction_interval      = island_extinction_interval,
+        fitting_island_function         = fitting_island_function,
+        always_drastic_simplify         = always_drastic_simplify,
+        remove_doubles_sigdigits        = remove_doubles_sigdigits,
+        remove_doubles_across_islands   = remove_doubles_across_islands,
+        max_age                         = max_age,
+        t_lim                           = t_lim,
+        multithreading                  = multithreading,
+        adaptive_compl_increment        = adaptive_compl_increment,
+        callback                        = callback,
+        print_progress                  = print_progress,
+        plot_hall_of_fame               = plot_hall_of_fame,
+        print_hall_of_fame              = print_hall_of_fame,
     )
 end
 

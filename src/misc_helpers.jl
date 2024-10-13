@@ -34,4 +34,3 @@ function round_equation_string(expr::Expr; sigdigits=3)
     map!(s -> round_equation_string(s, sigdigits=sigdigits), expr.args, expr.args)
     expr
 end
-

@@ -23,7 +23,7 @@ mutable struct Individual   #{T}
 
     Individual() = new()
 
-    function Individual(node, data, ops, cur_max_compl)
+    function Individual(node, data, ops, cur_max_compl, fit_iter)
 
         apply_simple_simplifications!(node, ops)
 
@@ -58,7 +58,7 @@ mutable struct Individual   #{T}
             return indiv
         end
 
-        fit_n_eval!(indiv, data, ops)
+        fit_n_eval!(indiv, data, ops, fit_iter)
 
         indiv.valid || return indiv
 

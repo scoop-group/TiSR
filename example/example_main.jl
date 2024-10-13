@@ -47,41 +47,43 @@ pow2(x) = x^2
 ops, data                          = Options(
     data_matr,
     data_split                     = data_split_params(
-        parts                      = [0.7, 0.3],
+        parts                    = [0.8, 0.2],
     ),
     binops                         = (+,   -,   *,   /,   pow),#^,
-    unaops                         = (exp, log, sin, cos, pow2, sqrt),
+    unaops                         = (exp, log, pow2, sqrt),
     general                        = general_params(
         n_gens                     = typemax(Int64),
-        t_lim                      = 60 * 10.0,
+        pop_size                   = 600,
+        num_islands                = 12,
+        t_lim                      = 60 * 60.0,
         multithreading             = true,
-        # remove_doubles_across_islands = true,
-        migration_interval         = 100,
-        island_extinction_interval = 1000,
+        migration_interval         = 200, # TODO: now higher?
+        island_extinction_interval = 2000,
+        fitting_island_function    = isle -> floor(isle / 3) % 2 == 0,
     ),
     selection                      = selection_params(
         hall_of_fame_objectives    = [:ms_processed_e, :compl],
-        selection_objectives       = [:ms_processed_e, :minus_abs_spearman, :compl, :age],
+        selection_objectives       = [:ms_processed_e, :minus_abs_spearman, :compl],#, :age],
     ),
     grammar                        = grammar_params(
         max_compl                  = 30,
     ),
     fitting                        = fitting_params(
         max_iter                   = 10,
-        early_stop_iter          = 5,
-        # lasso_factor             = 1e-3,
+        lasso_factor               = 0.0,
+        # early_stop_iter          = 5,
     ),
-    # mutation                     = mutation_params(;
-    #     p_crossover              = 5.0,
-    #     p_point                  = 0.5,
-    #     p_insert                 = 0.2,
-    #     p_hoist                  = 0.5,
-    #     p_subtree                = 0.2,
-    #     p_drastic_simplify       = 0.1,
-    #     p_insert_times_param     = 0.1,
-    #     p_add_term               = 0.1,
-    #     p_simplify               = 0.0,
-    # )
+    mutation                       = mutation_params(;
+        p_crossover                = 10.0,
+        p_point                    = 1.0,
+        p_insert                   = 1.0,
+        p_hoist                    = 1.0,
+        p_subtree                  = 0.5,
+        p_drastic_simplify         = 0.1,
+        p_insert_times_param       = 0.1,
+        p_add_term                 = 0.1,
+        p_simplify                 = 0.1,
+    )
 );
 
 # ==================================================================================================
@@ -130,12 +132,5 @@ save_to_fwf(hall_of_fame, ops)
 
 # save_to_csv(hall_of_fame, ops)
 # save_to_excel(hall_of_fame, population, prog_dict, ops)
-
-
-node = TiSR.string_to_node("log(1.0)", ops)
-
-
-
-length(ops.data_descript.split_inds[2])
 
 

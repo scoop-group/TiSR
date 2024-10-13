@@ -98,15 +98,21 @@ function generational_loop(
                 apply_genetic_operations!(new_nodes[isle], ops)
             end
 
+            if ops.general.fitting_island_function(isle)
+                fit_iter = ops.fitting.max_iter
+            else
+                fit_iter = 0
+            end
+
             # grow them up # -----------------------------------------------------------------------
             children[isle] = Array{Individual}(undef, length(new_nodes[isle]))
             if ops.general.multithreading
                 Threads.@threads :greedy for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl)
+                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
                 end
             else
                 for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl)
+                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
                 end
             end
 
@@ -121,8 +127,9 @@ function generational_loop(
         end # for isle in 1:ops.general.num_islands
 
 # ==================================================================================================
-# remove apperently same by rounded MAE and MSE
+# remove individuals
 # ==================================================================================================
+        # remove apperently same individuals by rounded MAE and MSE
         if ops.general.remove_doubles_sigdigits > 0
             if ops.general.remove_doubles_across_islands
                 remove_doubles_across_islands!(population, ops)
@@ -131,6 +138,11 @@ function generational_loop(
                     remove_doubles!(population[isle], ops)
                 end
             end
+        end
+
+        # remove individuals older than max_age
+        for isle in 1:ops.general.num_islands
+            filter!(i -> i.age <= ops.general.max_age, population[isle])
         end
 
 # ==================================================================================================
@@ -197,6 +209,13 @@ function generational_loop(
                     rand(1:length(population[emmigrate_island]))
                 )
             )
+        end
+
+        # hall of fame migration # -----------------------------------------------------------------
+        if gen % ops.general.hall_of_fame_migration_interval == 0
+            indiv = deepcopy(rand(hall_of_fame))
+            indiv.age = 0
+            push!(population[rand(1:ops.general.num_islands)], indiv)
         end
 
 # ==================================================================================================

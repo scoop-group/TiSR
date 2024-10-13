@@ -6,7 +6,7 @@
     the correspoinding functions are called, and the residual statistics calculated, if the
     fitting was successful (valid).
 """
-function fit_n_eval!(indiv, data, ops)
+function fit_n_eval!(indiv, data, ops, fit_iter)
     node = indiv.node
     list_of_param = list_of_param_nodes(node)
 
@@ -15,7 +15,7 @@ function fit_n_eval!(indiv, data, ops)
         return
     end
 
-    if ops.fitting.max_iter > 0 && length(list_of_param) > 0
+    if fit_iter > 0 && length(list_of_param) > 0
 
         if !iszero(ops.fitting.lasso_factor)
             max_iter_NW = 3
@@ -23,7 +23,7 @@ function fit_n_eval!(indiv, data, ops)
             max_iter_NW = 0
         end
 
-        max_iter_LM = ops.fitting.max_iter - max_iter_NW
+        max_iter_LM = fit_iter - max_iter_NW
 
         residual, valid = residual_after_fitting_LM(node, data, ops, list_of_param, max_iter_LM)
 
