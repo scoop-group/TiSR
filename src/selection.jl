@@ -100,3 +100,14 @@ function tournament_selection(fitness, inds; tournament_size=5, n_select=10, mod
     return selected
 end
 
+""" Calculate the relative fitness based on normalized objectives.
+"""
+function get_relative_fitness(indiv_obj_vals)
+    indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
+    indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
+    indiv_obj_vals ./= median(indiv_obj_vals, dims=1)
+    indiv_obj_vals  .= 1.0 ./ indiv_obj_vals
+    fitness          = sum(indiv_obj_vals, dims=2)
+end
+
+

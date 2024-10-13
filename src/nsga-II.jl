@@ -165,14 +165,7 @@ function generational_loop(
                 remaining_inds = setdiff(eachindex(population[isle]), selection_inds)
 
                 if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-
-                    # calculate fitness
-                    indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
-                    indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
-                    indiv_obj_vals ./= median(indiv_obj_vals, dims=1)
-                    indiv_obj_vals  .= 1.0 ./ indiv_obj_vals
-                    fitness          = sum(indiv_obj_vals, dims=2)
-
+                    fitness  = get_relative_fitness(indiv_obj_vals)
                     selected = tournament_selection(fitness, remaining_inds,
                         tournament_size = ops.selection.tournament_size,
                         n_select        = ops.general.pop_per_isle - length(selection_inds)
