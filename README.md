@@ -88,7 +88,7 @@ ops, data = Options(
         selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl], # -> objectives for the Pareto-optimal selection part of selection
         hall_of_fame_niching_sigdigits    = 2,                                              # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection. -> 2 ... 5
         population_niching_sigdigits      = 3,                                              # -> number of significant digits to round selection_objectives for population selection. -> 2 ... 5
-        ratio_pareto_tournament_selection = 0.7,                                            # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
+        ratio_pareto_tournament_selection = 0.5,                                            # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
         tournament_size                   = 5,                                              # -> tournament size
     ),
     fitting     = fitting_params(
