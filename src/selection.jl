@@ -106,7 +106,7 @@ function get_relative_fitness(indiv_obj_vals)
     indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
     indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
     indiv_obj_vals ./= median(indiv_obj_vals, dims=1)
-    indiv_obj_vals  .= 1.0 ./ indiv_obj_vals
+    indiv_obj_vals  .*= -1.0
     fitness          = sum(indiv_obj_vals, dims=2)
 end
 
