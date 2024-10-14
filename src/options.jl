@@ -223,7 +223,7 @@ function selection_params(;
     selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl],
     hall_of_fame_niching_sigdigits    = 2,
     population_niching_sigdigits      = 3,
-    ratio_pareto_tournament_selection = 0.7,
+    ratio_pareto_tournament_selection = 0.5,
     tournament_size                   = 5,
 )
     @assert tournament_size > 1                             "tournament size must be greater than 1"
