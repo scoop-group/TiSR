@@ -200,7 +200,7 @@ function generational_loop(
                 if ops.general.print_hall_of_fame
                     sort!(hall_of_fame, by=i->i.compl)
 
-                    inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=16)))
+                    inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
                     unique!(inds_to_show)
 
                     for (ii, i) in enumerate(inds_to_show)
