@@ -60,9 +60,12 @@ A brief explanation is provided for most settings as a comment.
 ops, data = Options(
     data_matr;                                  # -> nxm matrix containing the n data points, m-1 variables and the output
     fit_weights = abs.(1 ./ data_matr[:, end]), # -> weights for the data fitting -> residual .* weight
-    parts       = [1.0],                        # -> how to split the data. e.g. [1.0] -> (no split) or [0.8, 0.2]
     binops      = (+,   -,   *,   /,   ^  ),    # -> binary function set to choose from
     unaops      = (exp, log, sin, cos, abs),    # -> unary function set to choose from
+    data_split  = data_split_params(;
+        parts      = [1.0],                     # -> how the data should be splitted. The first part is used for fitting, the second is used for early stopping, while (currently) all are used to calculate the fit quality measures for selection. 
+        split_inds = nothing,                   # -> rather then splitting randomly automatically, the indices for each split can be specified in a Vector{Vector{Int64}}. If specified, parts cannot be specified.
+    ),
     general     = general_params(
         n_gens                          = typemax(Int64),                           # -> number of generations to conduct
         t_lim                           = 60. * 5.,                                 # -> time limit for the algorithm
