@@ -5,7 +5,7 @@ pow_abs(x, y) = abs(x)^y
 data = rand(100, 5)
 ops, data_vect = Options(
     data,
-    binops                             = (+,   -,   *,   /,   ^),
+    binops                             = (+,   -,   *,   /,   ^, pow_abs),
     unaops                             = (exp, log, sin, cos, abs, pow2, sqrt),
 )
 
@@ -195,7 +195,7 @@ ops, data_vect = Options(
     nodes = [TiSR.string_to_node(n, ops) for n in node_strs]
 
     for n in nodes
-        TiSR.drastic_simplify!(n, ops; threshold=1e-6, potential=false)
+        TiSR.drastic_simplify!(n, ops; threshold=1e-6, potential=false, prob=1.0)
     end
 
     simplified = [TiSR.node_to_string(n, ops) for n in nodes]

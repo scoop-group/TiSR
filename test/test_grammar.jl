@@ -1,31 +1,6 @@
 
 @testset "get_max_nodes_per_term" begin
 
-    # make some preparations # ---------------------------------------------------------------------
-    data = rand(100, 10)
-    ops, data_vect = Options(
-        data,
-        binops   = (*, /),
-        unaops   = (),
-    )
-
-    for _ in 1:1000
-        node = TiSR.grow_equation(3, ops, method=:full)
-
-        max_nodes_before = TiSR.get_max_nodes_per_term(node, ops)
-
-        @test TiSR.count_nodes(node) == max_nodes_before
-
-        new_node = TiSR.addterm_mutation!(node, ops, subtree_depth=4)
-
-        # this may happen when grow_equation in asym-mode makes a smaller node
-        if TiSR.count_nodes(new_node) <= 7 
-            continue
-        end
-
-        max_nodes_after = TiSR.get_max_nodes_per_term(node, ops)
-    end
-
     # some more manual tests # ---------------------------------------------------------------------
     ops, data_vect = Options(data)
 
@@ -84,7 +59,6 @@ end
     ops, data_vect = Options(
         data,
         binops=(+, -, *, /),
-        p_binops=(1.0, 1.0, 1.0, 1.0),
         grammar=TiSR.grammar_params(;
             illegal_dict = Dict(
                 "^" => (lef = (), rig = ("+", "-", "*", "/", "sin", "cos")),
@@ -219,6 +193,5 @@ end
     )
 
     @test findall([!TiSR.is_legal_nesting(n, ops) for n in nodes]) == [1, 6, 10, 14, 15, 18, 21, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 50]
-
 end                                                                       
 

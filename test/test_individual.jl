@@ -17,7 +17,7 @@ ops, data_vect = Options(
         node  = TiSR.grow_equation(rand(4:7), ops, method=:full)
         list_of_param = TiSR.list_of_param_nodes(node)
         !isempty(list_of_param) || continue
-        indiv = TiSR.Individual(node, data_vect, ops, Inf)
+        indiv = TiSR.Individual(node, data_vect, ops, Inf, 20)
         indiv.valid || continue
     end
 
@@ -72,7 +72,7 @@ end
         while length(indivs) < 5
             node  = TiSR.grow_equation(rand(4:7), ops)
 
-            indiv = TiSR.Individual(node, data_vect, ops, Inf)
+            indiv = TiSR.Individual(node, data_vect, ops, Inf, 20)
             indiv.valid || continue
             push!(indivs, indiv)
 

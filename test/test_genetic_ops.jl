@@ -70,8 +70,6 @@ end
 end
 
 @testset "mutate_left" begin
-    """ this test is kind of pointless
-    """
 
     for _ in 1:1000
         node = TiSR.grow_equation(rand(3:7), ops, method = :full)
@@ -94,7 +92,7 @@ end
         num_nodes_before = TiSR.count_nodes(node)
         str1 = TiSR.encode_single_char(node, ops)
 
-        TiSR.point_mutation!(node, ops)
+        TiSR.point_mutation1!(node, ops)
 
         num_nodes_after = TiSR.count_nodes(node)
         str2 = TiSR.encode_single_char(node, ops)
