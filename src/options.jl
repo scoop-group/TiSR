@@ -152,7 +152,7 @@ function general_params(;
     pop_size                        = 600,
     num_islands                     = 12,
     migration_interval              = 200,
-    island_extinction_interval      = 2000,
+    island_extinction_interval      = 5000,
     migrate_after_extinction_prob   = 1.0,
     fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,
     hall_of_fame_migration_interval = 1000,

@@ -69,7 +69,7 @@ ops, data = Options(
         pop_size                        = 600,                                      # -> number of individuals selected for next generation
         num_islands                     = 12,                                       # -> number of parallel islands
         migration_interval              = 200,                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
-        island_extinction_interval      = 2000,                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
+        island_extinction_interval      = 5000,                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
         migrate_after_extinction_prob   = 1.0,                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
         fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,         # -> function to determine on which islands fitting is conducted
         hall_of_fame_migration_interval = 1000,                                     # -> interval in which a random individual from the hall of fame is returned to a random island
