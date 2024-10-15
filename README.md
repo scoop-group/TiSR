@@ -25,7 +25,7 @@ However, you may also start with the following minimal example:
 using TiSR
 
 # create synthetic data
-data_matr = rand(1000, 3)
+data_matr = rand(100, 3)
 data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
 # -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2)
 
