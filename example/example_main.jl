@@ -28,7 +28,6 @@ using TiSR
 # ==================================================================================================
 # options -> specify some custom settings
 # ==================================================================================================
-
 # custom functions
 pow(x, y) = abs(x)^y
 pow2(x) = x^2
@@ -83,6 +82,10 @@ show(
     df_hall_of_fame[:, [:eqs_orig_rounded, :mare, :max_are, :weighted_compl, :n_params]],
     truncate = maximum(length, df_hall_of_fame.eqs_orig_rounded)
 )
+
+sort(hall_of_fame, by=i -> i.max_are)
+
+hall_of_fame
 
 # show the Pareto front # --------------------------------------------------------------------------
 using UnicodePlots
