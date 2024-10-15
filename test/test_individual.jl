@@ -6,7 +6,6 @@ ops, data_vect = Options(
     data,
     general                            = general_params(
         remove_doubles_sigdigits       = 2,
-        remove_doubles_across_islands  = false, # TODO: experiment
     ),
 )
 
@@ -95,47 +94,6 @@ end
         TiSR.remove_doubles!(indivs, ops)
 
         avg += (length(indivs) - avg)/iters
-    end
-
-    @test isapprox(avg, 5, rtol=0.1)
-end
-
-@testset "remove_doubles_across_islands!" begin
-    
-    avg = 0.0
-    
-    for iters in 1:100
-        indivs = TiSR.Individual[]
-
-        while length(indivs) < 5
-            node  = TiSR.grow_equation(rand(4:7), ops)
-
-            indiv = TiSR.Individual(node, data_vect, ops, Inf)
-            indiv.valid || continue
-            push!(indivs, indiv)
-
-        end
-
-        # copy individuals but with different complexities
-        for i in 1:5
-            for j in 1:5
-                indiv = copy(indivs[i])
-                indiv.mae   += rand() * 0.0001
-                indiv.mse   += rand() * 0.0001
-                indiv.compl += j
-                push!(indivs, indiv)
-            end
-        end
-
-        shuffle!(indivs)
-
-        populations_with_islands = [indivs[i:i+4] for i in 1:5:length(indivs)]
-
-        TiSR.remove_doubles_across_islands!(populations_with_islands, ops)
-
-        pop = reduce(vcat, populations_with_islands)
-
-        avg += (length(pop) - avg)/iters
     end
 
     @test isapprox(avg, 5, rtol=0.1)

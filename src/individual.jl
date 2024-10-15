@@ -125,42 +125,8 @@ function remove_doubles!(individs::Vector{Individual}, ops)
     keepat!(individs, unique_inds)
 end
 
-""" Removes similar individual across all islands. The individuals are considered similar,
-    if their MSE and MAE rounded to ops.general.remove_doubles_sigdigits significant digits are 
-    the same. Of those, the one with the least complexity remains in the population.
-"""
-function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, ops)
-
-    indiv_obj_vals = [
-        Float64[
-            round(getfield(indiv, obj), sigdigits=ops.general.remove_doubles_sigdigits)
-            for obj in [:mse, :mae, :compl]
-        ]
-        for isle in eachindex(individs) for indiv in individs[isle]
-    ]
-
-    unique_inds = [
-        (isle, ind)
-        for isle in eachindex(individs) for ind in eachindex(individs[isle])
-    ]
-
-    _remove_doubles_helper!(indiv_obj_vals, unique_inds)
-
-    # apply the unique_inds # ---------------------------------------------------------------------
-    unique_inds = [
-        [
-            unique_inds[i][2]
-            for i in 1:length(unique_inds)
-            if unique_inds[i][1] == isle
-           ] for isle in eachindex(individs)
-    ]
-
-    foreach(isle -> sort!(unique_inds[isle]), eachindex(individs))
-    foreach(isle -> keepat!(individs[isle], unique_inds[isle]), eachindex(individs))
-end
-
-""" Helper function while for remove_doubles! and remove_doubles_across_islands!, which performs 
-    the comparisons and modifies the unique_inds.
+""" Helper function while for remove_doubles!, which performs the comparisons and modifies 
+    the unique_inds.
 """
 function _remove_doubles_helper!(indiv_obj_vals, unique_inds)
 

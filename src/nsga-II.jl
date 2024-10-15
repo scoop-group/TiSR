@@ -75,122 +75,17 @@ function generational_loop(
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
-        for isle in 1:ops.general.num_islands
-
-            foreach(indiv -> indiv.age += 1, population[isle])
-
 # ==================================================================================================
-# genetic operations
+# perform one generation
 # ==================================================================================================
-            # create new children # ----------------------------------------------------------------
-            while length(new_nodes[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
-                push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops, method=:asym))
+        if ops.general.multithreading
+            Threads.@threads :greedy for isle in eachindex(population)
+                one_generation!(population, children, new_nodes, data, ops, cur_max_compl, isle)
             end
-
-            # perform mutations # ------------------------------------------------------------------
-            if length(population[isle]) > 0.4 * ops.general.pop_per_isle
-                shuffle!(population[isle])
-
-                for i in 1:max(length(population[isle]), (2 * ops.general.pop_per_isle  - length(population[isle])))
-                    push!(new_nodes[isle], deepcopy(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
-                end
-
-                apply_genetic_operations!(new_nodes[isle], ops)
+        else
+            for isle in eachindex(population)
+                one_generation!(population, children, new_nodes, data, ops, cur_max_compl, isle)
             end
-
-            if ops.general.fitting_island_function(isle)
-                fit_iter = ops.fitting.max_iter
-            else
-                fit_iter = 0
-            end
-
-            # grow them up # -----------------------------------------------------------------------
-            children[isle] = Array{Individual}(undef, length(new_nodes[isle]))
-            if ops.general.multithreading
-                Threads.@threads :greedy for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
-                end
-            else
-                for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
-                end
-            end
-
-            filter!(indiv -> indiv.valid, children[isle])
-            new_nodes[isle] = Individual[]
-
-# ==================================================================================================
-# add children to population
-# ==================================================================================================
-            append!(population[isle], children[isle])
-
-        end # for isle in 1:ops.general.num_islands
-
-# ==================================================================================================
-# remove individuals
-# ==================================================================================================
-        # remove apperently same individuals by rounded MAE and MSE
-        if ops.general.remove_doubles_sigdigits > 0
-            if ops.general.remove_doubles_across_islands
-                remove_doubles_across_islands!(population, ops)
-            else
-                for isle in 1:ops.general.num_islands
-                    remove_doubles!(population[isle], ops)
-                end
-            end
-        end
-
-        # remove individuals older than max_age
-        for isle in 1:ops.general.num_islands
-            filter!(i -> i.age <= ops.general.max_age, population[isle])
-        end
-
-# ==================================================================================================
-# selection
-# ==================================================================================================
-        for isle in 1:ops.general.num_islands
-            length(population[isle]) > ops.general.pop_per_isle || continue
-
-            selection_inds = Int64[]
-
-            indiv_obj_vals = [
-                Float64[
-                    round(getfield(indiv, obj), sigdigits=ops.selection.population_niching_sigdigits)
-                    for obj in ops.selection.selection_objectives
-                ]
-                for indiv in population[isle]
-            ]
-
-            # Pareto selection # -------------------------------------------------------------------
-            if ops.selection.n_pareto_select_per_isle > 0
-                selected = non_dominated_sort(
-                    indiv_obj_vals,
-                    n_select=ops.selection.n_pareto_select_per_isle,
-                    first_front=false
-                )
-
-                append!(selection_inds, selected)
-            end
-
-            # tournament selection # ---------------------------------------------------------------
-            if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
-                remaining_inds = setdiff(eachindex(population[isle]), selection_inds)
-
-                if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-                    fitness  = get_relative_fitness(indiv_obj_vals)
-                    selected = tournament_selection(fitness, remaining_inds,
-                        tournament_size = ops.selection.tournament_size,
-                        n_select        = ops.general.pop_per_isle - length(selection_inds)
-                    )
-                else
-                    selected = remaining_inds
-                end
-
-                append!(selection_inds, selected)
-            end
-
-            sort!(selection_inds)
-            keepat!(population[isle], selection_inds)
         end
 
 # ==================================================================================================
@@ -404,13 +299,107 @@ function generational_loop(
         println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
     end
 
-# ==================================================================================================
-# Post-pare for return
-# ==================================================================================================
+    # post-pare for return
     population = reduce(vcat, population)
 
     return hall_of_fame, population, prog_dict, stop_msg
 end
+
+""" perform one generation for one isle.
+"""
+function one_generation!(population, children, new_nodes, data, ops, cur_max_compl, isle)
+
+    foreach(indiv -> indiv.age += 1, population[isle])
+
+# ==================================================================================================
+# genetic operations
+# ==================================================================================================
+    # create new children # ----------------------------------------------------------------
+    while length(new_nodes[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
+        push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops, method=:asym))
+    end
+
+    # perform mutations # ------------------------------------------------------------------
+    if length(population[isle]) > 0.4 * ops.general.pop_per_isle
+        shuffle!(population[isle])
+
+        for i in 1:max(length(population[isle]), (2 * ops.general.pop_per_isle  - length(population[isle])))
+            push!(new_nodes[isle], deepcopy(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
+        end
+
+        apply_genetic_operations!(new_nodes[isle], ops)
+    end
+
+    if ops.general.fitting_island_function(isle)
+        fit_iter = ops.fitting.max_iter
+    else
+        fit_iter = 0
+    end
+
+    # grow them up # -----------------------------------------------------------------------
+    children[isle] = Array{Individual}(undef, length(new_nodes[isle]))
+    for ii in eachindex(new_nodes[isle])
+        children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
+    end
+
+    filter!(indiv -> indiv.valid, children[isle])
+    new_nodes[isle] = Individual[]
+
+    # add children to population
+    append!(population[isle], children[isle])
+
+    # remove individuals # -------------------------------------------------------------------------
+    if ops.general.remove_doubles_sigdigits > 0
+        remove_doubles!(population[isle], ops)
+    end
+
+    filter!(i -> i.age <= ops.general.max_age, population[isle])
+
+    # selection # ----------------------------------------------------------------------------------
+    if length(population[isle]) > ops.general.pop_per_isle
+        selection_inds = Int64[]
+
+        indiv_obj_vals = [
+            Float64[
+                round(getfield(indiv, obj), sigdigits=ops.selection.population_niching_sigdigits)
+                for obj in ops.selection.selection_objectives
+            ]
+            for indiv in population[isle]
+        ]
+
+        # Pareto selection # -------------------------------------------------------------------
+        if ops.selection.n_pareto_select_per_isle > 0
+            selected = non_dominated_sort(
+                indiv_obj_vals,
+                n_select=ops.selection.n_pareto_select_per_isle,
+                first_front=false
+            )
+
+            append!(selection_inds, selected)
+        end
+
+        # tournament selection # ---------------------------------------------------------------
+        if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
+            remaining_inds = setdiff(eachindex(population[isle]), selection_inds)
+
+            if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
+                fitness  = get_relative_fitness(indiv_obj_vals)
+                selected = tournament_selection(fitness, remaining_inds,
+                    tournament_size = ops.selection.tournament_size,
+                    n_select        = ops.general.pop_per_isle - length(selection_inds)
+                )
+            else
+                selected = remaining_inds
+            end
+
+            append!(selection_inds, selected)
+        end
+
+        sort!(selection_inds)
+        keepat!(population[isle], selection_inds)
+    end
+end
+
 
 """
     listen_for_input(input_channel::Channel)
@@ -440,4 +429,7 @@ function listen_for_input(input_channel::Channel)
     end
     close(input_channel)
 end
+
+
+
 
