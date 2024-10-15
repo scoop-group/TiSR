@@ -1,9 +1,4 @@
 
-# import Pkg
-# Pkg.develop(path=".")
-# Pkg.resolve()
-# Pkg.instantiate()
-
 using TiSR
 
 # # ==================================================================================================
@@ -13,42 +8,38 @@ using TiSR
 # using CSV
 #
 # # load data # ------------------------------------------------------------------------------------
-# file_path = "measurements_methanol_reduced_T150_P100_rho1000.txt"
+# file_path = "path_to_your_data_file.txt"
 #
 # df = CSV.read(file_path, DataFrame)
 #
 # # set variables for algorithm
-# data_matr = Matrix(df[!, 1:end-1])
+# data_matr = Matrix(df)
 
-# # or with synthetic data # -------------------------------------------------------------------------
-# # -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2) 
-# data_matr = rand(100, 3)
-# data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
+# or with synthetic data # -------------------------------------------------------------------------
+data_matr = rand(100, 3)
+data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
+# -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2) 
 
 # ==================================================================================================
 # options -> specify some custom settings
 # ==================================================================================================
-# custom functions
-pow(x, y) = abs(x)^y
-pow2(x) = x^2
+# # custom functions
+# pow(x, y) = abs(x)^y
+# pow2(x) = x^2
 
-ops, data                             = Options(
+ops, data                       = Options(
     data_matr,
-    binops                            = (+,   -,   *,   /, pow),#^,
-    unaops                            = (exp, log, sqrt, pow2),
-    general                           = general_params(
-        t_lim                         = 60 * 60.0,
-        multithreading                = true,
+    binops                      = (+, -, *, /, ^),
+    unaops                      = (exp, log, sqrt),
+    general                     = general_params(
+        t_lim                   = 60 * 60.0,
+        multithreading          = true,
     ),
-    selection                         = selection_params(
-        hall_of_fame_objectives       = [:ms_processed_e, :compl],
-        selection_objectives          = [:ms_processed_e, :minus_abs_spearman, :compl],
+    grammar                     = grammar_params(
+        max_compl               = 30,
     ),
-    grammar                           = grammar_params(
-        max_compl                     = 30,
-    ),
-    fitting                           = fitting_params(
-        max_iter                      = 10,
+    fitting                     = fitting_params(
+        max_iter                = 10,
     ),
 );
 
@@ -79,13 +70,9 @@ hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops);
 # ==================================================================================================
 df_hall_of_fame = TiSR.convert_to_dataframe(hall_of_fame, ops, sort_by="max_are")
 show(
-    df_hall_of_fame[:, [:eqs_orig_rounded, :mare, :max_are, :weighted_compl, :n_params]],
+    df_hall_of_fame[:, [:eqs_orig_rounded, :mare, :max_are, :compl, :n_params]],
     truncate = maximum(length, df_hall_of_fame.eqs_orig_rounded)
 )
-
-sort(hall_of_fame, by=i -> i.max_are)
-
-hall_of_fame
 
 # show the Pareto front # --------------------------------------------------------------------------
 using UnicodePlots
@@ -95,7 +82,9 @@ scatterplot(
     getfield.(hall_of_fame, :mare),
     xlabel="complexity",
     ylabel="mean rel. dev.",
-    yscale=:log10
+    yscale=:log10,
+    marker=:o,
+    unicode_exponent = false,
 )
 
 # ==================================================================================================
