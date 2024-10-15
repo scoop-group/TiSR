@@ -332,15 +332,18 @@ function generational_loop(
             probs   = (1 ./ abs.(offsets)).^2
 
             while !isempty(population[emmigrate_island])
-                immigrate_island = mod1(emmigrate_island + wsample(offsets, probs), ops.general.num_islands)
-
-                push!(
-                    population[immigrate_island],
-                    popat!(
-                        population[emmigrate_island],
-                        rand(1:length(population[emmigrate_island]))
-                    )
+                indiv = popat!(
+                    population[emmigrate_island],
+                    rand(1:length(population[emmigrate_island]))
                 )
+
+                if rand() < ops.general.migrate_after_extinction_prob
+                    immigrate_island = mod1(
+                        emmigrate_island + wsample(offsets, probs),
+                        ops.general.num_islands
+                    )
+                    push!(population[immigrate_island], indiv)
+                end
             end
         end
 

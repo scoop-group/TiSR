@@ -58,11 +58,11 @@ A brief explanation is provided for most settings as a comment.
 
 ```julia
 ops, data = Options(
-    data_matr;                               # -> nxm matrix containing the n data points, m-1 variables and the output
-    fit_weights = 1 ./ data_matr[:, end],    # -> weights for the data fitting -> residual .* weight
-    parts       = [1.0],                     # -> how to split the data. e.g. [1.0] -> (no split) or [0.8, 0.2]
-    binops      = (+,   -,   *,   /,   ^  ), # -> binary function set to choose from
-    unaops      = (exp, log, sin, cos, abs), # -> unary function set to choose from
+    data_matr;                                  # -> nxm matrix containing the n data points, m-1 variables and the output
+    fit_weights = abs.(1 ./ data_matr[:, end]), # -> weights for the data fitting -> residual .* weight
+    parts       = [1.0],                        # -> how to split the data. e.g. [1.0] -> (no split) or [0.8, 0.2]
+    binops      = (+,   -,   *,   /,   ^  ),    # -> binary function set to choose from
+    unaops      = (exp, log, sin, cos, abs),    # -> unary function set to choose from
     general     = general_params(
         n_gens                          = typemax(Int64),                           # -> number of generations to conduct
         t_lim                           = 60. * 5.,                                 # -> time limit for the algorithm
@@ -70,6 +70,7 @@ ops, data = Options(
         num_islands                     = 12,                                       # -> number of parallel islands
         migration_interval              = 200,                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
         island_extinction_interval      = 2000,                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
+        migrate_after_extinction_prob   = 1.0,                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
         fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,         # -> function to determine on which islands fitting is conducted
         hall_of_fame_migration_interval = 1000,                                     # -> interval in which a random individual from the hall of fame is returned to a random island
         always_drastic_simplify         = 1e-8,                                     # -> for individuals with parameters smaller than `always_drastic_simplify` a copy is created, those parameters removed, and simplified accordingly. -> 0 is off; 1e-10 ... 1e-6

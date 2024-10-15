@@ -153,6 +153,7 @@ function general_params(;
     num_islands                     = 12,
     migration_interval              = 200,
     island_extinction_interval      = 2000,
+    migrate_after_extinction_prob   = 1.0,
     fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,
     hall_of_fame_migration_interval = 1000,
     always_drastic_simplify         = 1e-8,
@@ -166,14 +167,15 @@ function general_params(;
     plot_hall_of_fame               = true,
     print_hall_of_fame              = true,
 )
-    @assert num_islands > 0                     "num_islands should be at least 1                "
-    @assert migration_interval > 0              "migration_interval should be at least 1         "
-    @assert always_drastic_simplify >= 0        "always_drastic_simplify must be >= 0            "
-    @assert adaptive_compl_increment > 0        "adaptive_compl_increment must be larger 0       "
-    @assert callback isa Function               "callback must be a function                     "
-    @assert island_extinction_interval > 0      "island_extinction_interval must be > 0          "
-    @assert max_age > 1                         "max_age must be > 1                             "
-    @assert hall_of_fame_migration_interval > 0 "hall_of_fame_migration_interval must be larger 0"
+    @assert num_islands > 0                             "num_islands should be at least 1                     "
+    @assert migration_interval > 0                      "migration_interval should be at least 1              "
+    @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                 "
+    @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0            "
+    @assert callback isa Function                       "callback must be a function                          "
+    @assert island_extinction_interval > 0              "island_extinction_interval must be > 0               "
+    @assert max_age > 1                                 "max_age must be > 1                                  "
+    @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0     "
+    @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1"
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -203,6 +205,7 @@ function general_params(;
         migration_interval              = migration_interval,
         hall_of_fame_migration_interval = hall_of_fame_migration_interval,
         island_extinction_interval      = island_extinction_interval,
+        migrate_after_extinction_prob   = migrate_after_extinction_prob,
         fitting_island_function         = fitting_island_function,
         always_drastic_simplify         = always_drastic_simplify,
         remove_doubles_sigdigits        = remove_doubles_sigdigits,
