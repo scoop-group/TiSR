@@ -272,4 +272,16 @@ function simplify_w_symbolic_utils!(node::Node, ops::Options; use_simplify=false
     copy_node_wo_copy!(node, simp_node)
 end
 
+""" 
+"""
+function simplify_to_string(node::Node, ops::Options; sigdigits=15)
+    sym_eq = node_to_symbolic(node, ops)
+    sym_eq = SymbolicUtils.simplify(sym_eq)
+    eq_str = string(sym_eq)
+    if sigdigits >= 15
+        return eq_str
+    else
+        return round_equation_string(eq_str, sigdigits=sigdigits)
+    end
+end
 

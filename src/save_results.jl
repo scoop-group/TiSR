@@ -10,13 +10,8 @@ function convert_to_dict(individuals::Vector{Individual}, ops; sort_by="mare")
     dict["eqs_orig"]         = node_to_string.(dict["node"], Ref(ops))
     dict["eqs_orig_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits = 3)
 
-    simplify_w_symbolic_utils!.(
-        dict["node"], Ref(ops);
-        use_simplify=false, though_polyform=false
-    )
-
-    dict["eqs_simpl"]         = node_to_string.(dict["node"], Ref(ops))
-    dict["eqs_simpl_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits = 3)
+    dict["eqs_simpl"]         = simplify_to_string.(dict["node"], Ref(ops); sigdigits = 15)
+    dict["eqs_simpl_rounded"] = simplify_to_string.(dict["node"], Ref(ops); sigdigits = 3)
 
     delete!(dict, "node")
     delete!(dict, "valid")

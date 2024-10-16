@@ -305,10 +305,12 @@ function generational_loop(
                     inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=16)))
                     unique!(inds_to_show)
 
+                    eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
+
                     for (ii, i) in enumerate(inds_to_show)
                         label!(plt, :r, ii, replace(
-                           TiSR.node_to_string(hall_of_fame[i].node, ops, sigdigits=2),
-                           " " => "", r"(\d)\.0\b" => s"\1"
+                            eq_strs[ii],
+                            " " => "", r"(\d)\.0\b" => s"\1"
                         ))
                     end
                 end
