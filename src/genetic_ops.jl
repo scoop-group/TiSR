@@ -207,16 +207,24 @@ function point_mutation2!(node, ops)
     node_elect = random_node(node, mode=0)
 
     if node_elect.ari == 2
-        node_elect.ari = 1
-        node_elect.ind = rand(1:length(ops.unaops))
-        if rand(Bool)
-            node_elect.lef = copy(node_elect.rig)
+        if !isempty(ops.unaops)
+            node_elect.ari = 1
+            node_elect.ind = rand(1:length(ops.unaops))
+            if rand(Bool)
+                node_elect.lef = copy(node_elect.rig)
+            end
+        else
+            point_mutation1!(node, ops)
         end
 
     elseif node_elect.ari == 1
-        node_elect.ari = 2
-        node_elect.ind = rand(1:length(ops.binops))
-        node_elect.rig = grow_equation(1, ops, method = :asym)
+        if !isempty(ops.binops)
+            node_elect.ari = 2
+            node_elect.ind = rand(1:length(ops.binops))
+            node_elect.rig = grow_equation(1, ops, method = :asym)
+        else
+            point_mutation1!(node, ops)
+        end
 
     elseif node_elect.ari == 0
         node_elect.ari = -1

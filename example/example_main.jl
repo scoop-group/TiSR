@@ -41,7 +41,6 @@ ops, data                       = Options(
     fitting                     = fitting_params(
         max_iter                = 10,
     ),
-    meta_data = Dict("ones" => ones(5))
 );
 
 # ==================================================================================================
