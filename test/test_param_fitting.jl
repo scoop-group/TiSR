@@ -58,8 +58,8 @@ ops, data_vect = Options(
         t_lim                    = Inf,
         rel_f_tol_5_iter         = 0.0,
         lasso_factor             = 1e-1,
-        pre_residual_processing! = (x, ind) -> x,
-        residual_processing      = (x, ind) -> x,
+        pre_residual_processing! = (x, ind, ops) -> x,
+        residual_processing      = (x, ind, ops) -> x,
     )
 )
 

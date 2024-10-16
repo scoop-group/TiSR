@@ -95,13 +95,13 @@ ops, data = Options(
         tournament_size                   = 5,                                              # -> tournament size
     ),
     fitting     = fitting_params(
-        max_iter                 = 10,            # -> maximum iterations for parameter fitting. -> 10 ... 100 ==> biggest time consumer <==
-        early_stop_iter          = 0,             # -> how many iterations to account for early stopping regularization. to use, the data needs to be partitioned into at least 2 parts. The early stopping evaluation is performed on the second partition. -> 0 is off; 4 ... 10
-        t_lim                    = Inf,           # -> time limit for parameter fitting of individual. -> Inf is off; 0.1 ... 0.5
-        rel_f_tol_5_iter         = 1e-2 * 0.01,   # -> relative tolerance for parameter fitting. considered converged if relative improvement over 5 iterations is smaller. -> 0 is off; 1e-2 * 1.0 ... 1e-2 * 0.01
-        lasso_factor             = 0.0,           # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
-        pre_residual_processing! = (x, ind) -> x, # -> processing of the equation output before the residual is calculated. Must be an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./= data[end][inds]"
-        residual_processing      = (x, ind) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./ data[end][inds]"
+        max_iter                 = 10,                 # -> maximum iterations for parameter fitting. -> 10 ... 100 ==> biggest time consumer <==
+        early_stop_iter          = 0,                  # -> how many iterations to account for early stopping regularization. to use, the data needs to be partitioned into at least 2 parts. The early stopping evaluation is performed on the second partition. -> 0 is off; 4 ... 10
+        t_lim                    = Inf,                # -> time limit for parameter fitting of individual. -> Inf is off; 0.1 ... 0.5
+        rel_f_tol_5_iter         = 1e-2 * 0.01,        # -> relative tolerance for parameter fitting. considered converged if relative improvement over 5 iterations is smaller. -> 0 is off; 1e-2 * 1.0 ... 1e-2 * 0.01
+        lasso_factor             = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
+        pre_residual_processing! = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. Must be an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./= data[end][inds]"
+        residual_processing      = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./ data[end][inds]"
     ),
     grammar     = grammar_params(
         max_compl           = 30,     # -> max allowed complexity.
@@ -122,6 +122,7 @@ ops, data = Options(
         p_add_term           = 0.1,   #|
         p_simplify           = 0.1,   #|-> simplify with SymbolicUtils
     ),
+    meta_data = Dict() # -> can be used to provide data for use in, for example, user-defined functions like the callback or pre_residual_processing!
 )
 
 # (1) example illegal_dict

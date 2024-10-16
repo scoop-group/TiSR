@@ -50,7 +50,7 @@ function fit_n_eval!(indiv, data, ops, fit_iter)
         indiv.q75_are = quantile(abs.(residual ./ relative_ref), 0.75)
         indiv.max_are = maximum(abs, residual ./ relative_ref)
 
-        indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual)) .* ops.data_descript.fit_weights)
+        indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
         indiv.valid = true
     else
         indiv.valid = false
@@ -104,7 +104,7 @@ end
 function early_stop_check(trace, node, list_of_param, data, ops; n=5)
     x = trace[end].metadata["x"]
     res_test = fitting_residual(x, node, list_of_param, data, ops.data_descript.split_inds[2], ops)[1]
-    res_test .= ops.fitting.residual_processing(res_test, ops.data_descript.split_inds[2])
+    res_test .= ops.fitting.residual_processing(res_test, ops.data_descript.split_inds[2], ops)
     res_test .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[2])
     res_test .= abs.(res_test)
 
@@ -127,7 +127,7 @@ function fitting_residual(x, node, list_of_param, data, inds, ops)
     dat = [view(d, inds) for d in data]
 
     arr, valid = eval_equation(node, dat, ops)
-    ops.fitting.pre_residual_processing!(arr, inds)
+    ops.fitting.pre_residual_processing!(arr, inds, ops)
     dat[end] .- arr, valid
 end
 
@@ -139,7 +139,7 @@ function fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <:
     list_of_param_ = list_of_param_nodes(node_)
 
     res   = fitting_residual(x, node_, list_of_param_, data_, ops.data_descript.split_inds[1], ops)[1]
-    res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1])
+    res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1], ops)
     res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
     res  .= abs.(res)
 

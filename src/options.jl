@@ -4,7 +4,7 @@
     There are also some safeguards, preventing certain settings combinations or warn the user,
     which may not cover all cases.
 """
-struct Options{A, B, C, F, G, H, I, J}
+struct Options{A, B, C, F, G, H, I, J, K}
     general::A
     unaops::B
     binops::C
@@ -14,6 +14,7 @@ struct Options{A, B, C, F, G, H, I, J}
     mutation::H
     grammar::I
     data_descript::J
+    meta_data::K
 
     function Options(
         data::Matrix;
@@ -26,6 +27,7 @@ struct Options{A, B, C, F, G, H, I, J}
         fitting       = fitting_params(),
         mutation      = mutation_params(),
         grammar       = grammar_params(),
+        meta_data     = Dict(),
     )
         # prepare data and its params --------------------------------------------------------------
         data_vect, data_descript = prepare_data(data, fit_weights)
@@ -68,7 +70,8 @@ struct Options{A, B, C, F, G, H, I, J}
                    typeof(fitting),
                    typeof(mutation),
                    typeof(grammar),
-                   typeof(data_descript)}(
+                   typeof(data_descript),
+                   typeof(meta_data)}(
                        general,
                        unaops,
                        binops,
@@ -76,7 +79,8 @@ struct Options{A, B, C, F, G, H, I, J}
                        fitting,
                        mutation,
                        grammar,
-                       data_descript
+                       data_descript,
+                       meta_data
         ), data_vect
     end
 end
@@ -252,8 +256,8 @@ function fitting_params(;
     t_lim                    = Inf,
     rel_f_tol_5_iter         = 1e-2 * 0.01,
     lasso_factor             = 0.0,
-    pre_residual_processing! = (x, ind) -> x,
-    residual_processing      = (x, ind) -> x,
+    pre_residual_processing! = (x, ind, ops) -> x,
+    residual_processing      = (x, ind, ops) -> x,
 )
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
