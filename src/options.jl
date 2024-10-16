@@ -109,7 +109,7 @@ function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
     start_inds = cumsum([ceil(Int64, size(data, 1) * p) for p in parts])
     pushfirst!(start_inds, 0)
 
-    split_inds = [eachind[start_inds[i]+1:start_inds[i+1]] for i in 1:length(parts)]
+    split_inds = [eachind[start_inds[i]+1:min(start_inds[i+1], size(data, 1))] for i in 1:length(parts)]
 
     return _data_split_params(data, nothing, split_inds)
 end
