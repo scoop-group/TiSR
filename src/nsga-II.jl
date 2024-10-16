@@ -34,14 +34,14 @@ function generational_loop(
     children     = [Individual[] for _ in 1:ops.general.num_islands]
     hall_of_fame = Individual[]
 
-# ==================================================================================================
-# prepar user interrupt
-# ==================================================================================================
-    # Create a channel for communication between tasks
-    input_channel = Channel{String}(1)
-
-    # Start listening for user input asynchronously
-    @async listen_for_input(input_channel)
+# # ==================================================================================================
+# # prepar user interrupt
+# # ==================================================================================================
+#     # Create a channel for communication between tasks
+#     input_channel = Channel{String}(1)
+#
+#     # Start listening for user input asynchronously
+#     @async listen_for_input(input_channel)
 
 # ==================================================================================================
 # misc
@@ -348,26 +348,26 @@ function generational_loop(
 # ==================================================================================================
         if gen >= ops.general.n_gens
             stop_msg = "reached maximum number of generations"
-            close(input_channel)
+            # close(input_channel)
             break
         elseif time() - t_start >= ops.general.t_lim
             stop_msg = "reached time limit"
-            close(input_channel)
+            # close(input_channel)
             break
         elseif ops.general.callback(hall_of_fame, population, ops)
             stop_msg = "callback returned true"
-            close(input_channel)
+            # close(input_channel)
             break
-        elseif isready(input_channel)
-            user_input = take!(input_channel)  # Get input from the channel
-            if user_input == ":q"
-                println("Detected ':q'. Exiting...")
-                stop_msg = "user interrupt"
-                break
-            elseif length(user_input) > 0
-                println("type :q and enter to finish the equation search early")
-            end
-        end
+        # elseif isready(input_channel)
+        #     user_input = take!(input_channel)  # Get input from the channel
+        #     if user_input == ":q"
+        #         println("Detected ':q'. Exiting...")
+        #         stop_msg = "user interrupt"
+        #         break
+        #     elseif length(user_input) > 0
+        #         println("type :q and enter to finish the equation search early")
+        #     end
+        # end
     end
 
     # final display of current KPIs # --------------------------------------------------------------
@@ -397,7 +397,8 @@ function generational_loop(
 
     if ops.general.print_progress
         display(cur_prog_dict)
-        println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
+        # println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
+        println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60))
     end
 
 # ==================================================================================================
@@ -408,32 +409,32 @@ function generational_loop(
     return hall_of_fame, population, prog_dict, stop_msg
 end
 
-"""
-    listen_for_input(input_channel::Channel)
-
-Listens for user input in a blocking fashion and sends the input to the given channel.
-This function runs asynchronously and continuously reads from `stdin`. If the input
-":q" is detected, it will send the input to the channel and terminate the listener.
-
-### Arguments
-- `input_channel::Channel`: A communication channel where user input is sent.
-
-### Behavior
-- The function reads input from the terminal using `readline(stdin)`.
-- The input is passed to the `input_channel` for further processing in a separate task.
-- If the user types ":q", the function stops, indicating the program should terminate.
-
-### Source
-Generated using OpenAI's ChatGPT.
-"""
-function listen_for_input(input_channel::Channel)
-    while true
-        input = readline(stdin)  # Blocking read, but in its own task
-        put!(input_channel, input)  # Send the input to the channel
-        if input == ":q"
-            break  # Exit the listener task if ':q' is entered
-        end
-    end
-    close(input_channel)
-end
+# """
+#     listen_for_input(input_channel::Channel)
+#
+# Listens for user input in a blocking fashion and sends the input to the given channel.
+# This function runs asynchronously and continuously reads from `stdin`. If the input
+# ":q" is detected, it will send the input to the channel and terminate the listener.
+#
+# ### Arguments
+# - `input_channel::Channel`: A communication channel where user input is sent.
+#
+# ### Behavior
+# - The function reads input from the terminal using `readline(stdin)`.
+# - The input is passed to the `input_channel` for further processing in a separate task.
+# - If the user types ":q", the function stops, indicating the program should terminate.
+#
+# ### Source
+# Generated using OpenAI's ChatGPT.
+# """
+# function listen_for_input(input_channel::Channel)
+#     while true
+#         input = readline(stdin)  # Blocking read, but in its own task
+#         put!(input_channel, input)  # Send the input to the channel
+#         if input == ":q"
+#             break  # Exit the listener task if ':q' is entered
+#         end
+#     end
+#     close(input_channel)
+# end
 
