@@ -367,7 +367,7 @@ function generational_loop(
         #     elseif length(user_input) > 0
         #         println("type :q and enter to finish the equation search early")
         #     end
-        # end
+        end
     end
 
     # final display of current KPIs # --------------------------------------------------------------
