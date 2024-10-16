@@ -274,7 +274,8 @@ function generational_loop(
 
             if ops.general.print_progress
                 display(cur_prog_dict)
-                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
+                # println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
+                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60))
             end
 
             if ops.general.plot_hall_of_fame
