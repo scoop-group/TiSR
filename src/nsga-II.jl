@@ -15,8 +15,8 @@ function generational_loop(data, ops, start_pop::Vector{Individual})
 end
 
 function generational_loop(data, ops, start_pop::Vector{String})
-    population = [Individual[] for _ in 1:ops.general.num_islands]
     start_pop  = Node[string_to_node(eq, ops) for eq in start_pop]
+    population = [Individual[] for _ in 1:ops.general.num_islands]
     new_nodes  = [
         start_pop[isle:ops.general.num_islands:end]
         for isle in 1:ops.general.num_islands
@@ -28,8 +28,16 @@ function generational_loop(
     data,
     ops,
     population::Vector{Vector{Individual}},
-    new_nodes::Vector{Vector{Node}}
+    new_nodes::Vector{Vector{Node}},
 )
+# ==================================================================================================
+# prepare bank_of_terms
+# ==================================================================================================
+    bank_of_terms  = Node[string_to_node(eq, ops) for eq in ops.grammar.bank_of_terms]
+
+# ==================================================================================================
+# initialize data structures
+# ==================================================================================================
 
     children     = [Individual[] for _ in 1:ops.general.num_islands]
     hall_of_fame = Individual[]
@@ -95,7 +103,7 @@ function generational_loop(
                     push!(new_nodes[isle], deepcopy(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
                 end
 
-                apply_genetic_operations!(new_nodes[isle], ops)
+                apply_genetic_operations!(new_nodes[isle], ops, bank_of_terms)
             end
 
             if ops.general.fitting_island_function(isle)

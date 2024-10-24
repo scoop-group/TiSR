@@ -11,7 +11,7 @@ grow_equation(
 function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, method)::Node
     if rem_depth <= 1 || (method == :asym && rand() < 0.3^rem_depth)
 
-        if rand() < (2 / (ops.data_descript.n_vars + 2))
+        if rand() < (2 / (ops.data_descript.n_vars + 2))       # parameter twice as likely as any one variable
             next_node = Node(rand())                           # parameter
         else
             next_node = Node(rand(1:ops.data_descript.n_vars)) # variable
@@ -97,7 +97,8 @@ end
 """
 function apply_genetic_operations!(
     nodes,
-    ops;
+    ops,
+    bank_of_terms;
     (one_node_muts!)=[
         insert_mutation!, point_mutation!, addterm_mutation!, insert_times_param_mutation!, # ___ below ar deeper than 2
         hoist_mutation!, subtree_mutation!, drastic_simplify!
@@ -107,7 +108,7 @@ function apply_genetic_operations!(
 
     if !iszero(ops.general.always_drastic_simplify)
         drastic_inds = findall(
-            drastic_simplify!(n, ops, potential=true, threshold=ops.general.always_drastic_simplify) 
+            drastic_simplify!(n, ops, potential=true, threshold=ops.general.always_drastic_simplify)
             for n in nodes
         )
         drastic_nodes = [deepcopy(nodes[i]) for i in drastic_inds]
@@ -116,11 +117,7 @@ function apply_genetic_operations!(
             drastic_simplify!(n, ops, potential=false, threshold=ops.general.always_drastic_simplify)
         end
 
-        for _ in 1:3
-            simplify_unary_of_param!.(drastic_nodes)
-            simplify_binary_of_param!.(drastic_nodes)
-            simplify_binary_across_1_level!.(drastic_nodes, Ref(ops))
-        end
+        apply_simple_simplifications!.(drastic_nodes, Ref(ops))
 
         append!(nodes, drastic_nodes)
     end
@@ -136,12 +133,15 @@ function apply_genetic_operations!(
             one_node_muts![findfirst(i -> rand_mutation < ops.mutation[i], 1:7)](node, ops)
 
         elseif rand_mutation < ops.mutation[8]
-            try
+            try # TODO: maybe work on getting rid of that
                 simplify_w_symbolic_utils!(node, ops)
             catch
             end
 
-        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[9]
+        elseif rand_mutation < ops.mutation[9]
+            add_from_bank_of_terms_mutation!(node, ops, bank_of_terms) # TODO: add check in options and add tests
+
+        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[10]
             ind = findfirst(i -> maxim_tree_depth(nodes[i], minim=3) > 2, eachind)
             if isnothing(ind)
                 point_mutation!(node, ops)
@@ -166,7 +166,7 @@ function mutate_left(node, min_depth)
             return rand(Bool)
         elseif suff_depth_lef
             return true
-        else 
+        else
             return false
         end
     else
@@ -298,7 +298,7 @@ end
 function addterm_mutation!(node, ops; subtree_depth=0)
     subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
     orig_node = deepcopy(node)
-    copy_node_wo_copy!(node, Node(2, findfirst(isequal(+), ops.binops)))
+    copy_node_wo_copy!(node, Node(2, findfirst(==(+), ops.binops)))
     node.lef = orig_node
     node.rig = grow_equation(subtree_depth, ops)
 end
@@ -309,9 +309,18 @@ function insert_times_param_mutation!(node, ops)
     node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
 
-    times_param_node = Node(2, findfirst(isequal(*), ops.binops))
+    times_param_node = Node(2, findfirst(==(*), ops.binops))
     times_param_node.lef = TiSR.Node(1.0)
     times_param_node.rig = getfield(node_elect, lefrig)
 
     setfield!(node_elect, lefrig, times_param_node)
+end
+
+""" add from bank of terms
+"""
+function add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
+    orig_node = deepcopy(node)
+    copy_node_wo_copy!(node, Node(2, findfirst(==(+), ops.binops)))
+    node.lef = orig_node
+    node.rig = deepcopy(rand(bank_of_terms)) # TODO: is the deepcopy required here?
 end

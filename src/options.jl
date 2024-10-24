@@ -54,6 +54,9 @@ struct Options{A, B, C, F, G, H, I, J, K}
             :weighted_compl in selection.hall_of_fame_objectives || @warn "weighted_compl_dict specified, but :weighted_compl not in hall_of_fame_objectives"
         end
 
+        # ------------------------------------------------------------------------------------------
+        @assert !xor(isempty(grammar.bank_of_terms), (mutation[9] - mutation[8]) == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
+
         # relative reference offset
         any(abs(d) < 0.1 for d in data[end]) && @warn "some target data < 0.1 -> 0.1 is used as lower bound for the relative measures like mare" # TODO: maybe lower to 1e-5?
 
@@ -188,13 +191,13 @@ function general_params(;
     remove_doubles_sigdigits < 6      || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
     always_drastic_simplify < 1e-3    || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4      || @warn "adaptive_compl_increment should be >= 5                         "
-    island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          " 
+    island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          "
     max_age > 10                      || @warn "max_age seems small                                             "
 
     island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
 
     if multithreading
-        Threads.nthreads() > 1 || @warn "To acually utilize multithreading, Julia must be started with the desired number of threads, i.e., `julia -t 4`" 
+        Threads.nthreads() > 1 || @warn "To acually utilize multithreading, Julia must be started with the desired number of threads, i.e., `julia -t 4`"
     end
 
     # resulting parameters
@@ -282,12 +285,13 @@ end
 """ Returns the equation grammar related parameters.
 """
 function grammar_params(;
-    max_compl           = 30,
-    min_compl           = 3,
-    init_tree_depth     = 4,
-    max_nodes_per_term  = Inf,
-    illegal_dict        = Dict(),
-    weighted_compl_dict = Dict{String, Float64}(),
+    max_compl::Int64                           = 30,
+    min_compl::Int64                           = 3,
+    init_tree_depth::Int64                     = 4,
+    max_nodes_per_term::Int64                  = typemax(Int64),
+    weighted_compl_dict::Dict{String, Float64} = Dict{String, Float64}(),
+    bank_of_terms::Vector{String}              = String[],
+    illegal_dict::Dict                         = Dict(),
 )
     @assert max_compl > 3             "max_compl must be larger than 3          "
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
@@ -320,6 +324,7 @@ function grammar_params(;
         max_compl           = max_compl,
         min_compl           = min_compl,
         max_nodes_per_term  = max_nodes_per_term,
+        bank_of_terms       = bank_of_terms,
     )
 end
 
@@ -328,15 +333,16 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;
-    p_crossover          = 10.0,
-    p_point              = 1.0,
-    p_insert             = 1.0,
-    p_hoist              = 1.0,
-    p_subtree            = 0.5,
-    p_drastic_simplify   = 0.1,
-    p_insert_times_param = 0.1,
-    p_add_term           = 0.1,
-    p_simplify           = 0.1,
+    p_crossover              = 10.0,
+    p_point                  = 1.0,
+    p_insert                 = 1.0,
+    p_hoist                  = 1.0,
+    p_subtree                = 0.5,
+    p_drastic_simplify       = 0.1,
+    p_insert_times_param     = 0.1,
+    p_add_term               = 0.1,
+    p_simplify               = 0.1,
+    p_add_from_bank_of_terms = 0.0,
 )
     p_crossover *= 0.5 # because it consumes a second one, if hit
 
@@ -349,6 +355,7 @@ function mutation_params(;
         p_subtree,
         p_drastic_simplify,
         p_simplify,
+        p_add_from_bank_of_terms,
         p_crossover,
     )
 

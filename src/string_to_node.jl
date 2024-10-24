@@ -5,8 +5,8 @@
 function prefix_string_to_equation(
     str_arr,
     ops;
-    number_regex=r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([e][+-]?[0-9]+)?$",
-    variable_regex=r"^[v][0-9]?[0-9]$"
+    number_regex         = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([e][+-]?[0-9]+)?$",
+    variable_regex       = r"^[v][0-9]?[0-9]$",
 )
     # performance -> preconvert ops to string; pop! instead of slicing array
     if str_arr[1] in string.(ops.binops)
@@ -27,7 +27,7 @@ function prefix_string_to_equation(
         return Node(ind_func, lef), rem_
 
     elseif occursin(variable_regex, string(str_arr[1]))
-        return Node(parse(Int64, str_arr[1][2:end])), str_arr[2:end]
+        return Node(parse(Int64, str_arr[1][2:end])), str_arr[2:end] # TODO: prevent non-existant variables
 
     elseif occursin(number_regex, string(str_arr[1]))
         return Node(parse(Float64, str_arr[1])), str_arr[2:end]
@@ -48,6 +48,8 @@ function prefix_string_to_equation(
             ind_func = findfirst(isequal("ln_abs"), string.(ops.unaops))
             lef, rem_ = prefix_string_to_equation(str_arr[2:end], ops)
             return Node(ind_func, lef), rem_
+        else
+            throw("cannot parse '$(str_arr[1])' into TiSR. Probably not in function set.")
         end
     end
 end
