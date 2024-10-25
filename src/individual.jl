@@ -3,6 +3,8 @@ mutable struct Individual   #{T}
     node::Node
     age::Float64
     valid::Bool
+    # rank::Int64
+    # crowding::Float64
 
     # complexity measures
     compl::Float64
@@ -104,7 +106,7 @@ Base.deepcopy(indiv::Individual)::Individual = Base.copy(indiv)
 # different remove doubles -> maybe combine somehow with views?
 # ==================================================================================================
 """ Removes similar individual from a population isle. The individuals are considered similar,
-    if their MSE and MAE rounded to ops.general.remove_doubles_sigdigits significant digits are 
+    if their MSE and MAE rounded to ops.general.remove_doubles_sigdigits significant digits are
     the same. Of those, the one with the least complexity remains in the population.
 """
 function remove_doubles!(individs::Vector{Individual}, ops)
@@ -125,7 +127,7 @@ function remove_doubles!(individs::Vector{Individual}, ops)
     keepat!(individs, unique_inds)
 end
 
-""" Helper function while for remove_doubles!, which performs the comparisons and modifies 
+""" Helper function while for remove_doubles!, which performs the comparisons and modifies
     the unique_inds.
 """
 function _remove_doubles_helper!(indiv_obj_vals, unique_inds)

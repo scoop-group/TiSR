@@ -110,4 +110,20 @@ function get_relative_fitness(indiv_obj_vals)
     fitness          = sum(indiv_obj_vals, dims=2)
 end
 
+""" perfrom binary tournament selection for parent selection
+"""
+function parent_selection(pop)
+    i1, i2 = rand(pop), rand(pop)
+    if i1.rank < i2.rank
+        return deepcopy(i1)
+    elseif i1.rank > i2.rank
+        return deepcopy(i2)
+    else
+        if i1.crowing < i2.crowing
+            return deepcopy(i2)
+        else
+            return deepcopy(i1)
+        end
+    end
+end
 

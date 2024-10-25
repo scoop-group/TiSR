@@ -148,7 +148,7 @@ end
     Like x + 1e-5 -> x, x * 1e-5 -> 1e-5
     In the latter example, the 1e-5 will again be detected and removed on the level above.
 """
-function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5)
+function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5) # TODO: test with new prob parameter
 
     pot = false
 
@@ -272,9 +272,9 @@ function simplify_w_symbolic_utils!(node::Node, ops::Options; use_simplify=false
     copy_node_wo_copy!(node, simp_node)
 end
 
-""" 
 """
-function simplify_to_string(node::Node, ops::Options; sigdigits=15)
+"""
+function simplify_to_string(node::Node, ops::Options; sigdigits=15) # TODO: make nicer, this was quick and dirty
     sym_eq = node_to_symbolic(node, ops)
     # sym_eq = SymbolicUtils.simplify(sym_eq)
     eq_str = string(sym_eq)
