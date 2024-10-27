@@ -36,6 +36,20 @@ function generational_loop(
     bank_of_terms  = Node[string_to_node(eq, ops) for eq in ops.grammar.bank_of_terms]
 
 # ==================================================================================================
+# check if bank_of_terms and start_pop legal
+# ==================================================================================================
+    if !isempty(ops.grammar.illegal_dict)
+        for node in bank_of_terms
+            @assert is_legal_nesting(node, ops) "'$node' from bank_of_terms has some illegal nestings"
+        end
+        for new_node in new_nodes
+            for node in new_node
+                @assert is_legal_nesting(node, ops) "'$node' from start_pop has some illegal nestings"
+            end
+        end
+    end
+
+# ==================================================================================================
 # initialize data structures
 # ==================================================================================================
 
