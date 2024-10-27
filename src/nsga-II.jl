@@ -221,6 +221,11 @@ function generational_loop(
             keepat!(population[isle], selection_inds)
         end
 
+        # remove doubles across islands
+        if ops.general.remove_doubles_across_islands && ops.general.remove_doubles_sigdigits > 0
+            remove_doubles_across_islands!(population, ops)
+        end
+
 # ==================================================================================================
 # migration
 # ==================================================================================================
