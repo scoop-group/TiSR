@@ -3,8 +3,8 @@ mutable struct Individual   #{T}
     node::Node
     age::Float64
     valid::Bool
-    # rank::Int64
-    # crowding::Float64
+    rank::Int64
+    crowding::Float64
 
     # complexity measures
     compl::Float64
@@ -101,6 +101,20 @@ function Base.copy(indiv::Individual)
 end
 
 Base.deepcopy(indiv::Individual)::Individual = Base.copy(indiv)
+
+function Base.isless(i1::Individual, i2::Individual)
+    if i1.rank < i2.rank
+        return true
+    elseif i1.rank > i2.rank
+        return false
+    else
+        if i1.crowding < i2.crowding
+            return false
+        else
+            return true
+        end
+    end
+end
 
 # ==================================================================================================
 # different remove doubles -> maybe combine somehow with views?

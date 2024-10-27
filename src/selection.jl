@@ -110,20 +110,55 @@ function get_relative_fitness(indiv_obj_vals)
     fitness          = sum(indiv_obj_vals, dims=2)
 end
 
-""" perfrom binary tournament selection for parent selection
-"""
-function parent_selection(pop)
-    i1, i2 = rand(pop), rand(pop)
-    if i1.rank < i2.rank
-        return deepcopy(i1)
-    elseif i1.rank > i2.rank
-        return deepcopy(i2)
-    else
-        if i1.crowing < i2.crowing
-            return deepcopy(i2)
-        else
-            return deepcopy(i1)
+# ==================================================================================================
+# 4 parent selection
+# ==================================================================================================
+
+function non_dominated_sort_clean(rows)
+    fronts = Vector{Int64}[]
+    individs = SVector{length(rows[1])}.(rows)
+    indices = collect(eachindex(individs))
+
+    while !isempty(individs)
+        red = [all(x -> !dominates(x, y), individs) for y in individs]
+        next_front = indices[red]
+        push!(fronts, next_front)
+        deleteat!(indices, red)
+        deleteat!(individs, red)
+    end
+
+    domination_score = zeros(Int64, length(rows))
+
+    for (front, inds) in enumerate(fronts)
+        domination_score[inds] .= front
+    end
+
+    return domination_score
+end
+
+function crowding_distance_clean(rows)
+
+    points = reduce(hcat, rows)'
+    n_points, n_dims = size(points)
+    distances = zeros(n_points)
+
+    for i in 1:n_dims                                                                                # compute the crowding distance for each point and each dimension
+        sorted_indices = sortperm(points[:, i])                                                      # sort the points by their i-th objective value
+        sorted_points = points[sorted_indices, :]
+        min_value, max_value = sorted_points[1, i], sorted_points[end, i]
+        min_value == max_value && continue
+
+        distances[sorted_indices[1]]   = Inf                                                         # set the crowding distance for the boundary points to infinity
+        distances[sorted_indices[end]] = Inf
+
+        for j in 2:n_points-1                                                                        # compute the crowding distance for the remaining points
+            distances[sorted_indices[j]] += (sorted_points[j+1, i] - sorted_points[j-1, i]) / (max_value - min_value)
         end
     end
+    return distances
 end
+
+""" perfrom binary tournament selection for parent selection
+"""
+parent_selection(pop) = min(rand(pop), rand(pop))
 

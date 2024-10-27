@@ -97,10 +97,15 @@ function generational_loop(
 
             # perform mutations # ------------------------------------------------------------------
             if length(population[isle]) > 0.4 * ops.general.pop_per_isle
-                shuffle!(population[isle])
 
-                for i in 1:max(length(population[isle]), (2 * ops.general.pop_per_isle  - length(population[isle])))
-                    push!(new_nodes[isle], deepcopy(getfield(population[isle][mod1(i, length(population[isle]))], :node)))
+                # select parents
+                shuffle!(population[isle])
+                for i in 1:ops.general.n_children
+                    if ops.general.parent_selection
+                        push!(new_nodes[isle], deepcopy(parent_selection(population[isle]).node))
+                    else
+                        push!(new_nodes[isle], deepcopy(population[isle][mod1(i, length(population[isle]))].node))
+                    end
                 end
 
                 apply_genetic_operations!(new_nodes[isle], ops, bank_of_terms)
@@ -165,15 +170,19 @@ function generational_loop(
                 for indiv in population[isle]
             ]
 
-            # Pareto selection # -------------------------------------------------------------------
-            if ops.selection.n_pareto_select_per_isle > 0
-                selected = non_dominated_sort(
-                    indiv_obj_vals,
-                    n_select=ops.selection.n_pareto_select_per_isle,
-                    first_front=false
-                )
+            # determine rank and crowding for all individuals -> overkill, if no parent selection
+            ranks    = non_dominated_sort_clean(indiv_obj_vals)
+            crowding = crowding_distance_clean(indiv_obj_vals)
 
-                append!(selection_inds, selected)
+            for i in eachindex(population[isle])
+                population[isle][i].rank     = ranks[i]
+                population[isle][i].crowding = crowding[i]
+            end
+
+            # # Pareto selection # -------------------------------------------------------------------
+            if ops.selection.n_pareto_select_per_isle > 0
+                sort!(population[isle]) # apply non_dominated_sort
+                append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
             end
 
             # tournament selection # ---------------------------------------------------------------
@@ -193,6 +202,7 @@ function generational_loop(
                 append!(selection_inds, selected)
             end
 
+            # apply selection
             sort!(selection_inds)
             keepat!(population[isle], selection_inds)
         end

@@ -157,7 +157,9 @@ function general_params(;
     n_gens                          = typemax(Int64),
     t_lim                           = 60. * 5.,
     pop_size                        = 600,
+    parent_selection                = false,
     num_islands                     = 12,
+    children_ratio                  = 1.0,
     migration_interval              = 200,
     island_extinction_interval      = 5000,
     migrate_after_extinction_prob   = 1.0,
@@ -173,15 +175,16 @@ function general_params(;
     plot_hall_of_fame               = true,
     print_hall_of_fame              = true,
 )
-    @assert num_islands > 0                             "num_islands should be at least 1                     "
-    @assert migration_interval > 0                      "migration_interval should be at least 1              "
-    @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                 "
-    @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0            "
-    @assert callback isa Function                       "callback must be a function                          "
-    @assert island_extinction_interval > 0              "island_extinction_interval must be > 0               "
-    @assert max_age > 1                                 "max_age must be > 1                                  "
-    @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0     "
-    @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1"
+    @assert num_islands > 0                             "num_islands should be at least 1                            "
+    @assert migration_interval > 0                      "migration_interval should be at least 1                     "
+    @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                        "
+    @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0                   "
+    @assert callback isa Function                       "callback must be a function                                 "
+    @assert island_extinction_interval > 0              "island_extinction_interval must be > 0                      "
+    @assert max_age > 1                                 "max_age must be > 1                                         "
+    @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0            "
+    @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1       "
+    @assert 0.0 <= children_ratio <= 2.0                "children_ratio should be inbetween 0.0 and 2.0              "
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -202,10 +205,13 @@ function general_params(;
 
     # resulting parameters
     pop_per_isle = ceil(Int64, pop_size / num_islands)
+    n_children = max(2, round(Int64, children_ratio * pop_per_isle))
 
     return (
         n_gens                          = n_gens,
         pop_size                        = pop_size,
+        parent_selection                = parent_selection,
+        n_children                      = n_children,
         pop_per_isle                    = pop_per_isle,
         num_islands                     = num_islands,
         migration_interval              = migration_interval,
