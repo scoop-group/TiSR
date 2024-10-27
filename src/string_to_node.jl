@@ -5,23 +5,23 @@
 function prefix_string_to_equation(
     str_arr,
     ops;
-    number_regex         = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([e][+-]?[0-9]+)?$",
-    variable_regex       = r"^[v][0-9]?[0-9]$",
+    number_regex   = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([e][+-]?[0-9]+)?$",
+    variable_regex = r"^[v][0-9]?[0-9]$",
 )
-    # performance -> preconvert ops to string; pop! instead of slicing array
+    # performance -> preconvert ops to string; pop! instead of slicing array; maybe dont need to do first if than findfirst
     if str_arr[1] in string.(ops.binops)
-        ind_func = findfirst(isequal(str_arr[1]), string.(ops.binops))
+        ind_func = findfirst(==(str_arr[1]), string.(ops.binops))
 
-        @assert !isnothing(ind_func) "$(str_arr[1]) not in $(string.(ops.binops))"
+        # @assert !isnothing(ind_func) "$(str_arr[1]) not in $(string.(ops.binops))"
 
         lef, rem_l = prefix_string_to_equation(str_arr[2:end], ops)
         rig, rem_r = prefix_string_to_equation(rem_l, ops)
         return Node(ind_func, lef, rig), rem_r
 
     elseif str_arr[1] in string.(ops.unaops)
-        ind_func = findfirst(isequal(str_arr[1]), string.(ops.unaops))
+        ind_func = findfirst(==(str_arr[1]), string.(ops.unaops))
 
-        @assert !isnothing(ind_func) "$(str_arr[1]) not in $(string.(ops.unaops))"
+        # @assert !isnothing(ind_func) "$(str_arr[1]) not in $(string.(ops.unaops))"
 
         lef, rem_ = prefix_string_to_equation(str_arr[2:end], ops)
         return Node(ind_func, lef), rem_
@@ -31,26 +31,8 @@ function prefix_string_to_equation(
 
     elseif occursin(number_regex, string(str_arr[1]))
         return Node(parse(Float64, str_arr[1])), str_arr[2:end]
-
     else
-        if str_arr[1] == "^"
-            ind_func = findfirst(isequal("pow_abs"), string.(ops.binops))
-            lef, rem_l = prefix_string_to_equation(str_arr[2:end], ops)
-            rig, rem_r = prefix_string_to_equation(rem_l, ops)
-            return Node(ind_func, lef, rig), rem_r
-
-        elseif str_arr[1] == "sqrt"
-            ind_func = findfirst(isequal("sqrt_abs"), string.(ops.unaops))
-            lef, rem_ = prefix_string_to_equation(str_arr[2:end], ops)
-            return Node(ind_func, lef), rem_
-
-        elseif str_arr[1] == "log"
-            ind_func = findfirst(isequal("ln_abs"), string.(ops.unaops))
-            lef, rem_ = prefix_string_to_equation(str_arr[2:end], ops)
-            return Node(ind_func, lef), rem_
-        else
-            throw("cannot parse '$(str_arr[1])' into TiSR. Probably not in function set.")
-        end
+        throw("cannot parse '$(str_arr[1])' into TiSR. Probably not in function set.")
     end
 end
 
