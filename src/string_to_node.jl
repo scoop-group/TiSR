@@ -12,8 +12,6 @@ function prefix_string_to_equation(
     if str_arr[1] in string.(ops.binops)
         ind_func = findfirst(==(str_arr[1]), string.(ops.binops))
 
-        # @assert !isnothing(ind_func) "$(str_arr[1]) not in $(string.(ops.binops))"
-
         lef, rem_l = prefix_string_to_equation(str_arr[2:end], ops)
         rig, rem_r = prefix_string_to_equation(rem_l, ops)
         return Node(ind_func, lef, rig), rem_r
@@ -21,18 +19,20 @@ function prefix_string_to_equation(
     elseif str_arr[1] in string.(ops.unaops)
         ind_func = findfirst(==(str_arr[1]), string.(ops.unaops))
 
-        # @assert !isnothing(ind_func) "$(str_arr[1]) not in $(string.(ops.unaops))"
-
         lef, rem_ = prefix_string_to_equation(str_arr[2:end], ops)
         return Node(ind_func, lef), rem_
 
     elseif occursin(variable_regex, string(str_arr[1]))
-        return Node(parse(Int64, str_arr[1][2:end])), str_arr[2:end] # TODO: prevent non-existant variables
-
+        var_num = parse(Int64, str_arr[1][2:end])
+        if 0 < var_num <= ops.data_descript.n_vars
+            return Node(var_num), str_arr[2:end]
+        else
+            throw("cannot parse '$(str_arr[1])' into TiSR. Only v1 through v$(ops.data_descript.n_vars) in dataset")
+        end
     elseif occursin(number_regex, string(str_arr[1]))
         return Node(parse(Float64, str_arr[1])), str_arr[2:end]
     else
-        throw("cannot parse '$(str_arr[1])' into TiSR. Probably not in function set.")
+        throw("cannot parse '$(str_arr[1])' into TiSR. Probably not in function set")
     end
 end
 
