@@ -1,5 +1,23 @@
 
+
+import Pkg
+Pkg.develop(path=".")
+
 using TiSR
+
+using DataFrames
+using CSV
+
+# # load data # ------------------------------------------------------------------------------------
+# # file_path = "../assael_data.txt"
+# file_path = "benchmarks/empirical_bench/data/newton's_law_of_universal_gravitation.csv"
+#
+# df = CSV.read(file_path, DataFrame)
+#
+# data_matr = Matrix(df)
+
+include("../benchmark_problems.jl")
+
 
 # # ==================================================================================================
 # # preparation
