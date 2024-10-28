@@ -202,7 +202,7 @@ function generational_loop(
                 population[isle][i].crowding = crowding[i]
             end
 
-            # # Pareto selection # -------------------------------------------------------------------
+            # Pareto selection # -------------------------------------------------------------------
             if ops.selection.n_pareto_select_per_isle > 0
                 sort!(population[isle]) # apply non_dominated_sort
                 append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
