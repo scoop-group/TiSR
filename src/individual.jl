@@ -1,10 +1,10 @@
 
-mutable struct Individual   #{T}
+mutable struct Individual
     node::Node
-    age::Float64
     valid::Bool
     rank::Int64
     crowding::Float64
+    age::Float64
 
     # complexity measures
     compl::Float64
@@ -13,73 +13,68 @@ mutable struct Individual   #{T}
     n_params::Float64
 
     # fit measures -> how to split in train and test
-    ms_processed_e::Float64           # T
-    mae::Float64                      # T
-    mse::Float64                      # T
-    max_ae::Float64                   # T
-    minus_r2::Float64                 # T
-    minus_abs_spearman::Float64       # T
-    mare::Float64                     # T
-    q75_are::Float64                  # T
-    max_are::Float64                  # T
+    ms_processed_e::Float64
+    mae::Float64
+    mse::Float64
+    max_ae::Float64
+    minus_r2::Float64
+    minus_abs_spearman::Float64
+    mare::Float64
+    q75_are::Float64
+    max_are::Float64
 
     Individual() = new()
-
-    function Individual(node, data, ops, cur_max_compl, fit_iter)
-
-        apply_simple_simplifications!(node, ops)
-
-        trim_to_max_nodes_per_term!(node, ops)
-
-        if count_nodes(node) > ops.grammar.max_compl
-            target_compl = rand(5:min(
-                    cur_max_compl + ops.general.adaptive_compl_increment,
-                    ops.grammar.max_compl
-            ))
-            trim_to_max_compl!(
-                node,
-                target_compl,
-                ops
-            )
-        end
-
-        apply_simple_simplifications!(node, ops)
-
-        div_to_mul_param!(node, ops)
-        reorder_add_n_mul!(node, ops)
-
-        indiv = new(node)
-
-        if count_nodes(node) < ops.grammar.min_compl
-            indiv.valid = false
-            return indiv
-        end
-
-        if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(node, ops)
-            indiv.valid = false
-            return indiv
-        end
-
-        fit_n_eval!(indiv, data, ops, fit_iter)
-
-        indiv.valid || return indiv
-
-        indiv.age             = 0.0
-        indiv.compl           = count_nodes(node)
-
-        if isempty(ops.grammar.weighted_compl_dict)
-            indiv.weighted_compl = indiv.compl
-        else
-            indiv.weighted_compl = get_weighted_compl(node, ops)
-        end
-
-        indiv.recursive_compl = recursive_compl(node, ops)
-        indiv.n_params        = length(list_of_param_nodes(node))
-
-        return indiv
-    end
+    Individual(node::Node, ops) = new(node)
 end
 
+function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+
+    apply_simple_simplifications!(indiv.node, ops)
+    trim_to_max_nodes_per_term!(indiv.node, ops)
+
+    if count_nodes(indiv.node) > ops.grammar.max_compl
+        target_compl = rand(5:min(
+                cur_max_compl + ops.general.adaptive_compl_increment,
+                ops.grammar.max_compl
+        ))
+        trim_to_max_compl!(
+            indiv.node,
+            target_compl,
+            ops
+        )
+    end
+
+    apply_simple_simplifications!(indiv.node, ops)
+
+    div_to_mul_param!(indiv.node, ops)
+    reorder_add_n_mul!(indiv.node, ops)
+
+    if count_nodes(indiv.node) < ops.grammar.min_compl
+        indiv.valid = false
+        return
+    end
+
+    if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
+        indiv.valid = false
+        return
+    end
+
+    fit_n_eval!(indiv, data, ops, fit_iter)
+
+    indiv.valid || return
+
+    indiv.age             = 0.0
+    indiv.compl           = count_nodes(indiv.node)
+
+    if isempty(ops.grammar.weighted_compl_dict)
+        indiv.weighted_compl = indiv.compl
+    else
+        indiv.weighted_compl = get_weighted_compl(indiv.node, ops)
+    end
+
+    indiv.recursive_compl = recursive_compl(indiv.node, ops)
+    indiv.n_params        = length(list_of_param_nodes(indiv.node))
+end
 
 # ==================================================================================================
 # some helpers
@@ -102,6 +97,8 @@ end
 
 Base.deepcopy(indiv::Individual)::Individual = Base.copy(indiv)
 
+""" The NSGA-II definition of isless.
+"""
 function Base.isless(i1::Individual, i2::Individual)
     if i1.rank < i2.rank
         return true

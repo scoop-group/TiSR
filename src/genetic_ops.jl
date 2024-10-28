@@ -95,60 +95,61 @@ end
     tracked or avoided. In this case, the individual is just refit with it's new parameters as
     start point.
 """
-function apply_genetic_operations!(
-    nodes,
-    ops,
-    bank_of_terms;
+function apply_genetic_operations!(indivs, ops, bank_of_terms;
     (one_node_muts!)=[
         insert_mutation!, point_mutation!, addterm_mutation!, insert_times_param_mutation!, # ___ below ar deeper than 2
         hoist_mutation!, subtree_mutation!, drastic_simplify!
     ]
 )
-    eachind = collect(eachindex(nodes))
+    eachind = collect(eachindex(indivs))
 
+    # always_drastic_simplify # --------------------------------------------------------------------
     if !iszero(ops.general.always_drastic_simplify)
         drastic_inds = findall(
-            drastic_simplify!(n, ops, potential=true, threshold=ops.general.always_drastic_simplify)
-            for n in nodes
+            drastic_simplify!(indiv.node, ops, potential=true, threshold=ops.general.always_drastic_simplify)
+            for indiv in indivs
         )
-        drastic_nodes = [deepcopy(nodes[i]) for i in drastic_inds]
+        drastic_indivs = [deepcopy(indivs[i]) for i in drastic_inds]
 
-        for n in drastic_nodes
-            drastic_simplify!(n, ops, potential=false, threshold=ops.general.always_drastic_simplify)
+        for indiv in drastic_indivs
+            drastic_simplify!(indiv.node, ops, potential=false, threshold=ops.general.always_drastic_simplify)
         end
 
-        apply_simple_simplifications!.(drastic_nodes, Ref(ops))
-
-        append!(nodes, drastic_nodes)
+        append!(indivs, drastic_indivs)
     end
 
     while !isempty(eachind) # TODO: maybe invert -> sample mutation first and then find appropriate node(s) -> closer to selected mutation probabilities
-        node = nodes[popfirst!(eachind)]
+        indiv = indivs[popfirst!(eachind)]
 
-        until_mut = maxim_tree_depth(node, minim=3) > 2 ? length(ops.mutation) : 3
+        until_mut = maxim_tree_depth(indiv.node, minim=3) > 2 ? length(ops.mutation) : 3
+        rand_mutation = rand() * sum(ops.mutation[1:until_mut])
+        mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation[1:i]), eachindex(ops.mutation))
 
-        rand_mutation = rand() * ops.mutation[until_mut]
+        if mut_ind <= 7
+            one_node_muts![mut_ind](indiv.node, ops)
 
-        if rand_mutation < ops.mutation[7]
-            one_node_muts![findfirst(i -> rand_mutation < ops.mutation[i], 1:7)](node, ops)
-
-        elseif rand_mutation < ops.mutation[8]
-            try # TODO: maybe work on getting rid of that
-                simplify_w_symbolic_utils!(node, ops)
+        elseif mut_ind == 8
+            try
+                simplify_w_symbolic_utils!(indiv.node, ops)
             catch
+                point_mutation!(indiv.node, ops)
             end
 
-        elseif rand_mutation < ops.mutation[9]
-            add_from_bank_of_terms_mutation!(node, ops, bank_of_terms) # TODO: add check in options and add tests
+        elseif mut_ind == 9
+            add_from_bank_of_terms_mutation!(indiv.node, ops, bank_of_terms)
 
-        elseif length(eachind) > 1 && rand_mutation <= ops.mutation[10]
-            ind = findfirst(i -> maxim_tree_depth(nodes[i], minim=3) > 2, eachind)
-            if isnothing(ind)
-                point_mutation!(node, ops)
+        elseif mut_ind == 10 && !isempty(eachind)
+            ind = findfirst(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
+            if !isnothing(ind)
+                indiv2 = indivs[popat!(eachind, ind)]
+                crossover_mutation!(indiv.node, indiv2.node, ops)
             else
-                node2 = nodes[popat!(eachind, ind)]
-                crossover_mutation!(node, node2, ops)
+                point_mutation!(indiv.node, ops)
             end
+        elseif isempty(eachind)
+            point_mutation!(indiv.node, ops)
+        else
+            @assert false
         end
     end
 end

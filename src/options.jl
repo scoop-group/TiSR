@@ -55,7 +55,7 @@ struct Options{A, B, C, F, G, H, I, J, K}
         end
 
         # ------------------------------------------------------------------------------------------
-        @assert !xor(isempty(grammar.bank_of_terms), (mutation[9] - mutation[8]) == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
+        @assert !xor(isempty(grammar.bank_of_terms), mutation[9] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
 
         # relative reference offset
         any(abs(d) < 0.1 for d in data[end]) && @warn "some target data < 0.1 -> 0.1 is used as lower bound for the relative measures like mare" # TODO: maybe lower to 1e-5?
@@ -169,6 +169,7 @@ function general_params(;
     remove_doubles_sigdigits        = 3,
     remove_doubles_across_islands   = false,
     max_age                         = pop_size / num_islands,
+    n_refitting                     = 1,
     adaptive_compl_increment        = Inf,
     callback                        = (hall_of_fame, population, ops) -> false,
     multithreading                  = false,
@@ -176,16 +177,17 @@ function general_params(;
     plot_hall_of_fame               = true,
     print_hall_of_fame              = true,
 )
-    @assert num_islands > 0                             "num_islands should be at least 1                            "
-    @assert migration_interval > 0                      "migration_interval should be at least 1                     "
-    @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                        "
-    @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0                   "
-    @assert callback isa Function                       "callback must be a function                                 "
-    @assert island_extinction_interval > 0              "island_extinction_interval must be > 0                      "
-    @assert max_age > 1                                 "max_age must be > 1                                         "
-    @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0            "
-    @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1       "
-    @assert 0.0 <= children_ratio <= 2.0                "children_ratio should be inbetween 0.0 and 2.0              "
+    @assert num_islands > 0                             "num_islands should be at least 1                          "
+    @assert migration_interval > 0                      "migration_interval should be at least 1                   "
+    @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                      "
+    @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0                 "
+    @assert callback isa Function                       "callback must be a function                               "
+    @assert island_extinction_interval > 0              "island_extinction_interval must be > 0                    "
+    @assert max_age > 1                                 "max_age must be > 1                                       "
+    @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0          "
+    @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1     "
+    @assert 0.0 <= children_ratio <= 2.0                "children_ratio should be inbetween 0.0 and 2.0            "
+    @assert 0 <= n_refitting <= pop_size / num_islands  "n_refitting should be between 0 and pop_size / num_islands"
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -224,6 +226,7 @@ function general_params(;
         remove_doubles_sigdigits        = remove_doubles_sigdigits,
         remove_doubles_across_islands   = remove_doubles_across_islands,
         max_age                         = max_age,
+        n_refitting                     = n_refitting,
         t_lim                           = t_lim,
         multithreading                  = multithreading,
         adaptive_compl_increment        = adaptive_compl_increment,
@@ -367,5 +370,5 @@ function mutation_params(;
         p_crossover,
     )
 
-    return cumsum(mut_params ./ sum(mut_params)) # TODO: change to do that where its needed
+    return mut_params ./ sum(mut_params) # TODO: change to do that where its needed
 end

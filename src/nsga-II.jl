@@ -1,8 +1,8 @@
 
 function generational_loop(data, ops)
     population = [Individual[] for _ in 1:ops.general.num_islands]
-    new_nodes  = [Node[] for _ in 1:ops.general.num_islands]
-    return generational_loop(data, ops, population, new_nodes)
+    children   = [Individual[] for _ in 1:ops.general.num_islands]
+    return generational_loop(data, ops, population, children)
 end
 
 function generational_loop(data, ops, start_pop::Vector{Individual})
@@ -10,25 +10,31 @@ function generational_loop(data, ops, start_pop::Vector{Individual})
         start_pop[isle:ops.general.num_islands:end]
         for isle in 1:ops.general.num_islands
     ]
-    new_nodes  = [Node[] for _ in 1:ops.general.num_islands]
-    return generational_loop(data, ops, population, new_nodes)
+    children   = [Individual[] for _ in 1:ops.general.num_islands]
+    return generational_loop(data, ops, population, children)
 end
 
 function generational_loop(data, ops, start_pop::Vector{String})
-    start_pop  = Node[string_to_node(eq, ops) for eq in start_pop]
     population = [Individual[] for _ in 1:ops.general.num_islands]
-    new_nodes  = [
-        start_pop[isle:ops.general.num_islands:end]
+
+    start_pop  = Node[string_to_node(eq, ops) for eq in start_pop]
+
+    children   = [
+        [
+            Individual(node, ops)
+            for node in start_pop[isle:ops.general.num_islands:end]
+        ]
         for isle in 1:ops.general.num_islands
     ]
-    return generational_loop(data, ops, population, new_nodes)
+
+    return generational_loop(data, ops, population, children)
 end
 
 function generational_loop(
     data,
     ops,
     population::Vector{Vector{Individual}},
-    new_nodes::Vector{Vector{Node}},
+    children::Vector{Vector{Individual}},
 )
 # ==================================================================================================
 # prepare bank_of_terms
@@ -42,7 +48,7 @@ function generational_loop(
         for node in bank_of_terms
             @assert is_legal_nesting(node, ops) "'$node' from bank_of_terms has some illegal nestings"
         end
-        for new_node in new_nodes
+        for new_node in population
             for node in new_node
                 @assert is_legal_nesting(node, ops) "'$node' from start_pop has some illegal nestings"
             end
@@ -52,8 +58,6 @@ function generational_loop(
 # ==================================================================================================
 # initialize data structures
 # ==================================================================================================
-
-    children     = [Individual[] for _ in 1:ops.general.num_islands]
     hall_of_fame = Individual[]
 
 # # ==================================================================================================
@@ -105,8 +109,10 @@ function generational_loop(
 # genetic operations
 # ==================================================================================================
             # create new children # ----------------------------------------------------------------
-            while length(new_nodes[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
-                push!(new_nodes[isle], grow_equation(ops.grammar.init_tree_depth, ops, method=:asym))
+            while length(children[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
+                push!(children[isle],
+                    Individual(grow_equation(ops.grammar.init_tree_depth, ops), ops)
+                )
             end
 
             # perform mutations # ------------------------------------------------------------------
@@ -116,13 +122,17 @@ function generational_loop(
                 shuffle!(population[isle])
                 for i in 1:ops.general.n_children
                     if ops.general.parent_selection
-                        push!(new_nodes[isle], deepcopy(parent_selection(population[isle]).node))
+                        push!(children[isle], copy(parent_selection(population[isle])))
                     else
-                        push!(new_nodes[isle], deepcopy(population[isle][mod1(i, length(population[isle]))].node))
+                        push!(children[isle], copy(population[isle][mod1(i, length(population[isle]))]))
                     end
                 end
 
-                apply_genetic_operations!(new_nodes[isle], ops, bank_of_terms)
+                apply_genetic_operations!(children[isle], ops, bank_of_terms)
+
+                for _ in 1:ops.general.n_refitting
+                    push!(children[isle], copy(rand(population[isle])))
+                end
             end
 
             if ops.general.fitting_island_function(isle)
@@ -132,24 +142,23 @@ function generational_loop(
             end
 
             # grow them up # -----------------------------------------------------------------------
-            children[isle] = Array{Individual}(undef, length(new_nodes[isle]))
             if ops.general.multithreading
-                Threads.@threads :greedy for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
+                Threads.@threads :greedy for ii in eachindex(children[isle])
+                    fit_individual!(children[isle][ii], data, ops, cur_max_compl, fit_iter)
                 end
             else
                 for ii in eachindex(new_nodes[isle])
-                    children[isle][ii] = Individual(new_nodes[isle][ii], data, ops, cur_max_compl, fit_iter)
+                    fit_individual!(children[isle][ii], data, ops, cur_max_compl, fit_iter)
                 end
             end
 
             filter!(indiv -> indiv.valid, children[isle])
-            new_nodes[isle] = Individual[]
 
 # ==================================================================================================
 # add children to population
 # ==================================================================================================
             append!(population[isle], children[isle])
+            children[isle] = Individual[]
 
         end # for isle in 1:ops.general.num_islands
 
@@ -246,7 +255,7 @@ function generational_loop(
 
         # hall of fame migration # -----------------------------------------------------------------
         if gen % ops.general.hall_of_fame_migration_interval == 0
-            indiv = deepcopy(rand(hall_of_fame))
+            indiv = copy(rand(hall_of_fame))
             indiv.age = 0
             push!(population[rand(1:ops.general.num_islands)], indiv)
         end
@@ -255,7 +264,7 @@ function generational_loop(
 # hall of fame
 # ==================================================================================================
         for isle in 1:ops.general.num_islands
-            append!(hall_of_fame, deepcopy.(population[isle]))
+            append!(hall_of_fame, copy.(population[isle]))
         end
 
         indiv_obj_vals = [
