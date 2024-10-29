@@ -273,8 +273,8 @@ end
 """ Combines two nodes to create two new ones.
 """
 function crossover_mutation!(node1, node2, ops)
-    node_elect1 = random_node(node1, mode=1)
-    node_elect2 = random_node(node2, mode=1)
+    node_elect1 = random_node(node1, mode=2)
+    node_elect2 = random_node(node2, mode=2)
 
     lefrig1 = mutate_left(node_elect1, 2) ? :lef : :rig
     lefrig2 = mutate_left(node_elect2, 2) ? :lef : :rig
