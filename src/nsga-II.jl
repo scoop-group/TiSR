@@ -60,14 +60,10 @@ function generational_loop(
 # ==================================================================================================
     hall_of_fame = Individual[]
 
-# # ==================================================================================================
-# # prepar user interrupt
-# # ==================================================================================================
-#     # Create a channel for communication between tasks
-#     input_channel = Channel{String}(1)
-#
-#     # Start listening for user input asynchronously
-#     @async listen_for_input(input_channel)
+# ==================================================================================================
+# prepare user interrupt
+# ==================================================================================================
+    stdin_reader = watch_stream(stdin)
 
 # ==================================================================================================
 # misc
@@ -320,8 +316,7 @@ function generational_loop(
 
             if ops.general.print_progress
                 display(cur_prog_dict)
-                # println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
-                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
+                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type q and enter to finish early")
             end
 
             if ops.general.plot_hall_of_fame
@@ -397,25 +392,16 @@ function generational_loop(
 # ==================================================================================================
         if gen >= ops.general.n_gens
             stop_msg = "reached maximum number of generations"
-            # close(input_channel)
             break
         elseif time() - t_start >= ops.general.t_lim
             stop_msg = "reached time limit"
-            # close(input_channel)
             break
         elseif ops.general.callback(hall_of_fame, population, ops)
             stop_msg = "callback returned true"
-            # close(input_channel)
             break
-        # elseif isready(input_channel)
-        #     user_input = take!(input_channel)  # Get input from the channel
-        #     if user_input == ":q"
-        #         println("Detected ':q'. Exiting...")
-        #         stop_msg = "user interrupt"
-        #         break
-        #     elseif length(user_input) > 0
-        #         println("type :q and enter to finish the equation search early")
-        #     end
+        elseif check_for_user_quit(stdin_reader)
+            stop_msg = "graceful user interrupt"
+            break
         end
     end
 
@@ -446,10 +432,10 @@ function generational_loop(
 
     if ops.general.print_progress
         display(cur_prog_dict)
-        # println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type :q and enter to finish early")
         println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
     end
 
+    close_reader!(stdin_reader)
 # ==================================================================================================
 # Post-pare for return
 # ==================================================================================================
@@ -458,32 +444,60 @@ function generational_loop(
     return hall_of_fame, population, prog_dict, stop_msg
 end
 
-# """
-#     listen_for_input(input_channel::Channel)
-#
-# Listens for user input in a blocking fashion and sends the input to the given channel.
-# This function runs asynchronously and continuously reads from `stdin`. If the input
-# ":q" is detected, it will send the input to the channel and terminate the listener.
-#
-# ### Arguments
-# - `input_channel::Channel`: A communication channel where user input is sent.
-#
-# ### Behavior
-# - The function reads input from the terminal using `readline(stdin)`.
-# - The input is passed to the `input_channel` for further processing in a separate task.
-# - If the user types ":q", the function stops, indicating the program should terminate.
-#
-# ### Source
-# Generated using OpenAI's ChatGPT.
-# """
-# function listen_for_input(input_channel::Channel)
-#     while true
-#         input = readline(stdin)  # Blocking read, but in its own task
-#         put!(input_channel, input)  # Send the input to the channel
-#         if input == ":q"
-#             break  # Exit the listener task if ':q' is entered
-#         end
-#     end
-#     close(input_channel)
-# end
+""" Copied from SymbolicRegression.jl, after own failed attempts.
+"""
+struct StdinReader{ST}
+    can_read_user_input::Bool
+    stream::ST
+end
 
+""" Start watching stream (like stdin) for user input.
+    Copied from SymbolicRegression.jl, after own failed attempts.
+"""
+function watch_stream(stream)
+    can_read_user_input = isreadable(stream)
+
+    can_read_user_input && try
+        Base.start_reading(stream)
+        bytes = bytesavailable(stream)
+        if bytes > 0
+            # Clear out initial data
+            read(stream, bytes)
+        end
+    catch err
+        if isa(err, MethodError)
+            can_read_user_input = false
+        else
+            throw(err)
+        end
+    end
+    return StdinReader(can_read_user_input, stream)
+end
+
+"""Close the stdin reader and stop reading.
+   Copied from SymbolicRegression.jl, after own failed attempts.
+"""
+function close_reader!(reader::StdinReader)
+    if reader.can_read_user_input
+        Base.stop_reading(reader.stream)
+    end
+end
+
+"""Check if the user typed 'q' and <enter> or <ctl-c>.
+   Copied from SymbolicRegression.jl, after own failed attempts.
+"""
+function check_for_user_quit(reader::StdinReader)::Bool
+    if reader.can_read_user_input
+        bytes = bytesavailable(reader.stream)
+        if bytes > 0
+            # Read:
+            data = read(reader.stream, bytes)
+            control_c = 0x03
+            quit = 0x71
+            if length(data) > 1 && (data[end] == control_c || data[end - 1] == quit)
+                return true
+            end
+        end
+    end
+    return false
+end
