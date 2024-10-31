@@ -39,11 +39,8 @@ end
 
         @test length(count_map_) == TiSR.count_nodes(node)
 
-        max_frequency_diff = maximum(abs, diff(collect(values(count_map_))))
-
         mean_freq = mean(collect(values(count_map_)))
         outest_lier = maximum(abs, mean_freq - freq for freq in values(count_map_))
-
         outest_lier / mean_freq
     end
 
@@ -67,7 +64,24 @@ end
 
         @test TiSR.count_nodes(node) > length(unique(obj_ids_mode1)) > length(unique(obj_ids_mode2))
     end
+
+    # # test scale parameter
+    # get_freqs = x -> [count(==(i), x) for i in sort(unique(x))]
+    #
+    # for _ in 1:1000
+    #     max_depth = rand(3:6)
+    #     node = TiSR.grow_equation(max_depth, ops, method=:full)
+    #     tree_depths = [TiSR.maxim_tree_depth(n) for n in flatten_node(node)]
+    #     freqs = get_freqs(tree_depths)
+    #     depths = map(1:100_000) do _
+    #         rand_node = TiSR.random_node(node, mode=0, scale=0.8)
+    #         TiSR.maxim_tree_depth(rand_node)
+    #     end
+    #     chosen_freqs = get_freqs(depths)
+    #     chosen_freqs ./ freqs
+    # end
 end
+
 
 @testset "mutate_left" begin
 
@@ -80,7 +94,7 @@ end
 
         if rand_node.ari == 1
             @test lefrig == true
-        end 
+        end
     end
 
 end
@@ -207,7 +221,7 @@ end
 end
 
 @testset "subtree_mutation!" begin
-    """ no idea how to test that. num_nodes can be higher or lower & edit distance can be 
+    """ no idea how to test that. num_nodes can be higher or lower & edit distance can be
         arbitrarily high.
     """
 end

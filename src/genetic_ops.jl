@@ -43,50 +43,32 @@ end
     1 -> at least one level above terminal
     2 -> at least two levels above terminal
 """
-function random_node(node::Node; mode=0)
+function random_node(node::Node; mode=0, scale=1.0)
 
     maxim_tree_depth(node, minim=mode + 2) <= mode && return node
 
     while true
-        node_elect, valid = random_node_(node, mode)
-        valid && return node_elect
+        node_elect = random_node_(node, scale=scale)
+        if maxim_tree_depth(node_elect, minim=mode + 2) > mode
+            return node_elect
+        end
     end
 end
 
 """ Traversal for the random_node function. Implemented along the lines of
     SymbolicRegression.jl
 """
-function random_node_(node::Node, mode)
-    if node.ari <= 0
-        valid = maxim_tree_depth(node, minim=mode + 2) > mode
-        return node, valid
-    end
+function random_node_(node; scale=1.0)
+    node.ari <= 0 && return node
 
-    b = 0
-    c = 0
-    if node.ari >= 1
-        b = count_nodes(node.lef)
-    end
-    if node.ari == 2
-        c = count_nodes(node.rig)
-    end
+    n_all = count_nodes(node)
+    rand_ = rand() * (n_all - 1.0 + scale)
+    rand_ <= scale && return node
 
-    i = rand(1:(1+b+c))
-    if i <= b
-        node_elect, valid = random_node_(node.lef, mode)
-        if valid
-            return node_elect, valid
-        end
-    elseif i == b + 1
-        valid = maxim_tree_depth(node, minim=mode + 2) > mode
-        return node, valid
-    end
-    if c > 0
-        node_elect, valid = random_node_(node.rig, mode)
-        return node_elect, valid
-    else
-        return node, false
-    end
+    n_lef = count_nodes(node.lef)
+    rand_ <= n_lef + scale && return random_node_(node.lef, scale=scale)
+
+    return random_node_(node.rig, scale=scale)
 end
 
 """ Entrace/switch function for the genetic operations. If nodes are shallow, only insert-,
@@ -109,7 +91,7 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
             drastic_simplify!(indiv.node, ops, potential=true, threshold=ops.general.always_drastic_simplify)
             for indiv in indivs
         )
-        drastic_indivs = [deepcopy(indivs[i]) for i in drastic_inds]
+        drastic_indivs = [copy(indivs[i]) for i in drastic_inds]
 
         for indiv in drastic_indivs
             drastic_simplify!(indiv.node, ops, potential=false, threshold=ops.general.always_drastic_simplify)
@@ -182,7 +164,6 @@ end
 """
 point_mutation!(node, ops) = rand(Bool) ? point_mutation1!(node, ops) : point_mutation2!(node, ops)
 
-
 """ Changes one node to another without modifying the structure of the node.
 """
 function point_mutation1!(node, ops)
@@ -244,7 +225,7 @@ function insert_mutation!(node, ops; subtree_depth=2)
     lefrig1 = mutate_left(new_node, 1) ? :lef : :rig
 
     if rand(1:count_nodes(node)) == 1
-        orig_node = deepcopy(node)
+        orig_node = copy(node)
         copy_node_wo_copy!(node, new_node)
 
         setfield!(node, lefrig1, orig_node)
@@ -272,16 +253,16 @@ end
 
 """ Combines two nodes to create two new ones.
 """
-function crossover_mutation!(node1, node2, ops)
-    node_elect1 = random_node(node1, mode=2)
-    node_elect2 = random_node(node2, mode=2)
+function crossover_mutation!(node1, node2, ops) # TODO: maybe somehow decide which parts to merry
+    node_elect1 = random_node(node1, mode=2, scale=1.0)
+    node_elect2 = random_node(node2, mode=2, scale=1.0)
 
     lefrig1 = mutate_left(node_elect1, 2) ? :lef : :rig
     lefrig2 = mutate_left(node_elect2, 2) ? :lef : :rig
 
     temp = getfield(node_elect1, lefrig1)
-    setfield!(node_elect1, lefrig1, deepcopy(getfield(node_elect2, lefrig2)))
-    setfield!(node_elect2, lefrig2, deepcopy(temp))
+    setfield!(node_elect1, lefrig1, copy(getfield(node_elect2, lefrig2)))
+    setfield!(node_elect2, lefrig2, copy(temp))
 end
 
 # redundand mutations # ----------------------------------------------------------------------------
@@ -289,39 +270,39 @@ end
 """
 function subtree_mutation!(node, ops; subtree_depth=0)
     subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
-    node_elect = random_node(node, mode=1)
+    node_elect = random_node(node, mode=1, scale=1.0)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
     setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))
+end
+
+""" Adds a *parameter to a random subnode.
+"""
+function insert_times_param_mutation!(node, ops)
+    node_elect = random_node(node, mode=1, scale=1.0)
+    lefrig = mutate_left(node_elect, 1) ? :lef : :rig
+
+    times_param_node = Node(2, findfirst(==(*), ops.binops))
+    times_param_node.lef = Node(1.0)
+    times_param_node.rig = getfield(node_elect, lefrig)
+
+    setfield!(node_elect, lefrig, times_param_node)
 end
 
 """ Adds a top-level term.
 """
 function addterm_mutation!(node, ops; subtree_depth=0)
     subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
-    orig_node = deepcopy(node)
+    orig_node = copy(node)
     copy_node_wo_copy!(node, Node(2, findfirst(==(+), ops.binops)))
     node.lef = orig_node
     node.rig = grow_equation(subtree_depth, ops)
 end
 
-""" Adds a *parameter to a random subnode.
-"""
-function insert_times_param_mutation!(node, ops)
-    node_elect = random_node(node, mode=1)
-    lefrig = mutate_left(node_elect, 1) ? :lef : :rig
-
-    times_param_node = Node(2, findfirst(==(*), ops.binops))
-    times_param_node.lef = TiSR.Node(1.0)
-    times_param_node.rig = getfield(node_elect, lefrig)
-
-    setfield!(node_elect, lefrig, times_param_node)
-end
-
 """ add from bank of terms
 """
 function add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
-    orig_node = deepcopy(node)
+    orig_node = copy(node)
     copy_node_wo_copy!(node, Node(2, findfirst(==(+), ops.binops)))
     node.lef = orig_node
-    node.rig = deepcopy(rand(bank_of_terms)) # TODO: is the deepcopy required here?
+    node.rig = copy(rand(bank_of_terms))
 end

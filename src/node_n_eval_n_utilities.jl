@@ -133,7 +133,7 @@ function node_to_string_(node::Node, ops, sigdigits)
     end
 end
 
-""" Encode the equation to a string where each operation is only one char. For string distance 
+""" Encode the equation to a string where each operation is only one char. For string distance
     purposes.
 """
 function encode_single_char(node::Node, ops)
@@ -153,10 +153,9 @@ function encode_single_char(node::Node, ops)
 
     elseif node.ari == -1
         # only last character should suffice for comparison
-        return string(round(extract_from_dual(node.val), sigdigits=1))[end] 
+        return string(round(extract_from_dual(node.val), sigdigits=1))[end]
     end
 end
-
 
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
@@ -255,26 +254,31 @@ end
 """ Search and overwrite nodes, which point to nodes that are no longer required.
 """
 function clean_trash_nodes!(node, null_node)
-
     if node.ari == 1
         clean_trash_nodes!(node.lef, null_node)
-
         if isdefined(node, :rig)
             node.rig = null_node
         end
-
     elseif node.ari == 2
         clean_trash_nodes!(node.lef, null_node)
         clean_trash_nodes!(node.rig, null_node)
-    else 
+    else
         if isdefined(node, :lef)
             node.lef = null_node
         end
-
         if isdefined(node, :rig)
             node.rig = null_node
         end
     end
 end
 
-
+""" Get a list of all nodes attached to this node.
+"""
+function flatten_node(node::Node)
+    node.ari <= 0 && return [node]
+    if node.ari == 1
+        return vcat(node, flatten_node(node.lef))
+    elseif node.ari == 2
+        return vcat(node, flatten_node(node.lef), flatten_node(node.rig))
+    end
+end
