@@ -6,7 +6,7 @@ importantly, it was used as a starting point on how the basis, i.e., the Node th
 equations and how they are evaluated. However, most of the code was completely rewritten without
 reference to SymbolicRegression.jl, as I was curious to build it up myself and understand the
 process completely, after I had understood the Node and eval_equation parts. The version of
-SymbolicRegression.jl in questions is 51b7da4 of May 1, 2022. 
+SymbolicRegression.jl in questions is 51b7da4 of May 1, 2022.
 
 - Node -> Node
     - approximately same, but other names and used more values in the "degree" to save the
@@ -48,6 +48,9 @@ SymbolicRegression.jl in questions is 51b7da4 of May 1, 2022.
 
 - optFunc & optimizeConstants
     - general structure and setup of optimizing the parameters inside the node
+
+- Nov. 1. 2024: The four parts: StdinReader, watch_stream, close_reader!, check_for_user_quit, are
+  copied to enable the graceful user interupt using q + enter.
 
 # DynamicExpressions.jl
 
