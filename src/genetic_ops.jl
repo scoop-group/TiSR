@@ -254,8 +254,8 @@ end
 """ Combines two nodes to create two new ones.
 """
 function crossover_mutation!(node1, node2, ops) # TODO: maybe somehow decide which parts to merry
-    node_elect1 = random_node(node1, mode=2, scale=1.0)
-    node_elect2 = random_node(node2, mode=2, scale=1.0)
+    node_elect1 = random_node(node1, mode=2, scale=1.0) # TODO: scale>1?
+    node_elect2 = random_node(node2, mode=2, scale=1.0) # TODO: scale>1?
 
     lefrig1 = mutate_left(node_elect1, 2) ? :lef : :rig
     lefrig2 = mutate_left(node_elect2, 2) ? :lef : :rig
@@ -270,7 +270,7 @@ end
 """
 function subtree_mutation!(node, ops; subtree_depth=0)
     subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
-    node_elect = random_node(node, mode=1, scale=1.0)
+    node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
     setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))
 end
@@ -278,7 +278,7 @@ end
 """ Adds a *parameter to a random subnode.
 """
 function insert_times_param_mutation!(node, ops)
-    node_elect = random_node(node, mode=1, scale=1.0)
+    node_elect = random_node(node, mode=1, scale=1.0) # TODO: scale<1?
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
 
     times_param_node = Node(2, findfirst(==(*), ops.binops))
