@@ -33,16 +33,12 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     trim_to_max_nodes_per_term!(indiv.node, ops)
 
     if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
-        target_compl = rand(5:min(
+        target_compl = rand(ops.grammar.min_compl:min(
                 cur_max_compl + ops.general.adaptive_compl_increment,
                 ops.grammar.max_compl
         ))
 
-        trim_to_max_compl!(
-            indiv.node,
-            target_compl,
-            ops
-        )
+        trim_to_max_compl!(indiv.node, target_compl, ops)
     end
 
     apply_simple_simplifications!(indiv.node, ops)
@@ -50,7 +46,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     div_to_mul_param!(indiv.node, ops)
     reorder_add_n_mul!(indiv.node, ops)
 
-    if count_nodes(indiv.node) < ops.grammar.min_compl
+    if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
         indiv.valid = false
         return
     end

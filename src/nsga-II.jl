@@ -16,9 +16,7 @@ end
 
 function generational_loop(data, ops, start_pop::Vector{String})
     population = [Individual[] for _ in 1:ops.general.num_islands]
-
     start_pop  = Node[string_to_node(eq, ops) for eq in start_pop]
-
     children   = [
         [
             Individual(node, ops)
@@ -26,7 +24,6 @@ function generational_loop(data, ops, start_pop::Vector{String})
         ]
         for isle in 1:ops.general.num_islands
     ]
-
     return generational_loop(data, ops, population, children)
 end
 
