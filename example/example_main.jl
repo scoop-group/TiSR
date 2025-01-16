@@ -1,30 +1,14 @@
 
-
-import Pkg
-Pkg.develop(path=".")
+# import Pkg
+# Pkg.develop(path=".")
 
 using TiSR
-
 using DataFrames
 using CSV
-
-# # load data # ------------------------------------------------------------------------------------
-# # file_path = "../assael_data.txt"
-# file_path = "benchmarks/empirical_bench/data/newton's_law_of_universal_gravitation.csv"
-#
-# df = CSV.read(file_path, DataFrame)
-#
-# data_matr = Matrix(df)
-
-include("../benchmark_problems.jl")
-
 
 # # ==================================================================================================
 # # preparation
 # # ==================================================================================================
-# using DataFrames
-# using CSV
-#
 # # load data # ------------------------------------------------------------------------------------
 # file_path = "path_to_your_data_file.txt"
 #
@@ -36,7 +20,7 @@ include("../benchmark_problems.jl")
 # or with synthetic data # -------------------------------------------------------------------------
 data_matr = rand(100, 3)
 data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
-# -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2) 
+# -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2)
 
 # ==================================================================================================
 # options -> specify some custom settings
