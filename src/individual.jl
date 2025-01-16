@@ -33,11 +33,10 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     trim_to_max_nodes_per_term!(indiv.node, ops)
 
     if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
-        target_compl = rand(ops.grammar.min_compl:min(
-                cur_max_compl + ops.general.adaptive_compl_increment,
-                ops.grammar.max_compl
+        target_compl = rand(ops.grammar.min_compl:min( # TODO: maybe scew this to larger complexities
+            cur_max_compl + ops.general.adaptive_compl_increment,
+            ops.grammar.max_compl
         ))
-
         trim_to_max_compl!(indiv.node, target_compl, ops)
     end
 
