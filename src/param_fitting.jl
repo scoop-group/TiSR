@@ -6,16 +6,14 @@
     the correspoinding functions are called, and the residual statistics calculated, if the
     fitting was successful (valid).
 """
-function fit_n_eval!(indiv, data, ops, fit_iter)
-    node = indiv.node
+function fit_n_eval!(node, data, ops, fit_iter)
     list_of_param = list_of_param_nodes(node)
 
-    if length(list_of_param) > length(data[1])
-        indiv.valid = false
-        return
+    if length(list_of_param) > length(ops.data_descript.split_inds[1])
+        return data[end], false
     end
 
-    if fit_iter > 0 && length(list_of_param) > 0
+    if fit_iter > 0 && !isempty(list_of_param)
 
         if !iszero(ops.fitting.lasso_factor)
             max_iter_NW = 3
@@ -25,46 +23,24 @@ function fit_n_eval!(indiv, data, ops, fit_iter)
 
         max_iter_LM = fit_iter - max_iter_NW
 
-        residual, valid = residual_after_fitting_LM(node, data, ops, list_of_param, max_iter_LM)
+        fitting_LM!(node, data, ops, list_of_param, max_iter_LM)
 
         if !iszero(max_iter_NW)
-            residual, valid = residual_after_fitting_newton(node, data, ops, list_of_param, max_iter_NW)
+            fitting_NW!(node, data, ops, list_of_param, max_iter_NW)
         end
-    else
-        pred, valid = eval_equation(node, data, ops)
-        residual = data[end] .- pred
     end
 
-    # calculate statistics for the residual # ------------------------------------------------------
-    if valid && isfinite(sum(residual))
-        indiv.mae = mean(abs, residual)
-        indiv.max_ae = maximum(abs, residual)
-        indiv.mse = mean(abs2, residual)
-
-        indiv.minus_r2 = get_minus_r2(data[end] .- residual, data[end])
-        indiv.minus_abs_spearman = get_minus_abs_spearman(data[end] .- residual, data[end])
-
-        relative_ref = any(d == 0 for d in data[end]) ? max.(abs.(data[end]), 0.1) : data[end]
-
-        indiv.mare = mean(abs, residual ./ relative_ref)
-        indiv.q75_are = quantile(abs.(residual ./ relative_ref), 0.75)
-        indiv.max_are = maximum(abs, residual ./ relative_ref)
-
-        indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
-        indiv.valid = true
-    else
-        indiv.valid = false
-    end
+    # final evaluation
+    prediction, valid = eval_equation(node, data, ops)
+    return prediction, valid
 end
 
 """ Create the cost function for the fitting and for the early stopping evaluation, fit the
     parameters in-place, and evaluate again using the optiized parameters. In case early
     stopping is used, the data is fit onto split_inds[1] and validated only split_inds[2].
     After fitting with early stopping, the parameters are selected for the best fit over all
-    data and the final residual and the whether the fitting was successful is return for all
-    data.
-"""
-function residual_after_fitting_LM(node, data, ops, list_of_param, max_iter)
+    data."""
+function fitting_LM!(node, data, ops, list_of_param, max_iter)
 
     minim = x -> fitting_objective(x, node, data, ops)
 
@@ -75,7 +51,7 @@ function residual_after_fitting_LM(node, data, ops, list_of_param, max_iter)
         callback = trace -> false
     end
 
-    x0 = getfield.(list_of_param, :val)
+    x0 = [n.val for n in list_of_param]
 
     x_best, trace = lmfit(minim, x0, autodiff = :forward, max_iter = ops.fitting.max_iter,
         t_lim = ops.fitting.t_lim, rel_f_tol_5_iter = ops.fitting.rel_f_tol_5_iter,
@@ -90,11 +66,7 @@ function residual_after_fitting_LM(node, data, ops, list_of_param, max_iter)
         x_best = trace[best_ind].metadata["x"]
     end
 
-    for i in eachindex(list_of_param)
-        list_of_param[i].val = x_best[i]
-    end
-
-    residual, valid = fitting_residual(x_best, node, list_of_param, data, eachindex(data[1]), ops)
+    set_params!(list_of_param, x_best)
 end
 
 """ Is called during each iteration of the fitting, if early_stop_iter > 0. The
@@ -117,18 +89,24 @@ end
 # ==================================================================================================
 # helper functions
 # ==================================================================================================
-""" Return the fitting residual. Pre-residual_processing! funciton is applied in-place
+
+""" Set the values of the parameter in a node.
 """
-function fitting_residual(x, node, list_of_param, data, inds, ops)
+function set_params!(list_of_param, x)
     for i in eachindex(x)
         list_of_param[i].val = x[i]
     end
+end
+
+""" Return the fitting residual. Pre-residual_processing! funciton is applied in-place
+"""
+function fitting_residual(x, node, list_of_param, data, inds, ops)
+    set_params!(list_of_param, x)
 
     dat = [view(d, inds) for d in data]
-
-    arr, valid = eval_equation(node, dat, ops)
-    ops.fitting.pre_residual_processing!(arr, inds, ops)
-    dat[end] .- arr, valid
+    pred, valid = eval_equation(node, dat, ops)
+    ops.fitting.pre_residual_processing!(pred, inds, ops)
+    dat[end] .- pred, valid # TODO: maybe remove the valid here?
 end
 
 """ Calculate the residual and apply pre- and post-processing.
@@ -142,10 +120,6 @@ function fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <:
     res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1], ops)
     res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
     res  .= abs.(res)
-
-    # if ops.fitting.lasso_factor > 0.0
-    #     push!(res, sum(abs, x) * ops.fitting.lasso_factor)
-    # end
     return res
 end
 
@@ -153,12 +127,11 @@ end
 # new one
 # ==================================================================================================
 
-function residual_after_fitting_newton(node, data, ops, list_of_param, max_iter)
+function fitting_NW!(node, data, ops, list_of_param, max_iter)
 
-    # create the closure
     minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
 
-    x0 = getfield.(list_of_param, :val)
+    x0 = [n.val for n in list_of_param]
 
     # # callback # ----------------------------------------------------------------------------------
     # function callback(tr)
@@ -181,12 +154,6 @@ function residual_after_fitting_newton(node, data, ops, list_of_param, max_iter)
     )
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
 
-    for i in eachindex(list_of_param)
-        list_of_param[i].val = x_best[i]
-    end
-
-    residual, valid = fitting_residual(x_best, node, list_of_param, data, eachindex(data[1]), ops)
-
-    return residual, valid
+    set_params!(list_of_param, x_best)
 end
 

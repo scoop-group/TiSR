@@ -113,6 +113,7 @@ function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
     pushfirst!(start_inds, 0)
 
     split_inds = [eachind[start_inds[i]+1:min(start_inds[i+1], size(data, 1))] for i in 1:length(parts)]
+    sort!.(split_inds)
 
     return _data_split_params(data, nothing, split_inds)
 end

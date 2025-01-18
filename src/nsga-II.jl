@@ -140,7 +140,7 @@ function generational_loop(
                     fit_individual!(children[isle][ii], data, ops, cur_max_compl, fit_iter)
                 end
             else
-                for ii in eachindex(new_nodes[isle])
+                for ii in eachindex(children[isle])
                     fit_individual!(children[isle][ii], data, ops, cur_max_compl, fit_iter)
                 end
             end

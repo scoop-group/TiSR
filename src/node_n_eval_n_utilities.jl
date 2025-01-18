@@ -237,7 +237,7 @@ function Base.isapprox(node1::Node, node2::Node; rtol=0.0)
     return true
 end
 
-""" Create an array containing the parameter nodes of a tree.
+""" Return an array containing the parameter nodes of a tree.
 """
 function list_of_param_nodes(node; list=Node[])
     if node.ari >= 1

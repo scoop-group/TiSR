@@ -28,7 +28,9 @@ mutable struct Individual
 end
 
 function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+    indiv.age = 0.0
 
+    # pre-process node # ---------------------------------------------------------------------------
     apply_simple_simplifications!(indiv.node, ops)
     trim_to_max_nodes_per_term!(indiv.node, ops)
 
@@ -45,6 +47,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     div_to_mul_param!(indiv.node, ops)
     reorder_add_n_mul!(indiv.node, ops)
 
+    # remove invalid nodes # -----------------------------------------------------------------------
     if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
         indiv.valid = false
         return
@@ -55,12 +58,36 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
         return
     end
 
-    fit_n_eval!(indiv, data, ops, fit_iter)
+    # perform fitting # ----------------------------------------------------------------------------
+    prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
 
+    indiv.valid = valid
     indiv.valid || return
 
-    indiv.age             = 0.0
-    indiv.compl           = count_nodes(indiv.node)
+    # fit measures # -------------------------------------------------------------------------------
+    residual = data[end] .- prediction
+
+    if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
+        residual_relative = residual ./ max.(abs.(data[end]), 0.1)
+    else
+        residual_relative = copy(residual)
+    end
+
+    indiv.mae    = mean(abs, residual)
+    indiv.max_ae = maximum(abs, residual)
+    indiv.mse    = mean(abs2, residual)
+
+    indiv.minus_r2           = get_minus_r2(prediction, data[end])
+    indiv.minus_abs_spearman = get_minus_abs_spearman(prediction, data[end])
+
+    indiv.mare    = mean(abs, residual_relative)
+    indiv.q75_are = quantile(abs.(residual_relative), 0.75)
+    indiv.max_are = maximum(abs, residual_relative)
+
+    indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
+
+    # complexity measures # ------------------------------------------------------------------------
+    indiv.compl = count_nodes(indiv.node)
 
     if isempty(ops.grammar.weighted_compl_dict)
         indiv.weighted_compl = indiv.compl
