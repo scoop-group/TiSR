@@ -103,7 +103,7 @@ function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
     @assert length(parts) > 0  "parts must have at least one float entry"
     @assert sum(parts) == 1.0  "sum of the parts should be 1.0"
     @assert all(parts .>= 0)   "data split parts have to be >= 0"
-    length(parts) < 4 || @warn "only two of the data split parts are used, while all data is used to calculate the final measures" # TODO: use 3rd place to calculate test measures
+    length(parts) < 4 || @warn "data split seems off. 1. part is used for fitting, 2. part is used for early stopping, while 1&2 are used for selection. All further parts are not used, but can be useful, like for a user defined callback." # TODO: use 3rd place to calculate test measures
 
     # create the split inds according to specified
     eachind = collect(1:size(data, 1))
