@@ -27,76 +27,81 @@ mutable struct Individual
     Individual(node::Node, ops) = new(node)
 end
 
-function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, timer)
     indiv.age = 0.0
 
-    # pre-process node # ---------------------------------------------------------------------------
-    apply_simple_simplifications!(indiv.node, ops)
-    trim_to_max_nodes_per_term!(indiv.node, ops)
+    @timeit timer "pre-process node" begin
+        apply_simple_simplifications!(indiv.node, ops)
+        trim_to_max_nodes_per_term!(indiv.node, ops)
 
-    if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
-        target_compl = rand(ops.grammar.min_compl:min( # TODO: maybe scew this to larger complexities
-            cur_max_compl + ops.general.adaptive_compl_increment,
-            ops.grammar.max_compl
-        ))
-        trim_to_max_compl!(indiv.node, target_compl, ops)
+        if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
+            target_compl = rand(ops.grammar.min_compl:min( # TODO: maybe scew this to larger complexities
+                cur_max_compl + ops.general.adaptive_compl_increment,
+                ops.grammar.max_compl
+            ))
+            trim_to_max_compl!(indiv.node, target_compl, ops)
+        end
+
+        apply_simple_simplifications!(indiv.node, ops)
+
+        div_to_mul_param!(indiv.node, ops)
+        reorder_add_n_mul!(indiv.node, ops)
     end
 
-    apply_simple_simplifications!(indiv.node, ops)
+    @timeit timer "remove invalid nodes" begin
+        if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
+            indiv.valid = false
+            return
+        end
 
-    div_to_mul_param!(indiv.node, ops)
-    reorder_add_n_mul!(indiv.node, ops)
-
-    # remove invalid nodes # -----------------------------------------------------------------------
-    if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
-        indiv.valid = false
-        return
+        if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
+            indiv.valid = false
+            return
+        end
     end
 
-    if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
-        indiv.valid = false
-        return
+    @timeit timer "fitting" begin
+        prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
+
+        indiv.valid = valid
+        indiv.valid || return
     end
 
-    # perform fitting # ----------------------------------------------------------------------------
-    prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
+    @timeit timer "calculate fit measures" begin
+        residual = data[end] .- prediction
 
-    indiv.valid = valid
-    indiv.valid || return
+        if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
+            residual_relative = residual ./ max.(abs.(data[end]), 0.1)
+        else
+            residual_relative = copy(residual)
+        end
 
-    # fit measures # -------------------------------------------------------------------------------
-    residual = data[end] .- prediction
+        indiv.mae    = mean(abs, residual)
+        indiv.max_ae = maximum(abs, residual)
+        indiv.mse    = mean(abs2, residual)
 
-    if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
-        residual_relative = residual ./ max.(abs.(data[end]), 0.1)
-    else
-        residual_relative = copy(residual)
+        indiv.minus_r2           = get_minus_r2(prediction, data[end])
+        indiv.minus_abs_spearman = get_minus_abs_spearman(prediction, data[end])
+
+        indiv.mare    = mean(abs, residual_relative)
+        indiv.q75_are = quantile(abs.(residual_relative), 0.75)
+        indiv.max_are = maximum(abs, residual_relative)
+
+        indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
     end
 
-    indiv.mae    = mean(abs, residual)
-    indiv.max_ae = maximum(abs, residual)
-    indiv.mse    = mean(abs2, residual)
+    @timeit timer "calculate complexity measures" begin
+        indiv.compl = count_nodes(indiv.node)
 
-    indiv.minus_r2           = get_minus_r2(prediction, data[end])
-    indiv.minus_abs_spearman = get_minus_abs_spearman(prediction, data[end])
+        if isempty(ops.grammar.weighted_compl_dict)
+            indiv.weighted_compl = indiv.compl
+        else
+            indiv.weighted_compl = get_weighted_compl(indiv.node, ops)
+        end
 
-    indiv.mare    = mean(abs, residual_relative)
-    indiv.q75_are = quantile(abs.(residual_relative), 0.75)
-    indiv.max_are = maximum(abs, residual_relative)
-
-    indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
-
-    # complexity measures # ------------------------------------------------------------------------
-    indiv.compl = count_nodes(indiv.node)
-
-    if isempty(ops.grammar.weighted_compl_dict)
-        indiv.weighted_compl = indiv.compl
-    else
-        indiv.weighted_compl = get_weighted_compl(indiv.node, ops)
+        indiv.recursive_compl = recursive_compl(indiv.node, ops)
+        indiv.n_params        = length(list_of_param_nodes(indiv.node))
     end
-
-    indiv.recursive_compl = recursive_compl(indiv.node, ops)
-    indiv.n_params        = length(list_of_param_nodes(indiv.node))
 end
 
 # ==================================================================================================
