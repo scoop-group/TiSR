@@ -2,9 +2,9 @@
 # ==================================================================================================
 # main fitting functions
 # ==================================================================================================
-""" Entrance/switch for parameter fitting. Depending on whether equation has parameters or not,
-    the correspoinding functions are called, and the residual statistics calculated, if the
-    fitting was successful (valid).
+""" Entrance/switch for parameter fitting. Depending on whether the equation has parameters
+    or not, the correspoinding functions are called, and the residual statistics calculated,
+    if the fitting was successful (valid).
 """
 function fit_n_eval!(node, data, ops, fit_iter)
     list_of_param = list_of_param_nodes(node)
@@ -55,7 +55,7 @@ function fitting_LM!(node, data, ops, list_of_param, max_iter)
 
     x_best, trace = lmfit(minim, x0, autodiff = :forward, max_iter = ops.fitting.max_iter,
         t_lim = ops.fitting.t_lim, rel_f_tol_5_iter = ops.fitting.rel_f_tol_5_iter,
-        callback = callback,
+        callback = callback
     )
 
     if ops.fitting.early_stop_iter > 0 && length(trace) > 2
