@@ -6,22 +6,7 @@ mutable struct Individual
     crowding::Float64
     age::Float64
 
-    # complexity measures
-    compl::Float64
-    weighted_compl::Float64
-    recursive_compl::Float64
-    n_params::Float64
-
-    # fit measures -> how to split in train and test
-    ms_processed_e::Float64
-    mae::Float64
-    mse::Float64
-    max_ae::Float64
-    minus_r2::Float64
-    minus_abs_spearman::Float64
-    mare::Float64
-    q75_are::Float64
-    max_are::Float64
+    measures::Dict{Symbol, Float64}
 
     Individual() = new()
     Individual(node::Node, ops) = new(node)
@@ -67,7 +52,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, timer)
         indiv.valid || return
     end
 
-    @timeit timer "calculate fit measures" begin
+    @timeit timer "calculate measures" begin
         residual = data[end] .- prediction
 
         if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
@@ -76,31 +61,10 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, timer)
             residual_relative = copy(residual)
         end
 
-        indiv.mae    = mean(abs, residual)
-        indiv.max_ae = maximum(abs, residual)
-        indiv.mse    = mean(abs2, residual)
-
-        indiv.minus_r2           = get_minus_r2(prediction, data[end])
-        indiv.minus_abs_spearman = get_minus_abs_spearman(prediction, data[end])
-
-        indiv.mare    = mean(abs, residual_relative)
-        indiv.q75_are = quantile(abs.(residual_relative), 0.75)
-        indiv.max_are = maximum(abs, residual_relative)
-
-        indiv.ms_processed_e = mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
-    end
-
-    @timeit timer "calculate complexity measures" begin
-        indiv.compl = count_nodes(indiv.node)
-
-        if isempty(ops.grammar.weighted_compl_dict)
-            indiv.weighted_compl = indiv.compl
-        else
-            indiv.weighted_compl = get_weighted_compl(indiv.node, ops)
-        end
-
-        indiv.recursive_compl = recursive_compl(indiv.node, ops)
-        indiv.n_params        = length(list_of_param_nodes(indiv.node))
+        indiv.measures = Dict(
+            m => f(residual, residual_relative, prediction, data, indiv.node, ops)
+            for (m, f) in ops.measures
+        )
     end
 end
 
@@ -152,7 +116,7 @@ function remove_doubles!(individs::Vector{Individual}, ops)
 
     indiv_obj_vals = [
         Float64[
-            round(getfield(indiv, obj), sigdigits=ops.general.remove_doubles_sigdigits)
+            round(indiv.measures[obj], sigdigits=ops.general.remove_doubles_sigdigits)
             for obj in [:mse, :mae, :compl]
         ]
         for indiv in individs
@@ -174,7 +138,7 @@ function remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, op
 
     indiv_obj_vals = [
         Float64[
-            round(getfield(indiv, obj), sigdigits=ops.general.remove_doubles_sigdigits)
+            round(indiv.measures[obj], sigdigits=ops.general.remove_doubles_sigdigits)
             for obj in [:mse, :mae, :compl]
         ]
         for isle in 1:ops.general.num_islands for indiv in individs[isle]

@@ -1,4 +1,60 @@
 
+""" Various pre-implemented fit quality measures.
+"""
+function get_measure_max_ae(residual, residual_relative, prediction, data, node, ops)
+    maximum(abs, residual)
+end
+
+function get_measure_mae(residual, residual_relative, prediction, data, node, ops)
+    mean(abs, residual)
+end
+
+function get_measure_mse(residual, residual_relative, prediction, data, node, ops)
+    mean(abs2, residual)
+end
+
+function get_measure_minus_r2(residual, residual_relative, prediction, data, node, ops)
+    get_minus_r2(prediction, data[end])
+end
+
+function get_measure_minus_abs_spearman(residual, residual_relative, prediction, data, node, ops)
+    get_minus_abs_spearman(prediction, data[end])
+end
+
+function get_measure_mare(residual, residual_relative, prediction, data, node, ops)
+    mean(abs, residual_relative)
+end
+
+function get_measure_q75_are(residual, residual_relative, prediction, data, node, ops)
+    quantile(abs.(residual_relative), 0.75)
+end
+
+function get_measure_max_are(residual, residual_relative, prediction, data, node, ops)
+    maximum(abs, residual_relative)
+end
+
+function get_measure_ms_processed_e(residual, residual_relative, prediction, data, node, ops)
+    mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
+end
+
+""" Various pre-implemented complexity measures.
+"""
+function get_measure_compl(residual, residual_relative, prediction, data, node, ops)
+    count_nodes(node)
+end
+
+function get_measure_weighted_compl(residual, residual_relative, prediction, data, node, ops)
+    get_weighted_compl(node, ops)
+end
+
+function get_measure_recursive_compl(residual, residual_relative, prediction, data, node, ops)
+    recursive_compl(node, ops)
+end
+
+function get_measure_n_params(residual, residual_relative, prediction, data, node, ops)
+    length(list_of_param_nodes(node))
+end
+
 """ Recursive complexity according to the dissertation of Kommenda 2018 except for the rule
     for ^, which was not addressed.
     Open TODO/caveats:

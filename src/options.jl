@@ -4,10 +4,11 @@
     There are also some safeguards, preventing certain settings combinations or warn the user,
     which may not cover all cases.
 """
-struct Options{A, B, C, F, G, H, I, J, K}
+struct Options{A, B, C, D, F, G, H, I, J, K}
     general::A
     unaops::B
     binops::C
+    measures::D
 
     selection::F
     fitting::G
@@ -23,12 +24,17 @@ struct Options{A, B, C, F, G, H, I, J, K}
         general       = general_params(),
         unaops        = (exp, log, sin, cos, abs),
         binops        = (+,   -,   *,   /,   ^  ),
+        measures      = measure_params(),
         selection     = selection_params(),
         fitting       = fitting_params(),
         mutation      = mutation_params(),
         grammar       = grammar_params(),
         meta_data     = Dict(),
     )
+        # make sure all required measres are calculated # ------------------------------------------
+        @assert all(s in keys(measures) for s in selection.selection_objectives) "some selection_objectives are not specified in the meausres"
+        @assert all(s in keys(measures) for s in selection.hall_of_fame_objectives) "some hall_of_fame_objectives are not specified in the meausres"
+
         # prepare data and its params --------------------------------------------------------------
         data_vect, data_descript = prepare_data(data, fit_weights)
 
@@ -69,6 +75,7 @@ struct Options{A, B, C, F, G, H, I, J, K}
         return new{typeof(general),
                    typeof(unaops),
                    typeof(binops),
+                   typeof(measures),
                    typeof(selection),
                    typeof(fitting),
                    typeof(mutation),
@@ -78,6 +85,7 @@ struct Options{A, B, C, F, G, H, I, J, K}
                        general,
                        unaops,
                        binops,
+                       measures,
                        selection,
                        fitting,
                        mutation,
@@ -103,7 +111,7 @@ function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
     @assert length(parts) > 0  "parts must have at least one float entry"
     @assert sum(parts) == 1.0  "sum of the parts should be 1.0"
     @assert all(parts .>= 0)   "data split parts have to be >= 0"
-    length(parts) < 4 || @warn "data split seems off. 1. part is used for fitting, 2. part is used for early stopping, while 1&2 are used for selection. All further parts are not used, but can be useful, like for a user defined callback." # TODO: use 3rd place to calculate test measures
+    length(parts) < 4 || @warn "data split seems off. 1. part is used for fitting, 2. part is used for early stopping, while 1&2 are used for selection. All further parts are not used, but can be useful, like for a user defined callback."
 
     # create the split inds according to specified
     eachind = collect(1:size(data, 1))
@@ -119,16 +127,13 @@ function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
 end
 
 function _data_split_params(data, parts::Nothing, split_inds::Vector{Vector{Int64}})
-
-    # split_inds assertions
     eachind = reduce(vcat, split_inds)
 
-    allunique(eachind)                       || @warn "in split_inds, some data rows are part of different splits"
-    length(unique(eachind)) == size(data, 1) || @warn "some rows in data are not part of any split"
+    allunique(eachind)                       || @warn "in split_inds, some data are part of different splits"
+    length(unique(eachind)) == size(data, 1) || @warn "some data are not part of any split"
 
     return split_inds
 end
-
 
 function prepare_data(data, fit_weights)
     data_vect = [data[:, i] for i in 1:size(data, 2)]
@@ -236,6 +241,34 @@ function general_params(;
         plot_hall_of_fame               = plot_hall_of_fame,
         print_hall_of_fame              = print_hall_of_fame,
     )
+end
+
+""" Specify the fit quality or complexity measures that should be calculated for
+    all individuals. Those will be tracked, printed, logged, and can be used as
+    selection_objetives or hall_of_fame_objectives. The measures "ms_processed_e",
+    "compl", "mse", and "mae" are always included. The following functions are
+    provided out of the box: ... TODO User-specified should should take 6
+    positional arguments: residual, residual_relative, prediction, data, node, ops.
+"""
+function measure_params(;
+    additional_measures = Dict(
+        :minus_abs_spearman => get_measure_minus_abs_spearman,
+        :mare               => get_measure_mare,
+        :max_are            => get_measure_max_are,
+    )
+)
+    @assert additional_measures isa Dict{Symbol, Function}
+    :ms_processed_e in keys(additional_measures) && @warn "ms_processed_e is overwritten in measures"
+    :compl          in keys(additional_measures) && @warn "compl is overwritten in measures         "
+    :mse            in keys(additional_measures) && @warn "mse is overwritten in measures           "
+    :mae            in keys(additional_measures) && @warn "mae is overwritten in measures           "
+
+    additional_measures[:ms_processed_e] = get_measure_ms_processed_e
+    additional_measures[:compl]          = get_measure_compl
+    additional_measures[:mse]            = get_measure_mse # TODO: maybe add only if remove_doubles > 0
+    additional_measures[:mae]            = get_measure_mae # TODO: maybe add only if remove_doubles > 0
+
+    return additional_measures
 end
 
 function selection_params(;

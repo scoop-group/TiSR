@@ -70,16 +70,11 @@ function generational_loop(
 
     @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
 
-    # create dict for the simulation progression # -------------------------------------------------
-    keep_track_of = [
-        "time", "generation", "mean age hall_of_fame",
-        "cur_max_compl", "mean compl", "mean recursive_compl", "mean n_params",
-        "min mae", "min mse", "min max_ae", "min minus_r2", "min minus_abs_spearman", "min mare", "min q75_are",
-        "min max_are", "min ms_processed_e"
-    ]
-
-    prog_dict     = OrderedDict(key => eltype(data[1])[]             for key in keep_track_of)
-    cur_prog_dict = OrderedDict(key => convert(eltype(data[1]), 0.0) for key in keep_track_of)
+    prog_dict = OrderedDict(
+        k => Float64[]
+        for k in ["time", "generation", "mean age", "cur_max_compl", "mean compl",
+                  ["min " * string(m) for m in keys(ops.measures)]...]
+    )
 
 # ==================================================================================================
 # start generational loop
@@ -91,7 +86,7 @@ function generational_loop(
     while true
         gen += 1.0
 
-        cur_max_compl = maximum(indiv.compl for indiv in hall_of_fame; init=5)
+        cur_max_compl = maximum(indiv.measures[:compl] for indiv in hall_of_fame; init=ops.grammar.min_compl)
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
@@ -185,7 +180,7 @@ function generational_loop(
 
                 indiv_obj_vals = [
                     Float64[
-                        round(getfield(indiv, obj), sigdigits=ops.selection.population_niching_sigdigits)
+                        round(indiv.measures[obj], sigdigits=ops.selection.population_niching_sigdigits)
                         for obj in ops.selection.selection_objectives
                     ]
                     for indiv in population[isle]
@@ -232,7 +227,7 @@ function generational_loop(
             if ops.general.remove_doubles_across_islands && ops.general.remove_doubles_sigdigits > 0
                 remove_doubles_across_islands!(population, ops)
             end
-        end
+        end # TODO: put the for isle together
 
 # ==================================================================================================
 # migration
@@ -271,13 +266,13 @@ function generational_loop(
 
             indiv_obj_vals = [
                 Float64[
-                    round(getfield(indiv, obj), sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
+                    round(indiv.measures[obj], sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
                     for obj in ops.selection.hall_of_fame_objectives
                 ]
                 for indiv in hall_of_fame
             ]
 
-            selection_inds = non_dominated_sort(indiv_obj_vals; first_front=true)
+            selection_inds = non_dominated_sort(indiv_obj_vals; first_front=true) # TODO: cleanup
 
             keepat!(hall_of_fame, selection_inds)
         end
@@ -301,42 +296,35 @@ function generational_loop(
                 end
 
                 # current KPIs # -----------------------------------------------------------------------
-                get_for_prog = [t_since, gen,
-                    mean(getfield.(hall_of_fame, :age)),
-                    cur_max_compl,
-                    mean(getfield.(hall_of_fame, :compl)),
-                    mean(getfield.(hall_of_fame, :recursive_compl)),
-                    mean(getfield.(hall_of_fame, :n_params)),
-                    minimum(getfield.(hall_of_fame, :mae)),
-                    minimum(getfield.(hall_of_fame, :mse)),
-                    minimum(getfield.(hall_of_fame, :max_ae)),
-                    minimum(getfield.(hall_of_fame, :minus_r2)),
-                    minimum(getfield.(hall_of_fame, :minus_abs_spearman)),
-                    minimum(getfield.(hall_of_fame, :mare)),
-                    minimum(getfield.(hall_of_fame, :q75_are)),
-                    minimum(getfield.(hall_of_fame, :max_are)),
-                    minimum(getfield.(hall_of_fame, :ms_processed_e))]
-
-                for i in eachindex(keep_track_of)
-                    push!(prog_dict[keep_track_of[i]], get_for_prog[i])
-                    cur_prog_dict[keep_track_of[i]] = get_for_prog[i]
-                end
+                get_for_prog = OrderedDict([
+                    "time"          => t_since,
+                    "generation"    => gen,
+                    "mean age"      => mean(i.age for i in hall_of_fame),
+                    "cur_max_compl" => cur_max_compl,
+                    "mean compl"    => mean(i.measures[:compl] for i in hall_of_fame),
+                    ["min " * string(m) => minimum([i.measures[m] for i in hall_of_fame])
+                     for m in keys(ops.measures)]...
+               ])
 
                 if ops.general.print_progress
-                    display(cur_prog_dict)
+                    display(get_for_prog)
                     println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type q and enter to finish early")
                 end
 
+                for k in keys(get_for_prog)
+                    push!(prog_dict[k], get_for_prog[k])
+                end
+
                 if ops.general.plot_hall_of_fame
-                    compl          = [indiv.compl          for indiv in hall_of_fame]
-                    ms_processed_e = [indiv.ms_processed_e for indiv in hall_of_fame]
+                    compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
+                    ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
 
                     plt = scatterplot(
                         compl,
                         clamp.(ms_processed_e, 1e-30, 1e30),
                         yscale           = :log10,
                         title            = "hall of fame",
-                        xlabel           = "complexity",
+                        xlabel           = "compl",
                         ylabel           = "log10 of ms_processed_e",
                         marker           = :circle,
                         unicode_exponent = false,
@@ -349,7 +337,7 @@ function generational_loop(
                     )
 
                     if ops.general.print_hall_of_fame
-                        sort!(hall_of_fame, by=i->i.compl)
+                        sort!(hall_of_fame, by=i->i.measures[:compl])
 
                         inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=16)))
                         unique!(inds_to_show)
@@ -420,32 +408,25 @@ function generational_loop(
 
     # final display of current KPIs # --------------------------------------------------------------
     t_since = time() - t_start
-    cur_max_compl = maximum(indiv.compl for indiv in hall_of_fame; init=5)
+    cur_max_compl = maximum(indiv.measures[:compl] for indiv in hall_of_fame; init=ops.grammar.min_compl)
 
-    get_for_prog = [t_since, gen,
-        mean(getfield.(hall_of_fame, :age)),
-        cur_max_compl,
-        mean(getfield.(hall_of_fame, :compl)),
-        mean(getfield.(hall_of_fame, :recursive_compl)),
-        mean(getfield.(hall_of_fame, :n_params)),
-        minimum(getfield.(hall_of_fame, :mae)),
-        minimum(getfield.(hall_of_fame, :mse)),
-        minimum(getfield.(hall_of_fame, :max_ae)),
-        minimum(getfield.(hall_of_fame, :minus_r2)),
-        minimum(getfield.(hall_of_fame, :minus_abs_spearman)),
-        minimum(getfield.(hall_of_fame, :mare)),
-        minimum(getfield.(hall_of_fame, :q75_are)),
-        minimum(getfield.(hall_of_fame, :max_are)),
-        minimum(getfield.(hall_of_fame, :ms_processed_e))]
-
-    for i in eachindex(keep_track_of)
-        push!(prog_dict[keep_track_of[i]], get_for_prog[i])
-        cur_prog_dict[keep_track_of[i]] = get_for_prog[i]
-    end
+    get_for_prog = OrderedDict([
+        "time"          => t_since,
+        "generation"    => gen,
+        "mean age"      => mean(i.age for i in hall_of_fame),
+        "cur_max_compl" => cur_max_compl,
+        "mean compl"    => mean(i.measures[:compl] for i in hall_of_fame),
+        ["min " * string(m) => minimum([i.measures[m] for i in hall_of_fame])
+         for m in keys(ops.measures)]...
+    ])
 
     if ops.general.print_progress
-        display(cur_prog_dict)
+        display(get_for_prog)
         println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec")
+    end
+
+    for k in keys(get_for_prog)
+        push!(prog_dict[k], get_for_prog[k])
     end
 
     close_reader!(stdin_reader)
