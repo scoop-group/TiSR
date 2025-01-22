@@ -12,60 +12,52 @@ mutable struct Individual
     Individual(node::Node, ops) = new(node)
 end
 
-function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, timer)
+function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     indiv.age = 0.0
 
-    @timeit timer "pre-process node" begin
-        apply_simple_simplifications!(indiv.node, ops)
-        trim_to_max_nodes_per_term!(indiv.node, ops)
+    apply_simple_simplifications!(indiv.node, ops)
+    trim_to_max_nodes_per_term!(indiv.node, ops)
 
-        if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
-            target_compl = rand(ops.grammar.min_compl:min( # TODO: maybe scew this to larger complexities
-                cur_max_compl + ops.general.adaptive_compl_increment,
-                ops.grammar.max_compl
-            ))
-            trim_to_max_compl!(indiv.node, target_compl, ops)
-        end
-
-        apply_simple_simplifications!(indiv.node, ops)
-
-        div_to_mul_param!(indiv.node, ops)
-        reorder_add_n_mul!(indiv.node, ops)
+    if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
+        target_compl = rand(ops.grammar.min_compl:min( # TODO: maybe scew this to larger complexities
+            cur_max_compl + ops.general.adaptive_compl_increment,
+            ops.grammar.max_compl
+        ))
+        trim_to_max_compl!(indiv.node, target_compl, ops)
     end
 
-    @timeit timer "remove invalid nodes" begin
-        if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
-            indiv.valid = false
-            return
-        end
+    apply_simple_simplifications!(indiv.node, ops)
 
-        if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
-            indiv.valid = false
-            return
-        end
+    div_to_mul_param!(indiv.node, ops)
+    reorder_add_n_mul!(indiv.node, ops)
+
+    if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
+        indiv.valid = false
+        return
     end
 
-    @timeit timer "fitting" begin
-        prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
-
-        indiv.valid = valid
-        indiv.valid || return
+    if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
+        indiv.valid = false
+        return
     end
 
-    @timeit timer "calculate measures" begin
-        residual = data[end] .- prediction
+    prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
 
-        if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
-            residual_relative = residual ./ max.(abs.(data[end]), 0.1)
-        else
-            residual_relative = copy(residual)
-        end
+    indiv.valid = valid
+    indiv.valid || return
 
-        indiv.measures = Dict(
-            m => f(residual, residual_relative, prediction, data, indiv.node, ops)
-            for (m, f) in ops.measures
-        )
+    residual = data[end] .- prediction
+
+    if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
+        residual_relative = residual ./ max.(abs.(data[end]), 0.1)
+    else
+        residual_relative = copy(residual)
     end
+
+    indiv.measures = Dict(
+        m => f(residual, residual_relative, prediction, data, indiv.node, ops)
+        for (m, f) in ops.measures
+    )
 end
 
 # ==================================================================================================
