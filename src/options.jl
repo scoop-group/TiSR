@@ -340,6 +340,7 @@ function grammar_params(;
     weighted_compl_dict::Dict{String, Float64} = Dict{String, Float64}(),
     bank_of_terms::Vector{String}              = String[],
     illegal_dict::Dict                         = Dict(),
+    custom_check_legal::Function               = (node, data, ops) -> true,
 )
     @assert max_compl > 3             "max_compl must be larger than 3          "
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
@@ -373,6 +374,7 @@ function grammar_params(;
         min_compl           = min_compl,
         max_nodes_per_term  = max_nodes_per_term,
         bank_of_terms       = bank_of_terms,
+        custom_check_legal  = custom_check_legal,
     )
 end
 

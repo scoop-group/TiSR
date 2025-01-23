@@ -43,7 +43,10 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
         return
     end
 
-    # TODO: add custom_check_legal function
+    if !ops.grammar.custom_check_legal(indiv.node, data, ops)
+        indiv.valid = false
+        return
+    end
 
     # fitting # ------------------------------------------------------------------------------------
     prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
