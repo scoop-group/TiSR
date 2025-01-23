@@ -33,7 +33,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 )
     @assert length(data) == ops.data_descript.n_vars + 1 "please use the data variable which was returned by the Options constructor."
 
-    # prepare and check bank_of_terms and start_pop legal # ----------------------------------------
+    # prepare and check bank_of_terms and start_pop # ----------------------------------------------
     bank_of_terms  = Node[string_to_node(eq, ops) for eq in ops.grammar.bank_of_terms]
 
     if !isempty(ops.grammar.illegal_dict)
@@ -48,17 +48,16 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     end
 
     # misc # ---------------------------------------------------------------------------------------
-    hall_of_fame = Individual[]        # initialize data structures
+    hall_of_fame = Individual[]                      # initialize data structures
 
-    prog_dict = OrderedDict(           # initialize progress dict
-        k => Float64[]
+    prog_dict = OrderedDict(k => Float64[]           # initialize progress dict
         for k in ["time", "generation", "mean age", "cur_max_compl", "mean compl",
                   ["min " * string(m) for m in keys(ops.measures)]...]
     )
 
-    stdin_reader = watch_stream(stdin) # prepare user interrupt
+    stdin_reader = watch_stream(stdin)               # prepare user interrupt
 
-    null_node = Node(0.0)              # create the null node for some manual garbification
+    null_node = Node(0.0)                            # create the null node for some manual garbification
 
     t_start  = time()
     gen      = 0.0
@@ -126,78 +125,67 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
             filter!(indiv -> indiv.valid, children[isle])
 
-# ==================================================================================================
-# add children to population
-# ==================================================================================================
+            # add children to population
             append!(population[isle], children[isle])
             children[isle] = Individual[]
 
-        end # for isle in 1:ops.general.num_islands
-
-# ==================================================================================================
-# remove individuals
-# ==================================================================================================
-        if ops.general.remove_doubles_sigdigits > 0
-            for isle in 1:ops.general.num_islands
+            # remove individuals
+            if ops.general.remove_doubles_sigdigits > 0
                 remove_doubles!(population[isle], ops)
             end
-        end
 
-        for isle in 1:ops.general.num_islands
             filter!(i -> i.age <= ops.general.max_age, population[isle])
-        end
 
 # ==================================================================================================
 # selection
 # ==================================================================================================
-        for isle in 1:ops.general.num_islands
-            length(population[isle]) > ops.general.pop_per_isle || continue
+            if length(population[isle]) > ops.general.pop_per_isle
+                selection_inds = Int64[]
 
-            selection_inds = Int64[]
-
-            indiv_obj_vals = [
-                Float64[
-                    round(indiv.measures[obj], sigdigits=ops.selection.population_niching_sigdigits)
-                    for obj in ops.selection.selection_objectives
+                indiv_obj_vals = [
+                    Float64[
+                        round(indiv.measures[obj], sigdigits=ops.selection.population_niching_sigdigits)
+                        for obj in ops.selection.selection_objectives
+                    ]
+                    for indiv in population[isle]
                 ]
-                for indiv in population[isle]
-            ]
 
-            # determine rank and crowding for all individuals -> overkill, if no parent selection
-            ranks    = non_dominated_sort_clean(indiv_obj_vals)
-            crowding = crowding_distance_clean(indiv_obj_vals)
+                # determine rank and crowding for all individuals -> overkill, if no parent selection
+                ranks    = non_dominated_sort_clean(indiv_obj_vals)
+                crowding = crowding_distance_clean(indiv_obj_vals)
 
-            for i in eachindex(population[isle])
-                population[isle][i].rank     = ranks[i]
-                population[isle][i].crowding = crowding[i]
-            end
-
-            # Pareto selection # -------------------------------------------------------------------
-            if ops.selection.n_pareto_select_per_isle > 0
-                sort!(population[isle]) # apply non_dominated_sort
-                append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
-            end
-
-            # tournament selection # ---------------------------------------------------------------
-            if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
-                remaining_inds = setdiff(eachindex(population[isle]), selection_inds)
-
-                if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-                    fitness  = get_relative_fitness(indiv_obj_vals)
-                    selected = tournament_selection(fitness, remaining_inds,
-                        tournament_size = ops.selection.tournament_size,
-                        n_select        = ops.general.pop_per_isle - length(selection_inds)
-                    )
-                else
-                    selected = remaining_inds
+                for i in eachindex(population[isle])
+                    population[isle][i].rank     = ranks[i]
+                    population[isle][i].crowding = crowding[i]
                 end
 
-                append!(selection_inds, selected)
-            end
+                # Pareto selection # -------------------------------------------------------------------
+                if ops.selection.n_pareto_select_per_isle > 0
+                    sort!(population[isle]) # apply non_dominated_sort
+                    append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
+                end
 
-            # apply selection
-            sort!(selection_inds)
-            keepat!(population[isle], selection_inds)
+                # tournament selection # ---------------------------------------------------------------
+                if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
+                    remaining_inds = setdiff(eachindex(population[isle]), selection_inds)
+
+                    if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
+                        fitness  = get_relative_fitness(indiv_obj_vals)
+                        selected = tournament_selection(fitness, remaining_inds,
+                            tournament_size = ops.selection.tournament_size,
+                            n_select        = ops.general.pop_per_isle - length(selection_inds)
+                        )
+                    else
+                        selected = remaining_inds
+                    end
+
+                    append!(selection_inds, selected)
+                end
+
+                # apply selection
+                sort!(selection_inds)
+                keepat!(population[isle], selection_inds)
+            end
         end
 
         # remove doubles across islands
