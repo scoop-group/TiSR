@@ -15,6 +15,7 @@ end
 function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     indiv.age = 0.0
 
+    # prepare node -> simplify, trim, reorder # ----------------------------------------------------
     apply_simple_simplifications!(indiv.node, ops)
     trim_to_max_nodes_per_term!(indiv.node, ops)
 
@@ -31,6 +32,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     div_to_mul_param!(indiv.node, ops)
     reorder_add_n_mul!(indiv.node, ops)
 
+    # remove invalids # ----------------------------------------------------------------------------
     if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= ops.grammar.max_compl)
         indiv.valid = false
         return
@@ -41,11 +43,13 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
         return
     end
 
+    # fitting # ------------------------------------------------------------------------------------
     prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
 
     indiv.valid = valid
     indiv.valid || return
 
+    # calculate measures # -------------------------------------------------------------------------
     residual = data[end] .- prediction
 
     if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
