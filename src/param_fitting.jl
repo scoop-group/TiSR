@@ -105,7 +105,7 @@ function fitting_residual(x, node, list_of_param, data, inds, ops)
 
     dat = [view(d, inds) for d in data]
     pred, valid = eval_equation(node, dat, ops)
-    ops.fitting.pre_residual_processing!(pred, inds, ops)
+    pred .= ops.fitting.pre_residual_processing(pred, inds, ops)
     dat[end] .- pred, valid # TODO: maybe remove the valid here?
 end
 

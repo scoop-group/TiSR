@@ -43,6 +43,8 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
         return
     end
 
+    # TODO: add custom_check_legal function
+
     # fitting # ------------------------------------------------------------------------------------
     prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
 
@@ -50,16 +52,8 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     indiv.valid || return
 
     # calculate measures # -------------------------------------------------------------------------
-    residual = data[end] .- prediction
-
-    if any(d == 0 for d in data[end]) # minimum relative reference to prevent singularities
-        residual_relative = residual ./ max.(abs.(data[end]), 0.1)
-    else
-        residual_relative = copy(residual)
-    end
-
     indiv.measures = Dict(
-        m => f(residual, residual_relative, prediction, data, indiv.node, ops)
+        m => f(prediction, data[end], indiv.node, ops)
         for (m, f) in ops.measures
     )
 end

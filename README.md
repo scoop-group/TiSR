@@ -63,7 +63,7 @@ ops, data = Options(
     binops      = (+,   -,   *,   /,   ^  ),    # -> binary function set to choose from
     unaops      = (exp, log, sin, cos, abs),    # -> unary function set to choose from
     data_split  = data_split_params(;
-        parts      = [1.0],                     # -> how the data should be splitted. The first part is used for fitting, the second is used for early stopping, while (currently) all are used to calculate the fit quality measures for selection. 
+        parts      = [1.0],                     # -> how the data should be splitted. The first part is used for fitting, the second is used for early stopping, while (currently) all are used to calculate the fit quality measures for selection.
         split_inds = nothing,                   # -> rather then splitting randomly automatically, the indices for each split can be specified in a Vector{Vector{Int64}}. If specified, parts cannot be specified.
     ),
     general     = general_params(
@@ -100,7 +100,7 @@ ops, data = Options(
         t_lim                    = Inf,                # -> time limit for parameter fitting of individual. -> Inf is off; 0.1 ... 0.5
         rel_f_tol_5_iter         = 1e-2 * 0.01,        # -> relative tolerance for parameter fitting. considered converged if relative improvement over 5 iterations is smaller. -> 0 is off; 1e-2 * 1.0 ... 1e-2 * 0.01
         lasso_factor             = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
-        pre_residual_processing! = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. Must be an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./= data[end][inds]"
+        pre_residual_processing  = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./= data[end][inds]"
         residual_processing      = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds) -> x ./ data[end][inds]"
     ),
     grammar     = grammar_params(
@@ -122,7 +122,7 @@ ops, data = Options(
         p_add_term           = 0.1,   #|
         p_simplify           = 0.1,   #|-> simplify with SymbolicUtils
     ),
-    meta_data = Dict() # -> can be used to provide data for use in, for example, user-defined functions like the callback or pre_residual_processing!
+    meta_data = Dict() # -> can be used to provide data for use in, for example, user-defined functions like the callback or pre_residual_processing
 )
 
 # (1) example illegal_dict
@@ -133,7 +133,7 @@ ops, data = Options(
 #     "exp" => (lef = ("exp", "log"), rig = ()),
 #     "cos" => (lef = ("sin", "cos"), rig = ())
 # )
- 
+
 # (2) example weighted_compl_dict
 # weighted_compl_dict =  Dict(
 #     "PARAM" => 1.5, "VAR" => 1.0,

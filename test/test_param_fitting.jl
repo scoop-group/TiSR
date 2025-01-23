@@ -1,7 +1,7 @@
 
 # TODO: test early stopping
-# TODO: test pre_residual_processing! = (x, ind) -> x,
-# TODO: test residual_processing      = (x, ind) -> x,
+# TODO: test pre_residual_processing = (x, ind) -> x,
+# TODO: test residual_processing     = (x, ind) -> x,
 # TODO: text t_lim
 # TODO: text rel_f_tol_5_iter
 
@@ -53,13 +53,13 @@ data = rand(100, 5)
 ops, data_vect = Options(
     data,
     fitting = fitting_params(;
-        max_iter                 = 15,
-        early_stop_iter          = 0,
-        t_lim                    = Inf,
-        rel_f_tol_5_iter         = 0.0,
-        lasso_factor             = 1e-1,
-        pre_residual_processing! = (x, ind, ops) -> x,
-        residual_processing      = (x, ind, ops) -> x,
+        max_iter                = 15,
+        early_stop_iter         = 0,
+        t_lim                   = Inf,
+        rel_f_tol_5_iter        = 0.0,
+        lasso_factor            = 1e-1,
+        pre_residual_processing = (x, ind, ops) -> x,
+        residual_processing     = (x, ind, ops) -> x,
     )
 )
 
@@ -94,7 +94,7 @@ ops, data_vect = Options(
 
         node_elect.lef = Node(
             findfirst(isequal(+), ops.binops),
-            node_elect.lef, 
+            node_elect.lef,
             Node(0.0)
         )
 
@@ -114,7 +114,7 @@ ops, data_vect = Options(
         residual, valid = TiSR.residual_after_fitting_LM(node, data_vect, ops, list_of_param, ops.fitting.max_iter - 3)
 
         valid || continue
-        
+
         before_lasso = abs(list_of_param[ind_of_added].val)
 
         residual, valid = TiSR.residual_after_fitting_newton(node, data_vect, ops, list_of_param, 3)
@@ -127,7 +127,7 @@ ops, data_vect = Options(
 
     # histogram(clamp.(trash_param, 0.0, 2.0), nbins=20)
     # sort(trash_param)
-    
+
     @test count(<(1), trash_param) > 50
 end
 

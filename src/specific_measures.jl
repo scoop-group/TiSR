@@ -1,59 +1,65 @@
 
 """ Various pre-implemented fit quality measures.
 """
-function get_measure_max_ae(residual, residual_relative, prediction, data, node, ops)
-    maximum(abs, residual)
+function get_measure_max_ae(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    residual = target .- prediction
+    @views maximum(abs, residual[inds])
 end
 
-function get_measure_mae(residual, residual_relative, prediction, data, node, ops)
-    mean(abs, residual)
+function get_measure_mae(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    residual = target .- prediction
+    @views mean(abs, residual[inds])
 end
 
-function get_measure_mse(residual, residual_relative, prediction, data, node, ops)
-    mean(abs2, residual)
+function get_measure_mse(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    residual = target .- prediction
+    @views mean(abs2, residual[inds])
 end
 
-function get_measure_minus_r2(residual, residual_relative, prediction, data, node, ops)
-    get_minus_r2(prediction, data[end])
+function get_measure_minus_r2(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    @views get_minus_r2(prediction[ind], target[ind])
 end
 
-function get_measure_minus_abs_spearman(residual, residual_relative, prediction, data, node, ops)
-    get_minus_abs_spearman(prediction, data[end])
+function get_measure_minus_abs_spearman(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    @views get_minus_abs_spearman(prediction[inds], target[inds])
 end
 
-function get_measure_mare(residual, residual_relative, prediction, data, node, ops)
-    mean(abs, residual_relative)
+function get_measure_mare(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    rel_residual = @. (prediction - target) / (abs(target) + 1e-12)
+    @views mean(abs, rel_residual[inds])
 end
 
-function get_measure_q75_are(residual, residual_relative, prediction, data, node, ops)
-    quantile(abs.(residual_relative), 0.75)
+function get_measure_q75_are(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    rel_residual = @. (prediction - target) / (abs(target) + 1e-12)
+    @views quantile(abs.(rel_residual[inds]), 0.75)
 end
 
-function get_measure_max_are(residual, residual_relative, prediction, data, node, ops)
-    maximum(abs, residual_relative)
+function get_measure_max_are(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    rel_residual = @. (prediction - target) / (abs(target) + 1e-12)
+    maximum(abs, rel_residual[inds])
 end
 
-function get_measure_ms_processed_e(residual, residual_relative, prediction, data, node, ops)
-    mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops) .* ops.data_descript.fit_weights)
+function get_measure_ms_processed_e(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[end]
+    residual = target .- prediction
+    @views mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops)[inds]
+                            .* ops.data_descript.fit_weights[inds])
 end
 
 """ Various pre-implemented complexity measures.
 """
-function get_measure_compl(residual, residual_relative, prediction, data, node, ops)
-    count_nodes(node)
-end
-
-function get_measure_weighted_compl(residual, residual_relative, prediction, data, node, ops)
-    get_weighted_compl(node, ops)
-end
-
-function get_measure_recursive_compl(residual, residual_relative, prediction, data, node, ops)
-    recursive_compl(node, ops)
-end
-
-function get_measure_n_params(residual, residual_relative, prediction, data, node, ops)
-    length(list_of_param_nodes(node))
-end
+get_measure_compl(prediction, target, node, ops)           = count_nodes(node)
+get_measure_weighted_compl(prediction, target, node, ops)  = get_weighted_compl(node, ops)
+get_measure_recursive_compl(prediction, target, node, ops) = recursive_compl(node, ops)
+get_measure_n_params(prediction, target, node, ops)        = length(list_of_param_nodes(node))
 
 """ Recursive complexity according to the dissertation of Kommenda 2018 except for the rule
     for ^, which was not addressed.

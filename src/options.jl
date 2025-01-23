@@ -52,7 +52,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
 
         #-------------------------------------------------------------------------------------------
         if fitting.early_stop_iter != 0
-            @assert length(data_descript.split_inds) > 1 "Data split required for early stopping"
+            @assert !isempty(data_descript.split_inds[2]) "second data split must contain data for early stopping"
         end
 
         if !isempty(grammar.weighted_compl_dict)
@@ -62,9 +62,6 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
 
         # ------------------------------------------------------------------------------------------
         @assert !xor(isempty(grammar.bank_of_terms), mutation[9] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
-
-        # relative reference offset
-        any(abs(d) < 0.1 for d in data[end]) && @warn "some target data < 0.1 -> 0.1 is used as lower bound for the relative measures like mare" # TODO: maybe lower to 1e-5?
 
         # resulting parameters
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
@@ -102,7 +99,7 @@ end
 """ Function to specify either parts for data splitting or split_inds directy.
 """
 data_split_params(;parts=nothing, split_inds=nothing) = (parts, split_inds)
-_data_split_params(data, parts::Nothing, split_inds::Nothing) = [collect(1:size(data, 1))]
+_data_split_params(data, parts::Nothing, split_inds::Nothing) = _data_split_params(data, nothing, [collect(1:size(data, 1))])
 _data_split_params(data, parts, split_inds) = throw("parts and split_inds cannot both be specified")
 
 function _data_split_params(data, parts::Vector{Float64}, split_inds::Nothing)
@@ -131,6 +128,12 @@ function _data_split_params(data, parts::Nothing, split_inds::Vector{Vector{Int6
 
     allunique(eachind)                       || @warn "in split_inds, some data are part of different splits"
     length(unique(eachind)) == size(data, 1) || @warn "some data are not part of any split"
+
+    while length(split_inds) < 3
+        push!(split_inds, Int64[])
+    end
+
+    push!(split_inds, sort(vcat(split_inds[1], split_inds[2])))
 
     return split_inds
 end
@@ -299,13 +302,13 @@ function selection_params(;
 end
 
 function fitting_params(;
-    max_iter                 = 10,
-    early_stop_iter          = 0,
-    t_lim                    = Inf,
-    rel_f_tol_5_iter         = 1e-2 * 0.01,
-    lasso_factor             = 0.0,
-    pre_residual_processing! = (x, ind, ops) -> x,
-    residual_processing      = (x, ind, ops) -> x,
+    max_iter                = 10,
+    early_stop_iter         = 0,
+    t_lim                   = Inf,
+    rel_f_tol_5_iter        = 1e-2 * 0.01,
+    lasso_factor            = 0.0,
+    pre_residual_processing = (x, ind, ops) -> x,
+    residual_processing     = (x, ind, ops) -> x,
 )
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
@@ -317,13 +320,13 @@ function fitting_params(;
     @assert lasso_factor >= 0           "lasso factor must be >= 0"
 
     return (
-        max_iter                 = max_iter,
-        early_stop_iter          = early_stop_iter,
-        rel_f_tol_5_iter         = rel_f_tol_5_iter,
-        t_lim                    = t_lim,
-        lasso_factor             = lasso_factor,
-        pre_residual_processing! = pre_residual_processing!,
-        residual_processing      = residual_processing,
+        max_iter                = max_iter,
+        early_stop_iter         = early_stop_iter,
+        rel_f_tol_5_iter        = rel_f_tol_5_iter,
+        t_lim                   = t_lim,
+        lasso_factor            = lasso_factor,
+        pre_residual_processing = pre_residual_processing,
+        residual_processing     = residual_processing,
     )
 end
 
