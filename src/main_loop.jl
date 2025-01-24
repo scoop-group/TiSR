@@ -151,8 +151,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 ]
 
                 # determine rank and crowding for all individuals -> overkill, if no parent selection
-                ranks    = non_dominated_sort_clean(indiv_obj_vals)
-                crowding = crowding_distance_clean(indiv_obj_vals)
+                ranks    = non_dominated_sort(indiv_obj_vals)
+                crowding = crowding_distance(indiv_obj_vals)
 
                 for i in eachindex(population[isle])
                     population[isle][i].rank     = ranks[i]
@@ -186,16 +186,17 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 sort!(selection_inds)
                 keepat!(population[isle], selection_inds)
             end
-        end
+        end # for isle in 1:ops.general.num_islands
 
-        # remove doubles across islands
+# ==================================================================================================
+# inter-isle
+# ==================================================================================================
+        # remove doubles across islands # ----------------------------------------------------------
         if ops.general.remove_doubles_across_islands && ops.general.remove_doubles_sigdigits > 0
             remove_doubles_across_islands!(population, ops)
         end
 
-# ==================================================================================================
-# migration
-# ==================================================================================================
+        # migration # ------------------------------------------------------------------------------
         if gen % ops.general.migration_interval == 0
             emmigrate_island = rand(1:ops.general.num_islands)
             immigrate_island = mod1(emmigrate_island + rand((1, -1)), ops.general.num_islands)
@@ -218,9 +219,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             push!(population[rand(1:ops.general.num_islands)], indiv)
         end
 
-# ==================================================================================================
-# hall of fame
-# ==================================================================================================
+        # hall of fame # ---------------------------------------------------------------------------
         for isle in 1:ops.general.num_islands
             append!(hall_of_fame, copy.(population[isle]))
         end
@@ -233,7 +232,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             for indiv in hall_of_fame
         ]
 
-        selection_inds = non_dominated_sort(indiv_obj_vals; first_front=true) # TODO: cleanup
+        selection_inds = first_pareto_front(indiv_obj_vals)
 
         keepat!(hall_of_fame, selection_inds)
 
@@ -310,7 +309,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         ))
                     end
                 end
-
                 display(plt)
             end
         end
@@ -358,7 +356,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             stop_msg = "graceful user interrupt"
             break
         end
-    end
+    end # while true
 
     # final display of current KPIs # --------------------------------------------------------------
     t_since = time() - t_start
@@ -384,9 +382,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     end
 
     close_reader!(stdin_reader)
-# ==================================================================================================
-# Post-pare for return
-# ==================================================================================================
+
+    # Post-pare for return
     population = reduce(vcat, population)
 
     return hall_of_fame, population, prog_dict, stop_msg

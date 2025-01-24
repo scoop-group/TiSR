@@ -253,9 +253,9 @@ end
 
 """ Combines two nodes to create two new ones.
 """
-function crossover_mutation!(node1, node2, ops) # TODO: maybe somehow decide which parts to merry
-    node_elect1 = random_node(node1, mode=2, scale=1.0) # TODO: scale>1?
-    node_elect2 = random_node(node2, mode=2, scale=1.0) # TODO: scale>1?
+function crossover_mutation!(node1, node2, ops) # TODO: maybe somehow decide which parts to merry -> maybe based on so kind of correlation or performace
+    node_elect1 = random_node(node1, mode=2, scale=1.0) # TODO: scale>1? -> with larger subtree -> more of 50/50 crossover
+    node_elect2 = random_node(node2, mode=2, scale=1.0) # TODO: scale>1? -> with larger subtree -> more of 50/50 crossover
 
     lefrig1 = mutate_left(node_elect1, 2) ? :lef : :rig
     lefrig2 = mutate_left(node_elect2, 2) ? :lef : :rig
@@ -278,7 +278,7 @@ end
 """ Adds a *parameter to a random subnode.
 """
 function insert_times_param_mutation!(node, ops)
-    node_elect = random_node(node, mode=1, scale=1.0) # TODO: scale<1?
+    node_elect = random_node(node, mode=1, scale=1.0) # TODO: scale<1? -> more likely to occur in a smaller subtree
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
 
     times_param_node = Node(2, findfirst(==(*), ops.binops))

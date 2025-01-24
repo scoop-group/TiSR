@@ -1,83 +1,75 @@
 
-# non-dominated sort # ---------------------------------------------------------
+# non-dominated sort # -----------------------------------------------------------------------------
 dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], eachindex(x))
 
 """ Slightly adapted of a version found on Julia Discourse:
     https://discourse.julialang.org/t/fast-non-dominated-sorting/24164
-    Non-dominated sorting, which selects n_select individuals. The selection in the last front is
-    made using crowding_distance selection. The fronts are then concatenated to one indices
-    vector. If the keysword first_front=true, only the unfiltered first front is returned.
+    Calculate the domination scores, i.e., number of pareto frontier, but
+    disregard doubles.
 """
-function non_dominated_sort(rows; n_select=200, first_front=false)
-    fronts = Vector{Int64}[]
+function non_dominated_sort(rows)
+    fronts   = Vector{Int64}[]
     individs = SVector{length(rows[1])}.(rows)
-    indices = collect(eachindex(individs))
 
-    # remove doubles
+    domination_score = fill(typemax(Int64), length(rows))
     indices = unique(i -> individs[i], 1:length(individs))
     keepat!(individs, indices)
 
-    if first_front
-        n_select = 1
-    end
-
-    cur_num = 0
-    while !isempty(individs) && cur_num < n_select
+    while !isempty(individs)
         red = [all(x -> !dominates(x, y), individs) for y in individs]
         next_front = indices[red]
-        cur_num += length(next_front)
         push!(fronts, next_front)
         deleteat!(indices, red)
         deleteat!(individs, red)
     end
 
-    if !first_front && (too_many = cur_num - n_select) > 0
-        arr = reduce(hcat, rows)'
-        to_select = length(fronts[end]) - too_many
-        inds = crowding_distance_selection(arr, fronts[end], to_select)
-        deleteat!(fronts, length(fronts))
-        push!(fronts, inds)
+    for (front, inds) in enumerate(fronts)
+        domination_score[inds] .= front
     end
 
-    reduce(vcat, fronts)
+    return domination_score
 end
 
-""" Adapted a ChatGPT generated answer (21.04.2023) after I found a fundamental bug in my own
-    implementation, which did not account for higher dimensions.
-    Calculates the crowing distance between the points.
+""" Calculate the crowding distances.
 """
-function crowding_distance(points)
-    n_points, n_dims = size(points)
-    distances = zeros(n_points)
+function crowding_distance(rows)
+    pnts = reduce(hcat, rows)'
+    n_pnts, n_dims = size(pnts)
+    distances = zeros(n_pnts)
 
-    for i in 1:n_dims                                                                                # compute the crowding distance for each point and each dimension
-        sorted_indices = sortperm(points[:, i])                                                      # sort the points by their i-th objective value
-        sorted_points = points[sorted_indices, :]
-        min_value, max_value = sorted_points[1, i], sorted_points[end, i]
-        min_value == max_value && continue
+    for i in 1:n_dims                                   # compute the crowding distance for each point and each dimension
+        s_inds = sortperm(pnts[:, i])                   # sort the pnts by their i-th objective val
+        s_pnts  = pnts[s_inds, :]
+        min_val, max_val = s_pnts[1, i], s_pnts[end, i]
+        min_val == max_val && continue
 
-        distances[sorted_indices[1]] = Inf                                                           # set the crowding distance for the boundary points to infinity
-        distances[sorted_indices[end]] = Inf
+        distances[s_inds[1]]   = Inf                    # set the crowding distance for the boundary pnts to infinity
+        distances[s_inds[end]] = Inf
 
-        for j in 2:n_points-1                                                                        # compute the crowding distance for the remaining points
-            distances[sorted_indices[j]] += (sorted_points[j+1, i] - sorted_points[j-1, i]) / (max_value - min_value)
+        for j in 2:n_pnts-1                             # compute the crowding distance for the remaining pnts
+            distances[s_inds[j]] += (s_pnts[j+1, i] - s_pnts[j-1, i]) / (max_val - min_val)
         end
     end
-    distances
+    return distances
 end
 
-""" Calls the crowing distance function, sets the distances to the minimal value of 1e-9
-    because wsample cannot handle 0, and returns the selected indices.
+""" perfrom binary tournament selection for parent selection
 """
-function crowding_distance_selection(arr, inds, n_select)
-    dists = crowding_distance(arr[inds, :])
-    dists .= max.(dists, 1e-20)                                                                        # wsmample cannot work with 0 or nan
-    replace!(dists, NaN => 1e-20)
-    replace!(dists, Inf => 1e20)
-    wsample(inds, dists, n_select, replace=false)
+parent_selection(pop) = min(rand(pop), rand(pop))
+
+""" Slightly adapted of a version found on Julia Discourse:
+    https://discourse.julialang.org/t/fast-non-dominated-sorting/24164
+    Find the first pareto frontier but disregards doubles.
+"""
+function first_pareto_front(rows)
+    individs = SVector{length(rows[1])}.(rows)
+    indices = unique(i -> individs[i], 1:length(individs))
+    keepat!(individs, indices)
+    red = [all(x -> !dominates(x, y), individs) for y in individs]
+    return indices[red]
 end
 
-# tournament selection # -------------------------------------------------------
+# tournament selection # ---------------------------------------------------------------------------
 """ Tournament selection. The proprocessing of the fitness may be adapted. The inds passed into
     this function are modified and should not be used afterwards.
 """
@@ -109,56 +101,3 @@ function get_relative_fitness(indiv_obj_vals)
     indiv_obj_vals  .*= -1.0
     fitness          = sum(indiv_obj_vals, dims=2)
 end
-
-# ==================================================================================================
-# 4 parent selection
-# ==================================================================================================
-
-function non_dominated_sort_clean(rows)
-    fronts = Vector{Int64}[]
-    individs = SVector{length(rows[1])}.(rows)
-    indices = collect(eachindex(individs))
-
-    while !isempty(individs)
-        red = [all(x -> !dominates(x, y), individs) for y in individs]
-        next_front = indices[red]
-        push!(fronts, next_front)
-        deleteat!(indices, red)
-        deleteat!(individs, red)
-    end
-
-    domination_score = zeros(Int64, length(rows))
-
-    for (front, inds) in enumerate(fronts)
-        domination_score[inds] .= front
-    end
-
-    return domination_score
-end
-
-function crowding_distance_clean(rows)
-
-    points = reduce(hcat, rows)'
-    n_points, n_dims = size(points)
-    distances = zeros(n_points)
-
-    for i in 1:n_dims                                                                                # compute the crowding distance for each point and each dimension
-        sorted_indices = sortperm(points[:, i])                                                      # sort the points by their i-th objective value
-        sorted_points = points[sorted_indices, :]
-        min_value, max_value = sorted_points[1, i], sorted_points[end, i]
-        min_value == max_value && continue
-
-        distances[sorted_indices[1]]   = Inf                                                         # set the crowding distance for the boundary points to infinity
-        distances[sorted_indices[end]] = Inf
-
-        for j in 2:n_points-1                                                                        # compute the crowding distance for the remaining points
-            distances[sorted_indices[j]] += (sorted_points[j+1, i] - sorted_points[j-1, i]) / (max_value - min_value)
-        end
-    end
-    return distances
-end
-
-""" perfrom binary tournament selection for parent selection
-"""
-parent_selection(pop) = min(rand(pop), rand(pop))
-
