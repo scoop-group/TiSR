@@ -19,20 +19,20 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
 
     function Options(
         data::Matrix;
-        fit_weights   = abs.(1 ./ data[:, end]),
-        data_split    = data_split_params(),
-        general       = general_params(),
-        unaops        = (exp, log, sin, cos, abs),
-        binops        = (+,   -,   *,   /,   ^  ),
-        measures      = measure_params(),
-        selection     = selection_params(),
-        fitting       = fitting_params(),
-        mutation      = mutation_params(),
-        grammar       = grammar_params(),
-        meta_data     = Dict(),
+        fit_weights::Vector{Float64} = abs.(1 ./ data[:, end]),
+        data_split                   = data_split_params(),
+        general                      = general_params(),
+        unaops                       = (exp, log, sin, cos, abs),
+        binops                       = (+,   -,   *,   /,   ^  ),
+        measures                     = measure_params(),
+        selection                    = selection_params(),
+        fitting                      = fitting_params(),
+        mutation                     = mutation_params(),
+        grammar                      = grammar_params(),
+        meta_data                    = Dict(),
     )
         # make sure all required measres are calculated # ------------------------------------------
-        @assert all(s in keys(measures) for s in selection.selection_objectives) "some selection_objectives are not specified in the meausres"
+        @assert all(s in keys(measures) for s in selection.selection_objectives)    "some selection_objectives are not specified in the meausres"
         @assert all(s in keys(measures) for s in selection.hall_of_fame_objectives) "some hall_of_fame_objectives are not specified in the meausres"
 
         # prepare data and its params --------------------------------------------------------------
@@ -42,8 +42,8 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
         data_descript = (data_descript..., split_inds = split_inds)
 
         # ------------------------------------------------------------------------------------------
-        @assert length(unaops) <= 128       "TiSR cannot handle more than 128 functions in the unaops out of the box"
-        @assert length(binops) <= 128       "TiSR cannot handle more than 128 functions in the binops out of the box"
+        @assert length(unaops) <= 128 "TiSR cannot handle more than 128 functions in the unaops out of the box"
+        @assert length(binops) <= 128 "TiSR cannot handle more than 128 functions in the binops out of the box"
 
         # function set asserts ---------------------------------------------------------------------
         @assert ("+" in string.(binops)) "+ is required in the function set for some mutations to work"
@@ -163,34 +163,33 @@ end
     parameters are also calculated and included.
 """
 function general_params(;
-    n_gens                          = typemax(Int64),
-    t_lim                           = 60. * 5.,
-    pop_size                        = 600,
-    parent_selection                = false,
-    num_islands                     = 12,
-    children_ratio                  = 1.0,
-    migration_interval              = 200,
-    island_extinction_interval      = 5000,
-    migrate_after_extinction_prob   = 1.0,
-    fitting_island_function         = isle -> floor(isle / 2) % 2 == 0,
-    hall_of_fame_migration_interval = 1000,
-    always_drastic_simplify         = 1e-8,
-    remove_doubles_sigdigits        = 3,
-    remove_doubles_across_islands   = false,
-    max_age                         = pop_size / num_islands,
-    n_refitting                     = 1,
-    adaptive_compl_increment        = Inf,
-    callback                        = (hall_of_fame, population, ops) -> false,
-    multithreading                  = false,
-    print_progress                  = true,
-    plot_hall_of_fame               = true,
-    print_hall_of_fame              = true,
+    n_gens::Int64                          = typemax(Int64),
+    t_lim::Float64                         = 60. * 5.,
+    pop_size::Int64                        = 600,
+    parent_selection::Bool                 = false,
+    num_islands::Int64                     = 12,
+    children_ratio::Float64                = 1.0,
+    migration_interval::Int64              = 200,
+    island_extinction_interval::Int64      = 5000,
+    migrate_after_extinction_prob::Float64 = 1.0,
+    fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,
+    hall_of_fame_migration_interval::Int64 = 1000,
+    always_drastic_simplify::Float64       = 1e-8,
+    remove_doubles_sigdigits::Int64        = 3,
+    remove_doubles_across_islands::Bool    = false,
+    max_age::Int64                         = round(Int, pop_size / num_islands),
+    n_refitting::Int64                     = 1,
+    adaptive_compl_increment::Int64        = 100,
+    callback::Function                     = (hall_of_fame, population, ops) -> false,
+    multithreading::Bool                   = false,
+    print_progress::Bool                   = true,
+    plot_hall_of_fame::Bool                = true,
+    print_hall_of_fame::Bool               = true,
 )
     @assert num_islands > 0                             "num_islands should be at least 1                          "
     @assert migration_interval > 0                      "migration_interval should be at least 1                   "
     @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                      "
     @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0                 "
-    @assert callback isa Function                       "callback must be a function                               "
     @assert island_extinction_interval > 0              "island_extinction_interval must be > 0                    "
     @assert max_age > 1                                 "max_age must be > 1                                       "
     @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0          "
@@ -202,12 +201,12 @@ function general_params(;
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
     end
 
-    remove_doubles_sigdigits > 1      || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
-    remove_doubles_sigdigits < 6      || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
-    always_drastic_simplify < 1e-3    || @warn "always_drastic_simplify seems high                              "
-    adaptive_compl_increment > 4      || @warn "adaptive_compl_increment should be >= 5                         "
-    island_extinction_interval > 500  || @warn "island_extinction_interval seems small                          "
-    max_age > 10                      || @warn "max_age seems small                                             "
+    remove_doubles_sigdigits > 1     || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
+    remove_doubles_sigdigits < 6     || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
+    always_drastic_simplify < 1e-3   || @warn "always_drastic_simplify seems high                              "
+    adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5                         "
+    island_extinction_interval > 500 || @warn "island_extinction_interval seems small                          "
+    max_age > 10                     || @warn "max_age seems small                                             "
 
     island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
 
@@ -254,13 +253,12 @@ end
     positional arguments: residual, residual_relative, prediction, data, node, ops.
 """
 function measure_params(;
-    additional_measures = Dict(
+    additional_measures::Dict{Symbol, Function} = Dict(
         :minus_abs_spearman => get_measure_minus_abs_spearman,
         :mare               => get_measure_mare,
         :max_are            => get_measure_max_are,
     )
 )
-    @assert additional_measures isa Dict{Symbol, Function}
     :ms_processed_e in keys(additional_measures) && @warn "ms_processed_e is overwritten in measures"
     :compl          in keys(additional_measures) && @warn "compl is overwritten in measures         "
     :mse            in keys(additional_measures) && @warn "mse is overwritten in measures           "
@@ -275,12 +273,12 @@ function measure_params(;
 end
 
 function selection_params(;
-    hall_of_fame_objectives           = [:ms_processed_e, :compl],
-    selection_objectives              = [:ms_processed_e, :minus_abs_spearman, :compl],
-    hall_of_fame_niching_sigdigits    = 2,
-    population_niching_sigdigits      = 3,
-    ratio_pareto_tournament_selection = 0.5,
-    tournament_size                   = 5,
+    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :compl],
+    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :minus_abs_spearman, :compl],
+    hall_of_fame_niching_sigdigits::Int64      = 2,
+    population_niching_sigdigits::Int64        = 3,
+    ratio_pareto_tournament_selection::Float64 = 0.5,
+    tournament_size::Int64                     = 5,
 )
     @assert tournament_size > 1                             "tournament size must be greater than 1"
     @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
@@ -288,8 +286,8 @@ function selection_params(;
     @assert hall_of_fame_niching_sigdigits > 0 "hall_of_fame_niching_sigdigits must be larger than 0"
     @assert population_niching_sigdigits   > 0 "population_niching_sigdigits must be larger than 0"
 
-    0 < hall_of_fame_niching_sigdigits  < 5 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
-    0 < population_niching_sigdigits    < 5 || @warn "population_niching_sigdigits should be between 0 and 5"
+    0 < hall_of_fame_niching_sigdigits < 5 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
+    0 < population_niching_sigdigits   < 5 || @warn "population_niching_sigdigits should be between 0 and 5"
 
     return (
         hall_of_fame_objectives           = hall_of_fame_objectives,
@@ -302,13 +300,13 @@ function selection_params(;
 end
 
 function fitting_params(;
-    max_iter                = 10,
-    early_stop_iter         = 0,
-    t_lim                   = Inf,
-    rel_f_tol_5_iter        = 1e-2 * 0.01,
-    lasso_factor            = 0.0,
-    pre_residual_processing = (x, ind, ops) -> x,
-    residual_processing     = (x, ind, ops) -> x,
+    max_iter::Int64                   = 10,
+    early_stop_iter::Int64            = 0,
+    t_lim::Float64                    = Inf,
+    rel_f_tol_5_iter::Float64         = 1e-2 * 0.01,
+    lasso_factor::Float64             = 0.0,
+    pre_residual_processing::Function = (x, ind, ops) -> x,
+    residual_processing::Function     = (x, ind, ops) -> x,
 )
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
@@ -363,8 +361,8 @@ function grammar_params(;
 
     @assert weighted_compl_dict isa Dict{String, Float64} "weighted_compl_dict is not formatted correctly"
 
-    max_compl > 100         && @warn "a high max_compl may lead to high calculation times"
-    init_tree_depth > 6     && @warn "a high init_tree_depth may lead to high calculation times"
+    max_compl > 100     && @warn "a high max_compl may lead to high calculation times"
+    init_tree_depth > 6 && @warn "a high init_tree_depth may lead to high calculation times"
 
     return (
         illegal_dict        = illegal_dict,
@@ -383,17 +381,22 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;
-    p_crossover              = 10.0,
-    p_point                  = 1.0,
-    p_insert                 = 1.0,
-    p_hoist                  = 1.0,
-    p_subtree                = 0.5,
-    p_drastic_simplify       = 0.1,
-    p_insert_times_param     = 0.1,
-    p_add_term               = 0.1,
-    p_simplify               = 0.1,
-    p_add_from_bank_of_terms = 0.0,
+    p_crossover::Float64              = 10.0,
+    p_point::Float64                  = 1.0,
+    p_insert::Float64                 = 1.0,
+    p_hoist::Float64                  = 1.0,
+    p_subtree::Float64                = 0.5,
+    p_drastic_simplify::Float64       = 0.1,
+    p_insert_times_param::Float64     = 0.1,
+    p_add_term::Float64               = 0.1,
+    p_simplify::Float64               = 0.1,
+    p_add_from_bank_of_terms::Float64 = 0.0,
 )
+    @assert all(p >= 0 for p in (
+        p_crossover, p_point, p_insert, p_hoist, p_subtree, p_drastic_simplify,
+        p_insert_times_param, p_add_term, p_simplify, p_add_from_bank_of_terms
+    )) "all mutation probabilities must be >= 0"
+
     p_crossover *= 0.5 # because it consumes a second one, if hit
 
     mut_params = (
