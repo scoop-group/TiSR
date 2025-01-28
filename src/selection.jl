@@ -33,24 +33,25 @@ end
 """ Calculate the crowding distances.
 """
 function crowding_distance(rows)
-    pnts = reduce(hcat, rows)'
-    n_pnts, n_dims = size(pnts)
-    distances = zeros(n_pnts)
+    n_pnts, n_dims = length(rows), length(rows[1])
+    dists = zeros(n_pnts)
+    s_inds = zeros(Int64, n_pnts)
 
-    for i in 1:n_dims                                   # compute the crowding distance for each point and each dimension
-        s_inds = sortperm(pnts[:, i])                   # sort the pnts by their i-th objective val
-        s_pnts  = pnts[s_inds, :]
-        min_val, max_val = s_pnts[1, i], s_pnts[end, i]
+    for i in 1:n_dims
+        sortperm!(s_inds, rows, by=x->x[i])
+
+        min_val, max_val = rows[s_inds[1]][i], rows[s_inds[end]][i]
         min_val == max_val && continue
 
-        distances[s_inds[1]]   = Inf                    # set the crowding distance for the boundary pnts to infinity
-        distances[s_inds[end]] = Inf
+        # set the crowding dist for the boundary pnts to infinity
+        dists[s_inds[1]] = dists[s_inds[end]] = Inf
 
-        for j in 2:n_pnts-1                             # compute the crowding distance for the remaining pnts
-            distances[s_inds[j]] += (s_pnts[j+1, i] - s_pnts[j-1, i]) / (max_val - min_val)
+        # compute the crowding dist for the remaining points
+        for j in 2:n_pnts-1
+            dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) / (max_val - min_val)
         end
     end
-    return distances
+    return dists
 end
 
 """ perfrom binary tournament selection for parent selection
