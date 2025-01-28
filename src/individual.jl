@@ -9,7 +9,7 @@ mutable struct Individual
     measures::Dict{Symbol, Float64}
 
     Individual() = new()
-    Individual(node::Node, ops) = new(node)
+    Individual(node::Node) = new(node)
 end
 
 function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)

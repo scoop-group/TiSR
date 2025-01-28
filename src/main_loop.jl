@@ -19,7 +19,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops, start_pop::Vector
     start_pop  = Node[string_to_node(eq, ops) for eq in start_pop]
     children   = [
         [
-            Individual(node, ops)
+            Individual(node)
             for node in start_pop[isle:ops.general.num_islands:end]
         ]
         for isle in 1:ops.general.num_islands
@@ -83,7 +83,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             # create new children # ----------------------------------------------------------------
             while length(children[isle]) + length(population[isle]) < 0.6 * ops.general.pop_per_isle
                 push!(children[isle],
-                    Individual(grow_equation(ops.grammar.init_tree_depth, ops), ops)
+                    Individual(grow_equation(ops.grammar.init_tree_depth, ops))
                 )
             end
 
