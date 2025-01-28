@@ -54,6 +54,62 @@ function get_measure_ms_processed_e(prediction, target, node, ops)
                             .* ops.data_descript.fit_weights[inds])
 end
 
+""" Various pre-implemented measures -> test versions.
+"""
+function get_measure_max_ae_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    residual = target .- prediction
+    @views maximum(abs, residual[inds])
+end
+
+function get_measure_mae_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    residual = target .- prediction
+    @views mean(abs, residual[inds])
+end
+
+function get_measure_mse_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    residual = target .- prediction
+    @views mean(abs2, residual[inds])
+end
+
+function get_measure_one_minus_r2_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    @views get_one_minus_r2(prediction[ind], target[ind])
+end
+
+function get_measure_one_minus_abs_spearman_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    @views get_one_minus_abs_spearman(prediction[inds], target[inds])
+end
+
+function get_measure_mare_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    rel_residual = @. (prediction - target) / (abs(target) + 1e-12)
+    @views mean(abs, rel_residual[inds])
+end
+
+function get_measure_q75_are_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    rel_residual = @. (prediction - target) / (abs(target) + 1e-12)
+    @views quantile(abs.(rel_residual[inds]), 0.75)
+end
+
+function get_measure_max_are_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    rel_residual = @. (prediction - target) / (abs(target) + 1e-12)
+    maximum(abs, rel_residual[inds])
+end
+
+function get_measure_ms_processed_e_test(prediction, target, node, ops)
+    inds = ops.data_descript.split_inds[3]
+    residual = target .- prediction
+    @views mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops)[inds]
+                            .* ops.data_descript.fit_weights[inds])
+end
+
+
 """ Various pre-implemented complexity measures.
 """
 get_measure_compl(prediction, target, node, ops)           = count_nodes(node)
