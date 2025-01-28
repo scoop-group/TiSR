@@ -59,6 +59,11 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
         m => f(prediction, data[end], indiv.node, ops)
         for (m, f) in ops.measures
     )
+
+    if any(!isfinite(v) for (k, v) in indiv.measures)
+        indiv.valid = false
+        return
+    end
 end
 
 # ==================================================================================================
