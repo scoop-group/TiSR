@@ -6,22 +6,25 @@
     data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
     @assert length(data) == 100 && unique(length.(data)) == [2]
 
-    inds = TiSR.non_dominated_sort(data; n_select=100, first_front=false)
+    inds = TiSR.non_dominated_sort(data)#; n_select=100, first_front=false)
+    inds = sortperm(inds)[1:100]
     @test length(unique(inds)) == 100
     @test issorted(inds)                                                                             # shold not have changed the ind positions, as 10 fronts with 10 points each are created with increasing offset -> a little quick and dirty, as within each set of 10 points, they have no particular order
     @test all(i in eachindex(x_data) for i in inds)                                                  # return only valid inds
 
-    inds = TiSR.non_dominated_sort(data; n_select=100, first_front=true)
+    inds = TiSR.first_pareto_front(data)
     @test length(unique(inds)) == 10                                                                 # first front consists of 10 points
     @test all(i < 11 for i in inds)
     @test all(i in eachindex(x_data) for i in inds)
 
-    inds = TiSR.non_dominated_sort(data; n_select=40, first_front=false)
+    inds = TiSR.non_dominated_sort(data)#; n_select=40, first_front=false)
+    inds = sortperm(inds)[1:40]
     @test length(unique(inds)) == 40
     @test all(i < 41 for i in inds)
     @test all(i in eachindex(x_data) for i in inds)
 
-    inds = TiSR.non_dominated_sort(data; n_select=35, first_front=false)
+    inds = TiSR.non_dominated_sort(data)#; n_select=35, first_front=false)
+    inds = sortperm(inds)[1:35]
     @test length(unique(inds)) == 35
     @test all(i in inds for i in 1:30)
     @test all(i in eachindex(x_data) for i in inds)
@@ -32,11 +35,12 @@
     data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
     @assert length(data) == 100 && unique(length.(data)) == [2]
 
-    inds = TiSR.non_dominated_sort(data; n_select=100, first_front=true)
+    inds = TiSR.first_pareto_front(data)
     @test length(unique(inds)) == 1                                                                  # 1 point dominates all
     @test all(i in eachindex(x_data) for i in inds)
 
-    inds = TiSR.non_dominated_sort(data; n_select=100, first_front=false)
+    inds = TiSR.non_dominated_sort(data)#; n_select=100, first_front=false)
+    inds = sortperm(inds)[1:100]
     @test length(unique(inds)) == 100
     @test all(i in eachindex(x_data) for i in inds)
 
@@ -47,7 +51,8 @@
     @test all(i in eachindex(x_data) for i in inds)
 
     num = 37                                                                                         # separete a front to check whether that works as well -> using the crowding_distance_selection
-    inds = TiSR.non_dominated_sort(data; n_select=num, first_front=false)
+    inds = TiSR.non_dominated_sort(data)#; n_select=num, first_front=false)
+    inds = sortperm(inds)[1:num]
     @test length(unique(inds)) == num
     @test all(i in eachindex(x_data) for i in inds)
 
@@ -56,42 +61,47 @@
     @test all(i in eachindex(x_data) for i in inds)
 
     # ----------------------------------------------------------------------------------------------
-    x_data = repeat(1.0:10., 10)                                                                      # generate a grid of points
+    x_data = repeat(1.0:10., 10)                                                                     # generate a grid of points
     y_data = sort(x_data)
     z_data = ones(size(x_data))
     data = [[xx, yy, zz] for (xx, yy, zz) in zip(x_data, y_data, z_data)]
     @assert length(data) == 100 && unique(length.(data)) == [3]
 
-    @test length(TiSR.non_dominated_sort(data; n_select=25, first_front=false)) == 25                      # this tests whether the function can handle if one variable is the same for all points -> there was a division by 0 error in the crowing distance before
+    inds = TiSR.non_dominated_sort(data)#; n_select=25, first_front=false)
+    inds = sortperm(inds)[1:25]
+    @test length(inds) == 25                                                                         # this tests whether the function can handle if one variable is the same for all points -> there was a division by 0 error in the crowing distance before
 end
 
-@testset "crowding_distance_selection" begin
-    x = 1.0:10.0
-    x_data = repeat(x, 10)                                                                           # generate a grid of points
-    y_data = sort(x_data)
-    data = [x_data, y_data]
-    @assert length(data) == 2 && length.(data) == [100, 100]
-    arr = reduce(hcat, data)
-    all_inds = collect(1:size(arr, 1))
+@testset "crowding_distance" begin
+    # Test case 1: Basic functionality with 2D points
+    rows = [[1.0, 2.0], [2.0, 4.0], [3.0, 6.0]]
+    expected = [Inf, 2.0, Inf]  # Boundary points have Inf, middle point has finite crowding distance
+    @test TiSR.crowding_distance(rows) ≈ expected
 
-    num_select = 20
-    inds = TiSR.crowding_distance_selection(arr, all_inds, num_select)
-    @test length(unique(inds)) == num_select
-    @test all(i in all_inds for i in inds)
+    # Test case 2: All points have the same value in one dimension
+    rows = [[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]]
+    expected = [Inf, 1.0, Inf]  # No variability in the second dimension
+    @test TiSR.crowding_distance(rows) ≈ expected
 
-    dist = TiSR.crowding_distance(arr)
-    @test 2 <= count(!isfinite, dist) <= 4                                                           # as we have 2 dimensions, depending on the row sort, there may be 2...4 Inf
+    # Test case 3: Single point
+    rows = [[1.0, 2.0]]
+    expected = [0.0]  # Only one point, no neighbors, no distance
+    @test TiSR.crowding_distance(rows) == expected
 
-    num_select = 40 - 4                                                                              # check whether all the edge points of the 2d grid are selected
-    inds = TiSR.crowding_distance_selection(arr, all_inds, num_select)
-    @test all(length(intersect([1. 10.], arr[i, :])) >= 1 for i in inds)                             # boundary points should have either a 1 or a 10 as one of their coordinates
-    @test all(i in all_inds for i in inds)
+    # Test case 4: Two points
+    rows = [[1.0, 2.0], [3.0, 4.0]]
+    expected = [Inf, Inf]  # Boundary points are always Inf
+    @test TiSR.crowding_distance(rows) == expected
 
-    num_select = 60                                                                                  # if more points are requested, are still all boundary points selected
-    inds = TiSR.crowding_distance_selection(arr, all_inds, num_select)
-    @test count(length(intersect([1. 10.], arr[i, :])) >= 1 for i in inds) == 36
-    @test length(unique(inds)) == num_select
-    @test all(i in all_inds for i in inds)
+    # Test case 5: 3D points
+    rows = [[1.0, 2.0, 1.0], [2.0, 4.0, 2.0], [3.0, 6.0, 3.0]]
+    expected = [Inf, 3.0, Inf]  # Distances calculated considering all dimensions
+    @test TiSR.crowding_distance(rows) ≈ expected
+
+    # Test case 6: Uniform points
+    rows = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
+    expected = [0.0, 0.0, 0.0]  # All values are the same, no distance
+    @test TiSR.crowding_distance(rows) == expected
 end
 
 @testset "tournament_selection" begin
@@ -101,38 +111,17 @@ end
     data = [x_data, y_data]
     @assert length(data) == 2 && length.(data) == [100, 100]
     all_inds = collect(eachindex(x_data))
+    rows = [[x, y] for (x, y) in zip(x_data, y_data)]
 
-    compl_coef      = 0.1
-    n_select        = 10
-    tournament_size = 100
+    fitness = TiSR.get_relative_fitness(rows)
 
-    fitness = x_data .+ compl_coef .* y_data
-    fitness = 1 ./ fitness
+    selection_better = count(1:1000) do _
+        tournament_size = rand(5:30)
+        n_select        = rand(2:30)
 
-    inds = TiSR.tournament_selection(
-        fitness,
-        all_inds;
-        tournament_size = tournament_size,
-        n_select        = n_select,
-        modify          = false,
-    )
-
-    @test length(unique(inds)) == n_select
-    @test all(i in all_inds for i in inds)
-
-    fitness_select = sum(fitness[inds]) ./ length(inds)
-    fitness_not_selected = sum(fitness[setdiff(all_inds, inds)]) ./ length(setdiff(all_inds, inds))
-    @test fitness_select > fitness_not_selected
-
-    tournament_size = 20
-
-    selection_better = map(1:100) do _
-        inds = TiSR.tournament_selection(
-            fitness,
-            all_inds;
+        inds = TiSR.tournament_selection(fitness, copy(all_inds),
             tournament_size = tournament_size,
-            n_select        = n_select,
-            modify          = false,
+            n_select        = n_select
         )
 
         @test length(unique(inds)) == n_select
@@ -140,10 +129,10 @@ end
 
         fitness_select = sum(fitness[inds]) / length(inds)
         fitness_not_selected = sum(fitness[setdiff(all_inds, inds)]) / length(setdiff(all_inds, inds))
-        fitness_select / fitness_not_selected
+        fitness_select > fitness_not_selected
     end
 
-    @test count(>(1), selection_better) > 90
+    @test selection_better > 950
 end
 
 @testset "niching tests" begin
@@ -153,12 +142,14 @@ end
     data = [[xx, yy] for (xx, yy) in zip(x_data, y_data)]
     @assert length(data) == 100 && unique(length.(data)) == [2]
 
-    inds = TiSR.non_dominated_sort(data; n_select=100, first_front=false)
+    num = 100                                                                                         # separete a front to check whether that works as well -> using the crowding_distance_selection
+    inds = TiSR.non_dominated_sort(data)#; n_select=num, first_front=false)
+    inds = sortperm(inds)[1:num]
     @test length(unique(inds)) == 100
     @test issorted(inds)                                                                             # shold not have changed the ind positions, as 10 fronts with 10 points each are created with increasing offset -> a little quick and dirty, as within each set of 10 points, they have no particular order
     @test all(i in eachindex(x_data) for i in inds)                                                  # return only valid inds
 
-    # add some slighty shifted data -> should be removed by roundeding and niching 
+    # add some slighty shifted data -> should be removed by roundeding and niching
     for i in eachindex(data)
         push!(data, data[i] .* 1.01)
     end
@@ -171,7 +162,9 @@ end
     sort!(data)
 
     @assert length(unique(data)) == 100
-    inds = TiSR.non_dominated_sort(data; n_select=200, first_front=false)
+    num = 200                                                                                         # separete a front to check whether that works as well -> using the crowding_distance_selection
+    inds = TiSR.non_dominated_sort(data)#; n_select=num, first_front=false)
+    inds = sortperm(inds)[1:100]
     @test length(unique(inds)) == 100 # only 100, because only 100 are unique
 
     # now acutally the niching # -------------------------------------------------------------------
@@ -191,27 +184,38 @@ end
     @assert length(data) == 15
     @assert length(unique(data)) == 15
 
+    sort!(data)
+    orig_data = deepcopy(data)
+
     avg = 0.0
-    for i in 1:1000
-        inds = TiSR.non_dominated_sort(data; n_select=10, first_front=false)
-        avg += (count(>(10), inds) - avg) / i
+    for i in 1:10000
+        shuffle!(data)
+        fronts = TiSR.non_dominated_sort(data)
+        inds = sortperm(fronts)[1:10]
+        orig_inds = [findfirst(==(data[i]), orig_data) for i in inds]
+        c = count(>(5), orig_inds)
+        avg += (c - avg) / i
     end
-    @test isapprox(avg, 3.333, rtol=0.1) # is slightly higher than 5/15, because the 5 are less crowded
+    @test isapprox(avg, 6.666, rtol=0.1)
 
     # round to 2 significant digits
-    for i in eachindex(data)
-        data[i] = round.(data[i], sigdigits=2)
-    end
+    data = [round.(d, sigdigits=2) for d in data]
+    sort!(data)
+    orig_data = deepcopy(data)
 
     @assert length(unique(data)) == 15
 
-    inds = TiSR.non_dominated_sort(data; n_select=10, first_front=false)
-
+    # in this test, we make sure that, not all of the additionally added points are added, which
+    # are slightly better on one, but significantly worse on the other
     avg = 0.0
-    for i in 1:1000
-        inds = TiSR.non_dominated_sort(data; n_select=10, first_front=false)
-        avg += (count(>(10), inds) - avg) / i
+    for i in 1:10000
+        shuffle!(data)
+        fronts = TiSR.non_dominated_sort(data)
+        inds = sortperm(fronts)[1:10]
+        orig_inds = [findfirst(==(data[i]), orig_data) for i in inds]
+        c = count(>(5), orig_inds)
+        avg += (c - avg) / i
     end
-    @test isapprox(avg, 0.0, rtol=0.1)
+    @test avg == 9
 end
 

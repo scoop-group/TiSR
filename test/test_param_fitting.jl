@@ -33,9 +33,12 @@ ops, data_vect = Options(data)
 
         isfinite(mse_before) || continue
 
-        residual, valid = TiSR.residual_after_fitting_LM(node, data_vect, ops, list_of_param, ops.fitting.max_iter)
+        TiSR.fitting_LM!(node, data_vect, ops, list_of_param, ops.fitting.max_iter)
+        prediction, valid = TiSR.eval_equation(node, data_vect, ops)
 
-        mse_after = mean(abs2, TiSR.eval_equation(node, data_vect, ops)[1] .- data_vect[end])
+        valid || continue
+
+        mse_after = mean(abs2, prediction .- data_vect[end])
 
         impr = mse_after / mse_before
 
@@ -44,10 +47,8 @@ ops, data_vect = Options(data)
         push!(improvements, impr)
         i += 1
     end
-
-    @test quantile([imp for imp in improvements], 0.5) < 1e-5
+    @test count(<(1e-3), [imp for imp in improvements]) > 70
 end
-
 
 data = rand(100, 5)
 ops, data_vect = Options(
@@ -66,13 +67,13 @@ ops, data_vect = Options(
 @testset "lasso_regression" begin
 
     # first check if no lasso does no minimize the redunded ones
-
     trash_param  = Float64[]
 
     i = 0
     while i < 100
         node = TiSR.grow_equation(rand(3:7), ops)
 
+        # remove all bloat from the equation
         str1 = TiSR.node_to_string(node, ops)
         while true
             TiSR.simplify_unary_of_param!(node)
@@ -102,24 +103,24 @@ ops, data_vect = Options(
 
         ind_of_added = findfirst(n -> iszero(n.val), list_of_param)
 
-        (length(list_of_param) > 0) || continue
-
-        orig_params = deepcopy(getfield.(list_of_param, :val))
-        x0 = rand(length(orig_params))
-        setfield!.(list_of_param, :val, x0)
+        for n in list_of_param
+            n.val = rand()
+        end
 
         # add noise to data
         data_vect[end] .*= (1.0 .+ randn(length(data_vect[end])) .* 0.01)
 
-        residual, valid = TiSR.residual_after_fitting_LM(node, data_vect, ops, list_of_param, ops.fitting.max_iter - 3)
+        TiSR.fitting_LM!(node, data_vect, ops, list_of_param, 10)
+        prediction, valid = TiSR.eval_equation(node, data_vect, ops)
+        before_lasso = abs(list_of_param[ind_of_added].val)
 
         valid || continue
 
-        before_lasso = abs(list_of_param[ind_of_added].val)
-
-        residual, valid = TiSR.residual_after_fitting_newton(node, data_vect, ops, list_of_param, 3)
-
+        TiSR.fitting_NW!(node, data_vect, ops, list_of_param, 10)
+        prediction, valid = TiSR.eval_equation(node, data_vect, ops)
         after_lasso = abs(list_of_param[ind_of_added].val)
+
+        valid || continue
 
         push!(trash_param, after_lasso/before_lasso)
         i += 1
@@ -130,8 +131,4 @@ ops, data_vect = Options(
 
     @test count(<(1), trash_param) > 50
 end
-
-# ==================================================================================================
-# test LM vs others for lasso
-# ==================================================================================================
 
