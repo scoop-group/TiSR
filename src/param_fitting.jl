@@ -144,8 +144,8 @@ function fitting_NW!(node, data, ops, list_of_param, max_iter)
 
     res = Optim.optimize(
         minim, x0,
-        # Optim.Newton(;linesearch=LineSearches.BackTracking()),
-        Optim.LBFGS(;linesearch=LineSearches.BackTracking()),
+        Optim.Newton(;linesearch=LineSearches.BackTracking()),
+        # Optim.LBFGS(;linesearch=LineSearches.BackTracking()),
         # Optim.GradientDescent(;linesearch=LineSearches.BackTracking()),
         Optim.Options(;
             show_warnings=false, iterations=max_iter, time_limit=ops.fitting.t_lim,
