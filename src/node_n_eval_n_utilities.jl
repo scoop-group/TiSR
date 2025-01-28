@@ -237,6 +237,10 @@ function Base.isapprox(node1::Node, node2::Node; rtol=0.0)
     return true
 end
 
+""" Compares two nodes and returns true if they are same.
+"""
+Base.:(==)(node1::Node, node2::Node) = Base.isapprox(node1, node2, rtol=0.0)
+
 """ Return an array containing the parameter nodes of a tree.
 """
 function list_of_param_nodes(node; list=Node[])

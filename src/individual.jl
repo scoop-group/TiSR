@@ -87,6 +87,11 @@ end
 
 Base.deepcopy(indiv::Individual)::Individual = Base.copy(indiv)
 
+""" make individual type iterable.
+"""
+Base.iterate(s::Individual, state=1) = state > length(fieldnames(Individual)) ? nothing : ((fieldnames(Individual)[state], getfield(s, state)), state + 1)
+Base.length(s::Individual) = length(fieldnames(Individual))
+
 """ The NSGA-II definition of isless.
 """
 function Base.isless(i1::Individual, i2::Individual)
