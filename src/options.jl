@@ -254,9 +254,9 @@ end
 """
 function measure_params(;
     additional_measures::Dict{Symbol, Function} = Dict(
-        :minus_abs_spearman => get_measure_minus_abs_spearman,
-        :mare               => get_measure_mare,
-        :max_are            => get_measure_max_are,
+        :one_minus_abs_spearman => get_measure_one_minus_abs_spearman,
+        :mare                   => get_measure_mare,
+        :max_are                => get_measure_max_are,
     )
 )
     :ms_processed_e in keys(additional_measures) && @warn "ms_processed_e is overwritten in measures"
@@ -274,7 +274,7 @@ end
 
 function selection_params(;
     hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :compl],
-    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :minus_abs_spearman, :compl],
+    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :compl],
     hall_of_fame_niching_sigdigits::Int64      = 2,
     population_niching_sigdigits::Int64        = 3,
     ratio_pareto_tournament_selection::Float64 = 0.5,

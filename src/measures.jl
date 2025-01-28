@@ -19,14 +19,14 @@ function get_measure_mse(prediction, target, node, ops)
     @views mean(abs2, residual[inds])
 end
 
-function get_measure_minus_r2(prediction, target, node, ops)
+function get_measure_one_minus_r2(prediction, target, node, ops)
     inds = ops.data_descript.split_inds[end]
-    @views get_minus_r2(prediction[ind], target[ind])
+    @views get_one_minus_r2(prediction[ind], target[ind])
 end
 
-function get_measure_minus_abs_spearman(prediction, target, node, ops)
+function get_measure_one_minus_abs_spearman(prediction, target, node, ops)
     inds = ops.data_descript.split_inds[end]
-    @views get_minus_abs_spearman(prediction[inds], target[inds])
+    @views get_one_minus_abs_spearman(prediction[inds], target[inds])
 end
 
 function get_measure_mare(prediction, target, node, ops)
@@ -146,14 +146,14 @@ function get_weighted_compl(node, ops) # TODO: test
     end
 end
 
-function get_minus_r2(pred, orig)
+function get_one_minus_r2(pred, orig)
     total_sum_of_squares = sum(abs2, orig .- mean(orig))
     sum_of_squares_pred = sum(abs2, pred .- orig)
-    return -(1 - sum_of_squares_pred / total_sum_of_squares)
+    return 1.0-(1.0 - sum_of_squares_pred / total_sum_of_squares)
 end
 
-function get_minus_abs_spearman(pred, orig)
-    minus_abs_spear = -abs(corspearman(pred, orig))
-    return isfinite(minus_abs_spear) ? minus_abs_spear : 0.0
+function get_one_minus_abs_spearman(pred, orig)
+    one_minus_abs_spear = 1.0-abs(corspearman(pred, orig))
+    return isfinite(one_minus_abs_spear) ? one_minus_abs_spear : 1.0
 end
 
