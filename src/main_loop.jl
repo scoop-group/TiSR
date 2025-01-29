@@ -142,12 +142,19 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             if length(population[isle]) > ops.general.pop_per_isle
                 selection_inds = Int64[]
 
+                # extract objectives # -------------------------------------------------------------
                 indiv_obj_vals = [
                     Float64[
-                        round(indiv.measures[obj], sigdigits=ops.selection.population_niching_sigdigits)
-                        for obj in ops.selection.selection_objectives
+                        indiv.measures[obj] for obj in ops.selection.selection_objectives
                     ]
                     for indiv in population[isle]
+                ]
+
+                indiv_obj_vals = normalize_objectives(indiv_obj_vals)
+
+                indiv_obj_vals .= [
+                    round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
+                    for indiv in indiv_obj_vals
                 ]
 
                 # determine rank and crowding for all individuals -> overkill, if no parent selection
@@ -224,12 +231,19 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             append!(hall_of_fame, copy.(population[isle]))
         end
 
+        # extract objectives # -------------------------------------------------------------
         indiv_obj_vals = [
             Float64[
-                round(indiv.measures[obj], sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
-                for obj in ops.selection.hall_of_fame_objectives
+                indiv.measures[obj] for obj in ops.selection.hall_of_fame_objectives
             ]
             for indiv in hall_of_fame
+        ]
+
+        indiv_obj_vals = normalize_objectives(indiv_obj_vals)
+
+        indiv_obj_vals .= [
+            round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
+            for indiv in indiv_obj_vals
         ]
 
         selection_inds = first_pareto_front(indiv_obj_vals)

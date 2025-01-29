@@ -1,4 +1,5 @@
 
+
 # non-dominated sort # -----------------------------------------------------------------------------
 dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], eachindex(x))
 
@@ -93,12 +94,21 @@ function tournament_selection(fitness, inds; tournament_size=5, n_select=10, mod
     return selected
 end
 
-""" Calculate the relative fitness based on normalized objectives.
+""" Normalize vector of vectors using the median instead of the maximum.
 """
-function get_relative_fitness(indiv_obj_vals)
+function normalize_objectives(indiv_obj_vals)
     indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
     indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
     indiv_obj_vals ./= median(indiv_obj_vals, dims=1)
-    indiv_obj_vals  .*= -1.0
-    fitness          = sum(indiv_obj_vals, dims=2)
+    return eachrow(indiv_obj_vals)
 end
+
+""" Calculate the relative fitness based on normalized objectives using the
+    median instead of the maximum.
+"""
+function get_relative_fitness(indiv_obj_vals)
+    normed  = normalize_objectives(indiv_obj_vals)
+    fitness = sum.(normed)
+    return -fitness
+end
+
