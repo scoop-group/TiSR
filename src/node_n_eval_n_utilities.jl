@@ -115,9 +115,9 @@ function node_to_string_(node::Node, ops, sigdigits)
         rig = node_to_string_(node.rig, ops, sigdigits)
 
         if op in ("+", "-", "*", "/", "^")
-            return "($lef $op $rig)"
+            return "($lef$op$rig)"
         else
-            return "$op($lef, $rig)"
+            return "$op($lef,$rig)"
         end
 
     elseif node.ari == 1

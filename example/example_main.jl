@@ -70,18 +70,18 @@ hall_of_fame, population, prog_dict, stop_msg = generational_loop(data, ops);
 # ==================================================================================================
 # Inspect the results
 # ==================================================================================================
-df_hall_of_fame = TiSR.convert_to_dataframe(hall_of_fame, ops, sort_by="max_are")
+df_hall_of_fame = TiSR.convert_to_dataframe(hall_of_fame, ops, sort_by=:mare)
 show(
-    df_hall_of_fame[:, [:eqs_orig_rounded, :mare, :max_are, :compl, :n_params]],
-    truncate = maximum(length, df_hall_of_fame.eqs_orig_rounded)
+    df_hall_of_fame[:, [:eq_rounded, :mare, :compl]],
+    truncate = maximum(length, df_hall_of_fame.eq_rounded)
 )
 
 # show the Pareto front # --------------------------------------------------------------------------
 using UnicodePlots
 
 scatterplot(
-    getfield.(hall_of_fame, :compl),
-    getfield.(hall_of_fame, :mare),
+    df_hall_of_fame[!, :compl],
+    df_hall_of_fame[!, :mare],
     xlabel="complexity",
     ylabel="mean rel. dev.",
     yscale=:log10,
@@ -96,5 +96,3 @@ save_to_fwf(hall_of_fame, ops)
 
 # save_to_csv(hall_of_fame, ops)
 # save_to_excel(hall_of_fame, population, prog_dict, ops)
-
-

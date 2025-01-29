@@ -1,23 +1,26 @@
 
 """ convert vector of individuals to a dictionary.
 """
-function convert_to_dict(individuals::Vector{Individual}, ops; sort_by="mare")
+function convert_to_dict(individuals::Vector{Individual}, ops; sort_by=:ms_processed_e)
 
-    dict = Dict(string(f) => copy.(getfield.(individuals, f))
-        for f in fieldnames(typeof(individuals[1]))
-    )
+    extracted = map(individuals) do i
+        [
+            :eq_orig          => TiSR.node_to_string(i.node,    ops),
+            :eq_rounded       => TiSR.node_to_string(i.node,    ops, sigdigits = 3),
+            :eq_simpl         => replace(TiSR.simplify_to_string(i.node, ops, sigdigits = 15), " " => ""),
+            :eq_simpl_rounded => replace(TiSR.simplify_to_string(i.node, ops, sigdigits = 3), " " => ""),
+            i.measures...
+        ]
+    end
 
-    dict["eqs_orig"]         = node_to_string.(dict["node"], Ref(ops))
-    dict["eqs_orig_rounded"] = node_to_string.(dict["node"], Ref(ops), sigdigits = 3)
-
-    dict["eqs_simpl"]         = simplify_to_string.(dict["node"], Ref(ops); sigdigits = 15)
-    dict["eqs_simpl_rounded"] = simplify_to_string.(dict["node"], Ref(ops); sigdigits = 3)
-
-    delete!(dict, "node")
-    delete!(dict, "valid")
+    dict = Dict{Symbol, Vector{Any}}()
+    for vec in extracted
+        for (key, value) in vec
+            push!(get!(dict, key, []), value)
+        end
+    end
 
     sort_perm = sortperm(dict[sort_by])
-
     for key in keys(dict)
         dict[key] = dict[key][sort_perm]
     end
@@ -27,14 +30,14 @@ end
 
 """ convert vector of individuals to a dataframe.
 """
-function convert_to_dataframe(individuals::Vector{Individual}, ops; sort_by="mare")
+function convert_to_dataframe(individuals::Vector{Individual}, ops; sort_by=:ms_processed_e)
     dict = convert_to_dict(individuals, ops; sort_by=sort_by)
     return DataFrame(dict)
 end
 
 """ Save vector of individuals to a fwf-file.
 """
-function save_to_fwf(individuals, ops; sort_by="mare", name_addedum="")
+function save_to_fwf(individuals, ops; sort_by=:ms_processed_e, name_addedum="")
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
     str = df_to_fwf_string(df)
     path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * name_addedum
@@ -45,7 +48,7 @@ end
 
 """ Save vector of individuals to a csv-file.
 """
-function save_to_csv(individuals, ops; sort_by="mare", name_addedum="")
+function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name_addedum="")
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
     str = df_to_csv_string(df)
     path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * name_addedum
@@ -64,8 +67,8 @@ function df_to_fwf_string(df)
         df[!, col] = rpad.(df[!, col], max_len)
         rename!(df, col => rpad(col, max_len))
     end
-    str = join(names(df), "; ") * "\n"
-    return str * join([join(df[row, :], "; ") for row in axes(df, 1)], "\n")
+    str = join(names(df), " ") * "\n"
+    return str * join([join(df[row, :], " ") for row in axes(df, 1)], "\n")
 end
 
 """ Convert a dataframe to a ;-separated string.
@@ -80,10 +83,10 @@ end
 
 # """ Save vector of individuals to a csv-file.
 # """
-# function save_to_csv(individuals, ops; sort_by="mare", name_addedum="")
+# function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name_addedum="")
 #     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
 #     path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * name_addedum
-#     CSV.write(df, path) # -> Some wierd string-char error. 
+#     CSV.write(df, path) # -> Some wierd string-char error.
 # end
 
 """ Outputs of a run and the options -> excel file.
@@ -92,7 +95,7 @@ end
     sheet3/4 -> hall_of_fame / population
     The equations strings are saved raw and rounded to 3 significant digits.
 """
-function save_to_excel(hall_of_fame, population, prog_dict, ops; sort_by="mare")
+function save_to_excel(hall_of_fame, population, prog_dict, ops; sort_by=:ms_processed_e)
     population   = convert_to_dict(population,   ops; sort_by=sort_by)
     hall_of_fame = convert_to_dict(hall_of_fame, ops; sort_by=sort_by)
 
