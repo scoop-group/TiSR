@@ -149,6 +149,7 @@ function prepare_data(data, fit_weights)
 
     @assert length(fit_weights) == size(data, 1) "fit_weights seems to have too many or to few entries"
     @assert all(fit_weights .>= 0.0)             "fit_weights must be larger than 0"
+    @assert all(isfinite, fit_weights)           "some non finite values in fit_weights"
 
     return data_vect, (
         data_type   = eltype(data_vect[1]),
