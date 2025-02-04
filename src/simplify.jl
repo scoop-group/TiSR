@@ -274,9 +274,11 @@ end
 
 """
 """
-function simplify_to_string(node::Node, ops::Options; sigdigits=15) # TODO: make nicer, this was quick and dirty
+function simplify_to_string(node::Node, ops::Options; sigdigits=15, use_simplify=false) # TODO: make nicer, this was quick and dirty
     sym_eq = node_to_symbolic(node, ops)
-    # sym_eq = SymbolicUtils.simplify(sym_eq)
+    if use_simplify
+        sym_eq = SymbolicUtils.simplify(sym_eq)
+    end
     eq_str = string(sym_eq)
     if sigdigits >= 15
         return eq_str

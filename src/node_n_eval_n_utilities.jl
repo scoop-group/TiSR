@@ -64,7 +64,7 @@ function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{
         arr_l, finite = eval_equation(node.lef, data, ops)
         (!finite || bad_array(arr_l)) && return arr_l, false
 
-        if (ops.unaops[node.ind] == log) && any(l <= 0.0 for l in arr_l)
+        if (ops.unaops[node.ind] in (log, log10)) && any(l <= 0.0 for l in arr_l)
             return arr_l, false
         end
 
