@@ -58,7 +58,7 @@ function fitting_LM!(node, data, ops, list_of_param, max_iter)
         callback = callback
     )
 
-    if ops.fitting.early_stop_iter > 0 && length(trace) > 2
+    if ops.fitting.early_stop_iter > 0 && length(trace) > 2 # TODO: maybe always check?
         best_ind = argmin(
             x -> trace[x].value + trace[x].metadata["test_residual_norm"],
             2:length(trace)

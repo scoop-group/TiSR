@@ -253,7 +253,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
         elseif time() - t_start >= ops.general.t_lim
             stop_msg = "reached time limit"
             break
-        elseif ops.general.callback(hall_of_fame, population, ops)
+        elseif ops.general.callback(hall_of_fame, population, gen, prog_dict, ops)
             stop_msg = "callback returned true"
             break
         elseif check_for_user_quit(stdin_reader)
