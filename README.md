@@ -1,6 +1,6 @@
 # Thermodynamics-informed Symbolic Regression - A Tool for the Thermodynamic Equation of State Development
 
- [![DOI](https://zenodo.org/badge/685443077.svg)](https://zenodo.org/badge/latestdoi/685443077)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8317546.svg)](https://zenodo.org/record/8317546)
 
 This code base is based on the work of the project "Machine Learning and Optimal Experimental Design for Thermodynamic Property Modeling" in the DFG priority program [SPP2331](https://chemengml.org/).
 It implements an adapted NSGA-II genetic algorithm for symbolic regression and is aimed at the development of thermodynamic equations of state.
