@@ -18,12 +18,12 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
     meta_data::K
 
     function Options(
-        data::Matrix;                                           # -> nxm matrix containing the n data points, m-1 variables and the output
-        fit_weights::Vector{Float64} = abs.(1 ./ data[:, end]), # -> weights for the data fitting -> residual .* weight
+        data::Matrix;                                             # -> nxm matrix containing the n data points, m-1 variables and the output
+        fit_weights::Vector{Float64} = abs.(1 ./ data[:, end]),   # -> weights for the data fitting -> residual .* weight
+        unaops                       = (exp, log, sin, cos, abs), # -> binary function set to choose from
+        binops                       = (+,   -,   *,   /,   ^  ), # -> unary function set to choose from
         data_split                   = data_split_params(),
         general                      = general_params(),
-        unaops                       = (exp, log, sin, cos, abs),
-        binops                       = (+,   -,   *,   /,   ^  ),
         measures                     = measure_params(),
         selection                    = selection_params(),
         fitting                      = fitting_params(),
