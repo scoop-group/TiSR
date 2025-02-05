@@ -20,8 +20,8 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
     function Options(
         data::Matrix;                                             # -> nxm matrix containing the n data points, m-1 variables and the output
         fit_weights::Vector{Float64} = abs.(1 ./ data[:, end]),   # -> weights for the data fitting -> residual .* weight
-        unaops                       = (exp, log, sin, cos, abs), # -> binary function set to choose from
-        binops                       = (+,   -,   *,   /,   ^  ), # -> unary function set to choose from
+        binops                       = (+,   -,   *,   /,   ^  ), # -> binary function set to choose from
+        unaops                       = (exp, log, sin, cos, abs), # -> unary function set to choose from
         data_split                   = data_split_params(),
         general                      = general_params(),
         measures                     = measure_params(),
@@ -385,7 +385,7 @@ end
     mutations to be appended to the Options. The input values don't need to add
     up to 1, since they are normalized here.
 """
-function mutation_params(;                     # -> probabilites for the various mutations (don't need to add up to 1)
+function mutation_params(;                     #|-> probabilites for the various mutations (don't need to add up to 1)
     p_crossover::Float64              = 10.0,  #|
     p_point::Float64                  = 1.0,   #|
     p_insert::Float64                 = 1.0,   #|
@@ -416,6 +416,5 @@ function mutation_params(;                     # -> probabilites for the various
         p_add_from_bank_of_terms,
         p_crossover,
     )
-
     return mut_params ./ sum(mut_params) # TODO: change to do that where its needed
 end
