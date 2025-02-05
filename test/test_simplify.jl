@@ -2,7 +2,7 @@
 pow2(x) = x^2
 pow_abs(x, y) = abs(x)^y
 
-data = rand(100, 5)
+data = rand(100, 10)
 ops, data_vect = Options(
     data,
     binops                             = (+,   -,   *,   /,   ^, pow_abs),
@@ -186,7 +186,6 @@ ops, data_vect = Options(
         "sin(sqrt((0.27-0.87))^1.0)"
         "sin(sqrt((0.27-0.87)))"
         "sin(sqrt((cos(v2)/(v3-v4))))"
-        "cos(pow2(pow2(0.56)/1e7))"
         "cos(pow2(pow2(0.56)))"
         "sin(sin(0.72))"
         "log(log(sqrt(0.3)))"
@@ -214,7 +213,6 @@ ops, data_vect = Options(
         "sin(sqrt((0.27-0.87)))"
         "sin(sqrt((0.27-0.87)))"
         "sin(sqrt((cos(v2)/(v3-v4))))"
-        "cos(pow2(0.0))"
         "cos(pow2(pow2(0.56)))"
         "sin(sin(0.72))"
         "log(log(sqrt(0.3)))"

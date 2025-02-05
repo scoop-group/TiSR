@@ -148,10 +148,10 @@ end
     Like x + 1e-5 -> x, x * 1e-5 -> 1e-5
     In the latter example, the 1e-5 will again be detected and removed on the level above.
 """
-function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5) # TODO: test with new prob parameter
+function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.2) # TODO: test with new prob parameter
 
+    # traverse down
     pot = false
-
     if node.ari >= 1
         pot_l = drastic_simplify!(node.lef, ops, threshold=threshold, potential=potential, prob=prob)
         pot = pot || pot_l
@@ -165,71 +165,127 @@ function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.5)
 
     op = ops.binops[node.ind]
 
-    if (node.lef.ari == -1 || node.rig.ari == -1)
-        node_1 = getfield(node, node.lef.ari != -1 ? :lef : :rig)
+    if (node.lef.ari == -1 || node.rig.ari == -1) # if param is 0.0
+        node_1       = getfield(node, node.lef.ari != -1 ? :lef : :rig)
         node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
 
-        if abs(node_1_param.val) < threshold # if parameter 0.0
-            if op in (+, -) # x + 0.0 -> x
-                potential && return true
-                if rand() < prob
+        if abs(node_1_param.val) < threshold           # if parameter 0.0
+            (potential && op in (+, -, *, ^, /)) && return true
+            if rand() < prob
+                if op in (+, -)                        # x + 0.0 -> x
                     copy_node_wo_copy!(node, node_1)
-                end
-            elseif (op == *) # x * 0.0 -> 0.0
-                potential && return true
-                if rand() < prob
+                elseif (op == *)                       # x * 0.0 -> 0.0
                     copy_node_wo_copy!(node, node_1_param)
-                end
-            elseif (op == ^) && node.rig.ari == -1 # x^0.0 -> 1.0
-                potential && return true
-                if rand() < prob
+                elseif (op == ^) && node.rig.ari == -1 # x^0.0 -> 1.0
                     node.rig.val = 1.0
                     copy_node_wo_copy!(node, node.rig)
-                end
-            elseif (op == ^) && node.lef.ari == -1 # 0.0^x -> 0 # TODO: new, test
-                potential && return true
-                if rand() < prob
+                elseif (op == ^) && node.lef.ari == -1 # 0.0^x -> 0   # TODO: test
                     node.lef.val = 0.0
                     copy_node_wo_copy!(node, node.lef)
-                end
-            elseif (op == /) && node.lef.ari == -1 # 0.0 / x -> 0.0
-                potential && return true
-                if rand() < prob
+                elseif (op == /) && node.lef.ari == -1 # 0.0 / x -> 0.0
                     copy_node_wo_copy!(node, node.lef)
                 end
             end
         elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
-            if (op == *) # 1.0 * x -> x
-                potential && return true
-                if rand() < prob
-                    copy_node_wo_copy!(node, node_1)
-                end
-            elseif (op == /) && node.rig.ari == -1 # x / 1.0 -> x
-                if rand() < prob
-                    copy_node_wo_copy!(node, node_1)
-                end
-                potential && return true
-            elseif (op == ^) && node.rig.ari == -1 # x^1.0 -> x
-                potential && return true
-                if rand() < prob
-                    copy_node_wo_copy!(node, node.lef)
-                end
-            elseif (op == ^) && node.lef.ari == -1 # 1.0^x -> 1.0 # TODO: test
-                potential && return true
-                if rand() < prob
-                    copy_node_wo_copy!(node, node.lef)
-                end
-            end
-        elseif (op == /) && node.rig.ari == -1 && abs(1 / node_1_param.val) < threshold
-            potential && return true
-            node_1_param.val = 0.0
+            potential && (op in (*, ^) || ((op == /) && node.rig.ari == -1)) && return true
             if rand() < prob
-                copy_node_wo_copy!(node, node_1_param)
+                if (op == *)                           # 1.0 * x -> x
+                    copy_node_wo_copy!(node, node_1)
+                elseif (op == /) && node.rig.ari == -1 # x / 1.0 -> x
+                    copy_node_wo_copy!(node, node_1)
+                elseif (op == ^) && node.rig.ari == -1 # x^1.0 -> x
+                    copy_node_wo_copy!(node, node.lef)
+                elseif (op == ^) && node.lef.ari == -1 # 1.0^x -> 1.0 # TODO: test
+                    copy_node_wo_copy!(node, node.lef)
+                end
             end
         end
     end
-    return pot || false
+    return pot
 end
+
+# function drastic_simplify!(node, ops; threshold=1e-1, potential=false, prob=0.2) # TODO: test with new prob parameter
+#
+#     pot = false
+#
+#     if node.ari >= 1
+#         pot_l = drastic_simplify!(node.lef, ops, threshold=threshold, potential=potential, prob=prob)
+#         pot = pot || pot_l
+#         if node.ari == 2
+#             pot_r = drastic_simplify!(node.rig, ops, threshold=threshold, potential=potential, prob=prob)
+#             pot = pot || pot_r
+#         end
+#     end
+#
+#     node.ari == 2 || return pot
+#
+#     op = ops.binops[node.ind]
+#
+#     if (node.lef.ari == -1 || node.rig.ari == -1)
+#         node_1 = getfield(node, node.lef.ari != -1 ? :lef : :rig)
+#         node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
+#
+#         if abs(node_1_param.val) < threshold # if parameter 0.0
+#             if op in (+, -) # x + 0.0 -> x
+#                 potential && return true
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node_1)
+#                 end
+#             elseif (op == *) # x * 0.0 -> 0.0
+#                 potential && return true
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node_1_param)
+#                 end
+#             elseif (op == ^) && node.rig.ari == -1 # x^0.0 -> 1.0
+#                 potential && return true
+#                 if rand() < prob
+#                     node.rig.val = 1.0
+#                     copy_node_wo_copy!(node, node.rig)
+#                 end
+#             elseif (op == ^) && node.lef.ari == -1 # 0.0^x -> 0 # TODO: new, test
+#                 potential && return true
+#                 if rand() < prob
+#                     node.lef.val = 0.0
+#                     copy_node_wo_copy!(node, node.lef)
+#                 end
+#             elseif (op == /) && node.lef.ari == -1 # 0.0 / x -> 0.0
+#                 potential && return true
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node.lef)
+#                 end
+#             end
+#         elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
+#             if (op == *) # 1.0 * x -> x
+#                 potential && return true
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node_1)
+#                 end
+#             elseif (op == /) && node.rig.ari == -1 # x / 1.0 -> x
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node_1)
+#                 end
+#                 potential && return true
+#             elseif (op == ^) && node.rig.ari == -1 # x^1.0 -> x
+#                 potential && return true
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node.lef)
+#                 end
+#             elseif (op == ^) && node.lef.ari == -1 # 1.0^x -> 1.0 # TODO: test
+#                 potential && return true
+#                 if rand() < prob
+#                     copy_node_wo_copy!(node, node.lef)
+#                 end
+#             end
+#         elseif (op == /) && node.rig.ari == -1 && abs(1 / node_1_param.val) < threshold
+#             potential && return true
+#             node_1_param.val = 0.0
+#             if rand() < prob
+#                 copy_node_wo_copy!(node, node_1_param)
+#             end
+#         end
+#     end
+#     return pot || false
+# end
 
 # ==================================================================================================
 # SymbolicUtils simplify -> used as a genetic operation
