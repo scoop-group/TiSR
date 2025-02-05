@@ -241,24 +241,9 @@ end
 """ Removes an operation.
 """
 function hoist_mutation!(node, ops)
-    if node.ari == 2 && node.lef.ari + node.rig.ari <= 0
-        copy_node_wo_copy!(node, rand((node.lef, node.rig)))
-        return
-    elseif node.ari == 1 && node.lef.ari <= 0
-        copy_node_wo_copy!(node, node.lef)
-        return
-    elseif node.ari <= 0
-        return
-    end
-
-    node_elect = random_node(node, mode=2)
-
-    lefrig1 = mutate_left(node_elect, 2) ? :lef : :rig
-    sub1 = getfield(node_elect, lefrig1)
-
-    lefrig2 = mutate_left(sub1, 1) ? :lef : :rig
-    sub2 = getfield(sub1, lefrig2)
-    setfield!(node_elect, lefrig1, sub2)
+    node_elect = TiSR.random_node(node, mode=1)
+    lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
+    TiSR.copy_node_wo_copy!(node_elect, getfield(node_elect, lefrig))
 end
 
 """ Combines two nodes to create two new ones.
