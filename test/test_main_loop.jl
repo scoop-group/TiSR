@@ -46,7 +46,7 @@
         data_matr,
         general=general_params(
             t_lim=Inf,
-            callback = (hall_of_fame, population, ops) -> any(i.measures[:compl] <= 7 && i.measures[:mare] < 1e-5 for i in hall_of_fame),
+            callback = (hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] <= 7 && i.measures[:mare] < 1e-5 for i in hall_of_fame),
             print_progress     = false,
             plot_hall_of_fame  = false,
             print_hall_of_fame = false,
@@ -55,7 +55,7 @@
 
     hall_of_fame, population, prog_dict, stop_msg = generational_loop(data_vect, ops);
 
-    @assert stop_msg == "callback returned true"
-    @assert any(i.measures[:compl] <= 7 && i.measures[:mare] <= 1e-5 for i in hall_of_fame)
+    @test stop_msg == "callback returned true"
+    @test any(i.measures[:compl] <= 7 && i.measures[:mare] <= 1e-5 for i in hall_of_fame)
 end
 
