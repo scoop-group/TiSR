@@ -180,6 +180,15 @@ end
     end
 
     @test quantile(distances, 0.5) < 8
+
+    # test if smaller than 2-3
+    node = TiSR.string_to_node("exp(v1)", ops)
+    TiSR.hoist_mutation!(node, ops)
+    @test TiSR.node_to_string(node, ops) == "v1"
+
+    node = TiSR.string_to_node("v1 + v2", ops)
+    TiSR.hoist_mutation!(node, ops)
+    @test TiSR.node_to_string(node, ops) in ("v1", "v2")
 end
 
 @testset "crossover_mutation!" begin
