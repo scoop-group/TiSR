@@ -167,11 +167,6 @@ ops, data_vect = Options(
 
 @testset "drastic_simplify!" begin
 
-    # nodes = [TiSR.node_to_string(TiSR.grow_equation(rand(3:5), ops, method=:full), ops, sigdigits=2) for _ in 1:10]
-    # for n in nodes
-    #     println(n)
-    # end
-
     node_strs = [
         "(abs(0.38)-(v4-v1))"
         "(abs(0.38)-1e-7-(v4-v1+1e-7))"
@@ -180,6 +175,7 @@ ops, data_vect = Options(
         "sqrt((((0.98-v1)*(0.24*0.89))/cos(cos(v3))^1e-7))"
         "sin(exp(sqrt(0.25)))"
         "sqrt((cos((v1-v4))+((v4/0.24)+cos(v3))))"
+        "sqrt((cos((v1-v4))+1e-7/((v4/0.24)+cos(v3))))"
         "sqrt((cos((v1-v4)*1.0)+((v4/0.24)+cos(v3))))"
         "sin(((cos(0.49)^(v3+0.92))^((v2*v3)^(0.044+v2))))"
         "sin(((cos(0.49)^(v3+0.92))^((v2*v3/1.0)^(0.044+v2))))"
@@ -189,12 +185,14 @@ ops, data_vect = Options(
         "cos(pow2(pow2(0.56)))"
         "sin(sin(0.72))"
         "log(log(sqrt(0.3)))"
+        "log(log(sqrt(0.3)))+1e-7^log(log(sqrt(0.3)))"
+        "log(log(sqrt(0.3)))+1.0^log(log(sqrt(0.3)))"
     ]
 
     nodes = [TiSR.string_to_node(n, ops) for n in node_strs]
 
     for n in nodes
-        TiSR.drastic_simplify!(n, ops; threshold=1e-6, potential=false, prob=1.0)
+        TiSR.drastic_simplify!(n, ops; threshold=1e-6, full=true)
     end
 
     simplified = [TiSR.node_to_string(n, ops) for n in nodes]
@@ -207,6 +205,7 @@ ops, data_vect = Options(
         "sqrt(((0.98-v1)*(0.24*0.89)))"
         "sin(exp(sqrt(0.25)))"
         "sqrt((cos((v1-v4))+((v4/0.24)+cos(v3))))"
+        "sqrt(cos((v1-v4)))"
         "sqrt((cos((v1-v4))+((v4/0.24)+cos(v3))))"
         "sin(((cos(0.49)^(v3+0.92))^((v2*v3)^(0.044+v2))))"
         "sin(((cos(0.49)^(v3+0.92))^((v2*v3)^(0.044+v2))))"
@@ -216,6 +215,8 @@ ops, data_vect = Options(
         "cos(pow2(pow2(0.56)))"
         "sin(sin(0.72))"
         "log(log(sqrt(0.3)))"
+        "log(log(sqrt(0.3)))"
+        "(log(log(sqrt(0.3)))+1.0)"
     ]
 
     @test simplified == right_ones
@@ -325,3 +326,10 @@ end
 
     @test count(<=(1e-5), mse_diffs) > 8000
 end
+
+
+
+
+
+
+

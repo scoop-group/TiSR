@@ -57,7 +57,7 @@ end
 
 """ Traversal for the random_node function. Implemented along the lines of
     SymbolicRegression.jl
-"""
+"""                        # TODO: explain scale parameter
 function random_node_(node; scale=1.0)
     node.ari <= 0 && return node
 
@@ -83,55 +83,56 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
         hoist_mutation!, subtree_mutation!, drastic_simplify!
     ]
 )
-    eachind = collect(eachindex(indivs))
+    eachind = shuffle(eachindex(indivs))
 
     # always_drastic_simplify # --------------------------------------------------------------------
     if !iszero(ops.general.always_drastic_simplify)
         drastic_inds = findall(
-            drastic_simplify!(indiv.node, ops, potential=true, threshold=ops.general.always_drastic_simplify)
+            is_drastic_simplifyable(indiv.node, ops; threshold=ops.general.always_drastic_simplify)
             for indiv in indivs
         )
         drastic_indivs = [copy(indivs[i]) for i in drastic_inds]
 
         for indiv in drastic_indivs
-            drastic_simplify!(indiv.node, ops, potential=false, threshold=ops.general.always_drastic_simplify)
+            drastic_simplify!(indiv.node, ops, threshold=ops.general.always_drastic_simplify)
         end
 
         append!(indivs, drastic_indivs)
     end
 
-    while !isempty(eachind) # TODO: maybe invert -> sample mutation first and then find appropriate node(s) -> closer to selected mutation probabilities
+    while !isempty(eachind)
         indiv = indivs[popfirst!(eachind)]
 
-        until_mut = maxim_tree_depth(indiv.node, minim=3) > 2 ? length(ops.mutation) : 3
-        rand_mutation = rand() * sum(ops.mutation[1:until_mut])
-        mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation[1:i]), eachindex(ops.mutation))
+        until_mut     = TiSR.maxim_tree_depth(indiv.node, minim = 3) > 2 ? length(ops.mutation.mut_probs) : 4
+        rand_mutation = rand() * sum(ops.mutation.mut_probs[1:until_mut])
+        mut_ind       = findfirst(i -> rand_mutation <= sum(ops.mutation.mut_probs[1:i]), eachindex(ops.mutation.mut_probs))
 
-        if mut_ind <= 7
-            one_node_muts![mut_ind](indiv.node, ops)
-
+        if mut_ind == 10 && !isempty(eachind) && any(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
+            ind = findfirst(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
+            indiv2 = indivs[popat!(eachind, ind)]
+            crossover_mutation!(indiv.node, indiv2.node, ops)
+        elseif mut_ind == 9
+            add_from_bank_of_terms_mutation!(indiv.node, ops, bank_of_terms)
         elseif mut_ind == 8
             try
                 simplify_w_symbolic_utils!(indiv.node, ops)
             catch
                 point_mutation!(indiv.node, ops)
             end
-
-        elseif mut_ind == 9
-            add_from_bank_of_terms_mutation!(indiv.node, ops, bank_of_terms)
-
-        elseif mut_ind == 10 && !isempty(eachind)
-            ind = findfirst(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
-            if !isnothing(ind)
-                indiv2 = indivs[popat!(eachind, ind)]
-                crossover_mutation!(indiv.node, indiv2.node, ops)
-            else
-                point_mutation!(indiv.node, ops)
-            end
-        elseif isempty(eachind)
-            point_mutation!(indiv.node, ops)
+        elseif mut_ind == 7 && is_drastic_simplifyable(indiv.node, ops)
+            drastic_simplify!(indiv.node, ops)
+        elseif mut_ind == 6
+            subtree_mutation!(indiv.node, ops)
         else
-            @assert false
+            while true
+                until_mut = maxim_tree_depth(indiv.node, minim=3) > 2 ? 5 : 3
+                rand_mutation = rand() * sum(ops.mutation.mut_probs[1:until_mut])
+                mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation.mut_probs[1:i]), eachindex(ops.mutation.mut_probs))
+
+                one_node_muts![mut_ind](indiv.node, ops)
+
+                rand() < ops.mutation.p_multiple_mutations || break
+            end
         end
     end
 end
@@ -241,6 +242,7 @@ end
 """ Removes an operation.
 """
 function hoist_mutation!(node, ops)
+    node.ari <= 0 && return
     node_elect = TiSR.random_node(node, mode=1)
     lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
     TiSR.copy_node_wo_copy!(node_elect, getfield(node_elect, lefrig))
@@ -264,7 +266,7 @@ end
 """ Replaces a subtree of a random subtree.
 """
 function subtree_mutation!(node, ops; subtree_depth=0)
-    subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
+    subtree_depth = iszero(subtree_depth) ? rand(2:4) : subtree_depth
     node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
     setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))

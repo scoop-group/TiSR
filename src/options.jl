@@ -62,7 +62,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
         end
 
         # ------------------------------------------------------------------------------------------
-        @assert !xor(isempty(grammar.bank_of_terms), mutation[9] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
+        @assert !xor(isempty(grammar.bank_of_terms), mutation.mut_probs[9] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
 
         # resulting parameters
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
@@ -390,12 +390,13 @@ function mutation_params(;                     #|-> probabilites for the various
     p_point::Float64                  = 1.0,   #|
     p_insert::Float64                 = 1.0,   #|
     p_hoist::Float64                  = 1.0,   #|
-    p_subtree::Float64                = 0.5,   #|
+    p_subtree::Float64                = 1.0,   #|
     p_drastic_simplify::Float64       = 0.1,   #|-> remove parameter nodes with small values and simplify accordingly
     p_insert_times_param::Float64     = 0.1,   #|
     p_add_term::Float64               = 0.1,   #|
     p_simplify::Float64               = 0.1,   #|-> simplify with SymbolicUtils
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
+    p_multiple_mutations::Float64     = 0.05,  # -> probability for more than one mutation
 )
     @assert all(p >= 0 for p in (
         p_crossover, p_point, p_insert, p_hoist, p_subtree, p_drastic_simplify,
@@ -404,7 +405,12 @@ function mutation_params(;                     #|-> probabilites for the various
 
     p_crossover *= 0.5 # because it consumes a second one, if hit
 
-    mut_params = (
+    @assert p_multiple_mutations < 1         "p_multiple_mutations must be < 1"
+    0 <= p_multiple_mutations < 0.5 || @warn "p_multiple_mutations should be between 0 and 0.5"
+
+    # TODO: reduce remainder by p_multiple_mutations
+
+    mut_probs = (
         p_insert,
         p_point,
         p_add_term,
@@ -416,5 +422,10 @@ function mutation_params(;                     #|-> probabilites for the various
         p_add_from_bank_of_terms,
         p_crossover,
     )
-    return mut_params ./ sum(mut_params) # TODO: change to do that where its needed
+
+    mut_probs = mut_probs ./ sum(mut_probs)
+    return (
+        mut_probs = mut_probs,
+        p_multiple_mutations = p_multiple_mutations,
+    )
 end

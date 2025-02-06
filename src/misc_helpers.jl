@@ -23,7 +23,7 @@ rand_mult(;minn=0.5, maxx=2.0) = (rand() * (maxx - minn) + minn) * rand((1.0, -1
 """
 split_list(list, n) = length(list) <= n ? [list] : [list[1:n], split_list(list[n+1:end], n)...]
 
-""" Round numbers in an equation string and return a string. It is used for the equation simplified 
+""" Round numbers in an equation string and return a string. It is used for the equation simplified
     by SymbolicUtils.
 """
 round_equation_string(str::String; sigdigits=3) = string(round_equation_string(Meta.parse(str), sigdigits=sigdigits))
@@ -34,3 +34,7 @@ function round_equation_string(expr::Expr; sigdigits=3)
     map!(s -> round_equation_string(s, sigdigits=sigdigits), expr.args, expr.args)
     expr
 end
+
+""" round to a custom specified base.
+"""
+round_to_next(x, base) = round(x / base) * base
