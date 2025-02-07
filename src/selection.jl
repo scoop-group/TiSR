@@ -7,12 +7,11 @@ dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], 
     Calculate the domination scores, i.e., number of pareto frontier, but
     disregard doubles.
 """
-function non_dominated_sort(rows)
+function non_dominated_sort(individs)
     fronts   = Vector{Int64}[]
-    individs = SVector{length(rows[1])}.(rows)
-
-    domination_score = fill(typemax(Int64), length(rows))
     indices = collect(eachindex(individs))
+    individs = deepcopy(individs)
+    domination_score = fill(typemax(Int64), length(individs))
 
     while !isempty(individs)
         red = [all(x -> !dominates(x, y), individs) for y in individs]
@@ -28,6 +27,12 @@ function non_dominated_sort(rows)
 
     return domination_score
 end
+
+""" Slightly adapted of a version found on Julia Discourse:
+    https://discourse.julialang.org/t/fast-non-dominated-sorting/24164
+    Find the first pareto frontier but disregards doubles.
+"""
+first_pareto_front(individs) = findall(y -> all(x -> !dominates(x, y), individs), individs)
 
 """ Calculate the crowding distances.
 """
@@ -46,11 +51,11 @@ function crowding_distance(rows; normalize=false)
 
         if normalize
             for j in 2:n_pnts-1
-                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) / (max_val - min_val) #-> already normalized
+                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) / (max_val - min_val)
             end
         else
             for j in 2:n_pnts-1
-                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i])
+                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) #-> already normalized
             end
         end
     end
@@ -60,17 +65,6 @@ end
 """ perfrom binary tournament selection for parent selection
 """
 parent_selection(pop) = min(rand(pop), rand(pop))
-
-""" Slightly adapted of a version found on Julia Discourse:
-    https://discourse.julialang.org/t/fast-non-dominated-sorting/24164
-    Find the first pareto frontier but disregards doubles.
-"""
-function first_pareto_front(rows)
-    individs = SVector{length(rows[1])}.(rows)
-    indices = eachindex(individs)
-    red = [all(x -> !dominates(x, y), individs) for y in individs]
-    return indices[red]
-end
 
 # tournament selection # ---------------------------------------------------------------------------
 """ Tournament selection. The proprocessing of the fitness may be adapted. The inds passed into
