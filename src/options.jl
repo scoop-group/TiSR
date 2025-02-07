@@ -173,7 +173,7 @@ function general_params(;
     pop_size::Int64                        = 600,                                                      # -> number of individuals selected for next generation / population size
     parent_selection::Bool                 = true,                                                     # -> wheather to conduct parent selection or to use all individuals in the population as parents
     num_islands::Int64                     = 12,                                                       # -> number of parallel islands
-    children_ratio::Float64                = 1.0,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
+    children_ratio::Float64                = 0.5,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 5000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
@@ -280,6 +280,7 @@ end
 function selection_params(;
     hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :compl],                          # -> objectives for the hall_of_fame
     selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :compl], # -> objectives for the Pareto-optimal selection part of selection
+    normalize_objectives::Bool                 = false,                                              # -> whether to normalize the objectives for niching and crowding distance
     hall_of_fame_niching_sigdigits::Int64      = 2,                                                  # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5
     population_niching_sigdigits::Int64        = 3,                                                  # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5
     ratio_pareto_tournament_selection::Float64 = 0.5,                                                # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
@@ -297,6 +298,7 @@ function selection_params(;
     return (
         hall_of_fame_objectives           = hall_of_fame_objectives,
         selection_objectives              = selection_objectives,
+        normalize_objectives              = normalize_objectives,
         hall_of_fame_niching_sigdigits    = hall_of_fame_niching_sigdigits,
         population_niching_sigdigits      = population_niching_sigdigits,
         tournament_size                   = tournament_size,
@@ -396,7 +398,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_add_term::Float64               = 0.1,   #|
     p_simplify::Float64               = 0.1,   #|-> simplify with SymbolicUtils
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
-    p_multiple_mutations::Float64     = 0.05,  # -> probability for more than one mutation
+    p_multiple_mutations::Float64     = 0.5,   # -> probability for more than one mutation
 )
     @assert all(p >= 0 for p in (
         p_crossover, p_point, p_insert, p_hoist, p_subtree, p_drastic_simplify,
@@ -406,7 +408,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_crossover *= 0.5 # because it consumes a second one, if hit
 
     @assert p_multiple_mutations < 1         "p_multiple_mutations must be < 1"
-    0 <= p_multiple_mutations < 0.5 || @warn "p_multiple_mutations should be between 0 and 0.5"
+    0 <= p_multiple_mutations < 0.9 || @warn "p_multiple_mutations should be between 0 and 0.9"
 
     # TODO: reduce remainder by p_multiple_mutations
 

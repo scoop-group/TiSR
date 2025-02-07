@@ -1,5 +1,4 @@
 
-
 # non-dominated sort # -----------------------------------------------------------------------------
 dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], eachindex(x))
 
@@ -13,8 +12,7 @@ function non_dominated_sort(rows)
     individs = SVector{length(rows[1])}.(rows)
 
     domination_score = fill(typemax(Int64), length(rows))
-    indices = unique(i -> individs[i], 1:length(individs))
-    keepat!(individs, indices)
+    indices = collect(eachindex(individs))
 
     while !isempty(individs)
         red = [all(x -> !dominates(x, y), individs) for y in individs]
@@ -33,7 +31,7 @@ end
 
 """ Calculate the crowding distances.
 """
-function crowding_distance(rows)
+function crowding_distance(rows; normalize=false)
     n_pnts, n_dims = length(rows), length(rows[1])
     dists = zeros(n_pnts)
     s_inds = zeros(Int64, n_pnts)
@@ -43,13 +41,17 @@ function crowding_distance(rows)
 
         min_val, max_val = rows[s_inds[1]][i], rows[s_inds[end]][i]
         min_val == max_val && continue
-
-        # set the crowding dist for the boundary pnts to infinity
         dists[s_inds[1]] = dists[s_inds[end]] = Inf
+        length(s_inds) == 2 && continue
 
-        # compute the crowding dist for the remaining points
-        for j in 2:n_pnts-1
-            dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) / (max_val - min_val)
+        if normalize
+            for j in 2:n_pnts-1
+                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) / (max_val - min_val) #-> already normalized
+            end
+        else
+            for j in 2:n_pnts-1
+                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i])
+            end
         end
     end
     return dists
@@ -65,8 +67,7 @@ parent_selection(pop) = min(rand(pop), rand(pop))
 """
 function first_pareto_front(rows)
     individs = SVector{length(rows[1])}.(rows)
-    indices = unique(i -> individs[i], 1:length(individs))
-    keepat!(individs, indices)
+    indices = eachindex(individs)
     red = [all(x -> !dominates(x, y), individs) for y in individs]
     return indices[red]
 end
@@ -106,9 +107,5 @@ end
 """ Calculate the relative fitness based on normalized objectives using the
     median instead of the maximum.
 """
-function get_relative_fitness(indiv_obj_vals)
-    normed  = normalize_objectives(indiv_obj_vals)
-    fitness = sum.(normed)
-    return -fitness
-end
+get_relative_fitness(indiv_obj_vals) = -sum.(indiv_obj_vals)
 
