@@ -1,5 +1,4 @@
 
-
 """ Whether x dominates y.
 """
 dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], eachindex(x))

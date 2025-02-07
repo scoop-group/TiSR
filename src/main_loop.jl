@@ -396,8 +396,21 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
 
         # Pareto selection # -------------------------------------------------------------------
         if ops.selection.n_pareto_select_per_isle > 0
-            sort!(pop)
-            append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
+            # sort!(pop)
+            # append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
+
+            n_front = 1
+            while true
+                n_required = ops.selection.n_pareto_select_per_isle - length(selection_inds)
+                n_required > 0 || break
+                front = findall(==(n_front), ranks)
+                if n_required < length(front)
+                    front = wsample(front, replace([crowding[f] for f in front], Inf => 10.0, 0.0 => 1e-100), n_required, replace=false)
+                end
+                append!(selection_inds, front)
+                n_front += 1
+            end
+
         end
 
         # tournament selection # ---------------------------------------------------------------
