@@ -1,13 +1,14 @@
 
-# non-dominated sort # -----------------------------------------------------------------------------
+
+""" Whether x dominates y.
+"""
 dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], eachindex(x))
 
 """ Slightly adapted of a version found on Julia Discourse:
-    https://discourse.julialang.org/t/fast-non-dominated-sorting/24164
-    Calculate the domination scores, i.e., number of pareto frontier, but
-    disregard doubles.
+    [source](https://discourse.julialang.org/t/fast-non-dominated-sorting/24164)
+    For each entry, the pareto front number is determined.
 """
-function non_dominated_sort(individs)
+function non_dominated_sort(individs::Vector{Vector{Float64}})
     fronts   = Vector{Int64}[]
     indices = collect(eachindex(individs))
     individs = deepcopy(individs)
@@ -28,34 +29,32 @@ function non_dominated_sort(individs)
     return domination_score
 end
 
-""" Slightly adapted of a version found on Julia Discourse:
-    https://discourse.julialang.org/t/fast-non-dominated-sorting/24164
-    Find the first pareto frontier but disregards doubles.
+""" Find the first pareto front.
 """
-first_pareto_front(individs) = findall(y -> all(x -> !dominates(x, y), individs), individs)
+first_pareto_front(individs::Vector{Vector{Float64}}) = findall(y -> all(x -> !dominates(x, y), individs), individs)
 
 """ Calculate the crowding distances.
 """
-function crowding_distance(rows; normalize=false)
-    n_pnts, n_dims = length(rows), length(rows[1])
+function crowding_distance(individs; normalize=false)
+    n_pnts, n_dims = length(individs), length(individs[1])
     dists = zeros(n_pnts)
     s_inds = zeros(Int64, n_pnts)
 
     for i in 1:n_dims
-        sortperm!(s_inds, rows, by=x->x[i])
+        sortperm!(s_inds, individs, by=x->x[i])
 
-        min_val, max_val = rows[s_inds[1]][i], rows[s_inds[end]][i]
+        min_val, max_val = individs[s_inds[1]][i], individs[s_inds[end]][i]
         min_val == max_val && continue
         dists[s_inds[1]] = dists[s_inds[end]] = Inf
-        length(s_inds) == 2 && continue
+        length(s_inds) == 2 && continue # would lead to NaN
 
         if normalize
             for j in 2:n_pnts-1
-                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) / (max_val - min_val)
+                dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) / (max_val - min_val)
             end
         else
             for j in 2:n_pnts-1
-                dists[s_inds[j]] += (rows[s_inds[j+1]][i] - rows[s_inds[j-1]][i]) #-> already normalized
+                dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) #-> already normalized
             end
         end
     end
