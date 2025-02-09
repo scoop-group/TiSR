@@ -129,10 +129,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             for indiv in hall_of_fame
         ]
 
-        if ops.selection.normalize_objectives
-            indiv_obj_vals = normalize_objectives(indiv_obj_vals)
-        end
-
         # apply niching
         indiv_obj_vals = [
             round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
