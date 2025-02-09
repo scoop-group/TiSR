@@ -118,7 +118,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         # hall of fame # ---------------------------------------------------------------------------
         for isle in 1:ops.general.num_islands
-            append!(hall_of_fame, copy.(population[isle]))
+            prepend!(hall_of_fame, copy.(population[isle]))
         end
 
         # extract objectives # -------------------------------------------------------------
@@ -133,12 +133,12 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             indiv_obj_vals = normalize_objectives(indiv_obj_vals)
         end
 
+        # apply niching
         indiv_obj_vals = [
             round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
             for indiv in indiv_obj_vals
         ]
 
-        # apply niching
         unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
         keepat!(indiv_obj_vals, unique_inds)
         keepat!(hall_of_fame, unique_inds)
@@ -405,7 +405,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
                 n_required > 0 || break
                 front = findall(==(n_front), ranks)
                 if n_required < length(front)
-                    front = wsample(front, replace([crowding[f] for f in front], Inf => 10.0, 0.0 => 1e-100), n_required, replace=false)
+                    front = wsample(front, replace([crowding[f] for f in front], Inf => 1e100, 0.0 => 1e-100), n_required, replace=false)
                 end
                 append!(selection_inds, front)
                 n_front += 1
