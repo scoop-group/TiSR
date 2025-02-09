@@ -227,7 +227,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             emmigrate_island = rand(1:ops.general.num_islands)
 
             # both directions, decreasing with distance
-            offsets = -trunc(Int64, 0.5 * ops.general.num_islands):trunc(Int64, 0.5 * ops.general.num_islands)
+            offsets = -trunc(Int64, 0.25 * ops.general.num_islands):trunc(Int64, 0.25 * ops.general.num_islands)
             offsets = filter(!=(0), offsets)
             probs   = (1 ./ abs.(offsets)).^2
 
