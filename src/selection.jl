@@ -92,7 +92,7 @@ end
 function normalize_objectives(indiv_obj_vals)
     indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
     indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
-    indiv_obj_vals ./= (median(indiv_obj_vals, dims=1) .+ 1e-1)
+    indiv_obj_vals ./= (maximum(indiv_obj_vals, dims=1) .+ 1e-1)
     return eachrow(indiv_obj_vals)
 end
 
