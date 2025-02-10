@@ -5,10 +5,10 @@ function convert_to_dict(individuals::Vector{Individual}, ops; sort_by=:ms_proce
 
     extracted = map(individuals) do i
         [
-            :eq_orig          => TiSR.node_to_string(i.node,    ops),
-            :eq_rounded       => TiSR.node_to_string(i.node,    ops, sigdigits = 3),
-            :eq_simpl         => replace(TiSR.simplify_to_string(i.node, ops, sigdigits = 15), " " => ""),
-            :eq_simpl_rounded => replace(TiSR.simplify_to_string(i.node, ops, sigdigits = 3), " " => ""),
+            :eq_orig          => node_to_string(i.node,    ops),
+            :eq_rounded       => node_to_string(i.node,    ops, sigdigits = 3),
+            :eq_simpl         => replace(simplify_to_string(i.node, ops, sigdigits = 15), " " => ""),
+            :eq_simpl_rounded => replace(simplify_to_string(i.node, ops, sigdigits = 3), " " => ""),
             i.measures...
         ]
     end
