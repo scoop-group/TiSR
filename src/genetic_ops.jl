@@ -267,7 +267,7 @@ end
 """ Replaces a subtree of a random subtree.
 """
 function subtree_mutation!(node, ops; subtree_depth=0)
-    subtree_depth = iszero(subtree_depth) ? rand(2:4) : subtree_depth
+    subtree_depth = iszero(subtree_depth) ? rand(2:5) : subtree_depth
     node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
     setfield!(node_elect, lefrig, grow_equation(subtree_depth, ops))

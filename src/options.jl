@@ -173,7 +173,7 @@ function general_params(;
     pop_size::Int64                        = 600,                                                      # -> number of individuals selected for next generation / population size
     parent_selection::Bool                 = true,                                                     # -> wheather to conduct parent selection or to use all individuals in the population as parents
     num_islands::Int64                     = 12,                                                       # -> number of parallel islands
-    children_ratio::Float64                = 0.5,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
+    children_ratio::Float64                = 1.0,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 5000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
