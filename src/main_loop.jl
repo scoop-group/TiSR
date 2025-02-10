@@ -204,7 +204,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 if ops.general.print_hall_of_fame
                     sort!(hall_of_fame, by=i->i.measures[:compl])
 
-                    inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=16)))
+                    inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
                     unique!(inds_to_show)
 
                     eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]

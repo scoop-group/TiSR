@@ -104,7 +104,7 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
     while !isempty(eachind)
         indiv = indivs[popfirst!(eachind)]
 
-        until_mut     = TiSR.maxim_tree_depth(indiv.node, minim = 3) > 2 ? length(ops.mutation.mut_probs) : 3
+        until_mut     = maxim_tree_depth(indiv.node, minim = 3) > 2 ? length(ops.mutation.mut_probs) : 3
         rand_mutation = rand() * sum(ops.mutation.mut_probs[1:until_mut])
         mut_ind       = findfirst(i -> rand_mutation <= sum(ops.mutation.mut_probs[1:i]), eachindex(ops.mutation.mut_probs))
 
@@ -244,9 +244,9 @@ end
 """
 function hoist_mutation!(node, ops)
     node.ari <= 0 && return
-    node_elect = TiSR.random_node(node, mode=1)
-    lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
-    TiSR.copy_node_wo_copy!(node_elect, getfield(node_elect, lefrig))
+    node_elect = random_node(node, mode=1)
+    lefrig = mutate_left(node_elect, 1) ? :lef : :rig
+    copy_node_wo_copy!(node_elect, getfield(node_elect, lefrig))
 end
 
 """ Combines two nodes to create two new ones.
