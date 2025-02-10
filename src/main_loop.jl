@@ -134,7 +134,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
             for indiv in indiv_obj_vals
         ]
-
         unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
         keepat!(indiv_obj_vals, unique_inds)
         keepat!(hall_of_fame, unique_inds)
@@ -367,23 +366,18 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
             for indiv in pop
         ]
 
-        if ops.selection.normalize_objectives
-            indiv_obj_vals = normalize_objectives(indiv_obj_vals)
-        end
-
         # apply niching
         indiv_obj_vals = [
             round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
             for indiv in indiv_obj_vals
         ]
-
         unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
         keepat!(indiv_obj_vals, unique_inds)
         keepat!(pop, unique_inds)
 
         # determine rank and crowding for all individuals
         ranks    = non_dominated_sort(indiv_obj_vals)
-        crowding = crowding_distance(indiv_obj_vals, normalize=!ops.selection.normalize_objectives)
+        crowding = crowding_distance(indiv_obj_vals)
 
         for i in eachindex(pop)
             pop[i].rank     = ranks[i]
@@ -414,11 +408,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
             remaining_inds = setdiff(eachindex(pop), selection_inds)
 
             if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-
-                if !ops.selection.normalize_objectives
-                    indiv_obj_vals = normalize_objectives(indiv_obj_vals)
-                end
-
+                indiv_obj_vals = normalize_objectives(indiv_obj_vals)
                 fitness  = get_relative_fitness(indiv_obj_vals)
                 selected = tournament_selection(fitness, remaining_inds,
                     tournament_size = ops.selection.tournament_size,

@@ -34,27 +34,18 @@ first_pareto_front(individs::Vector{Vector{Float64}}) = findall(y -> all(x -> !d
 
 """ Calculate the crowding distances.
 """
-function crowding_distance(individs; normalize=false)
+function crowding_distance(individs)
     n_pnts, n_dims = length(individs), length(individs[1])
     dists = zeros(n_pnts)
     s_inds = zeros(Int64, n_pnts)
-
     for i in 1:n_dims
         sortperm!(s_inds, individs, by=x->x[i])
-
         min_val, max_val = individs[s_inds[1]][i], individs[s_inds[end]][i]
         min_val == max_val && continue
         dists[s_inds[1]] = dists[s_inds[end]] = Inf
         length(s_inds) == 2 && continue # would lead to NaN
-
-        if normalize
-            for j in 2:n_pnts-1
-                dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) / (max_val - min_val)
-            end
-        else
-            for j in 2:n_pnts-1
-                dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) #-> already normalized
-            end
+        for j in 2:n_pnts-1
+            dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) / (max_val - min_val)
         end
     end
     return dists

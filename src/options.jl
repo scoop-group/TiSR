@@ -280,7 +280,6 @@ end
 function selection_params(;
     hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :compl],                          # -> objectives for the hall_of_fame
     selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :compl], # -> objectives for the Pareto-optimal selection part of selection
-    normalize_objectives::Bool                 = false,                                              # -> whether to normalize the objectives for niching and crowding distance
     hall_of_fame_niching_sigdigits::Int64      = 2,                                                  # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5
     population_niching_sigdigits::Int64        = 3,                                                  # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5
     ratio_pareto_tournament_selection::Float64 = 0.5,                                                # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
@@ -298,7 +297,6 @@ function selection_params(;
     return (
         hall_of_fame_objectives           = hall_of_fame_objectives,
         selection_objectives              = selection_objectives,
-        normalize_objectives              = normalize_objectives,
         hall_of_fame_niching_sigdigits    = hall_of_fame_niching_sigdigits,
         population_niching_sigdigits      = population_niching_sigdigits,
         tournament_size                   = tournament_size,
@@ -389,7 +387,7 @@ end
 """
 function mutation_params(;                     #|-> probabilites for the various mutations (don't need to add up to 1)
     p_crossover::Float64              = 10.0,  #|
-    p_point::Float64                  = 1.0,   #|
+    p_point::Float64                  = 2.0,   #|
     p_insert::Float64                 = 1.0,   #|
     p_hoist::Float64                  = 1.0,   #|
     p_subtree::Float64                = 0.5,   #|
