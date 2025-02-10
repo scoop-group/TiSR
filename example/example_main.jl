@@ -34,14 +34,11 @@ ops, data                       = Options(
     binops                      = (+, -, *, /, ^),
     unaops                      = (exp, log, sqrt),
     general                     = general_params(
-        t_lim                   = 60 * 60.0,
+        t_lim                   = 60 * 5.0,
         multithreading          = true,
     ),
     grammar                     = grammar_params(
         max_compl               = 30,
-    ),
-    fitting                     = fitting_params(
-        max_iter                = 10,
     ),
 );
 
