@@ -156,7 +156,7 @@ function is_drastic_simplifyable(node, ops; threshold=1e-1)
             bool = is_drastic_simplifyable(node.rig, ops, threshold=threshold)
         end
     end
-    if !bool && node.ari == 2 && (node.lef.ari == -1 || node.rig.ari == -1) # if param is 0.0
+    if !bool && node.ari == 2 && (node.lef.ari == -1 || node.rig.ari == -1) # if param either is a parameter
         op = ops.binops[node.ind]
         node_1       = getfield(node, node.lef.ari != -1 ? :lef : :rig)
         node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
