@@ -232,7 +232,7 @@ function drastic_simplify_!(node, ops; threshold=1e-1)
     end
 end
 
-function drastic_simplify!(node, ops; threshold=1e-1, full=false)
+function drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
     while true
         drastic_nodes = get_drastic_simplify_nodes(node, ops; threshold=threshold)
         shuffle!(drastic_nodes)

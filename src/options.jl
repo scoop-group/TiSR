@@ -396,7 +396,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_add_term::Float64               = 0.1,   #|
     p_simplify::Float64               = 0.1,   #|-> simplify with SymbolicUtils
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
-    p_multiple_mutations::Float64     = 0.2,   # -> probability for more than one mutation
+    p_multiple_mutations::Float64     = 0.1,   # -> probability for more than one mutation
 )
     @assert all(p >= 0 for p in (
         p_crossover, p_point, p_insert, p_hoist, p_subtree, p_drastic_simplify,

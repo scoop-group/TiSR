@@ -1,5 +1,5 @@
 
-""" Check for illegal nestings in existing nodes. For it, ops.illegal_dict needs 
+""" Check for illegal nestings in existing nodes. For it, ops.illegal_dict needs
     to be specified like thus:
 
     illegal_dict = Dict(

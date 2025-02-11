@@ -312,11 +312,13 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     if length(pop) > 0.4 * ops.general.pop_per_isle
 
         # select parents
-        shuffle!(pop)
-        for i in 1:ops.general.n_children
-            if ops.general.parent_selection
+        if ops.general.parent_selection
+            for i in 1:ops.general.n_children
                 push!(chil, copy(parent_selection(pop)))
-            else
+            end
+        else
+            shuffle!(pop)
+            for i in 1:ops.general.n_children
                 push!(chil, copy(pop[mod1(i, length(pop))]))
             end
         end
