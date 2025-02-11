@@ -111,14 +111,14 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         # hall of fame migration # -----------------------------------------------------------------
         if gen % ops.general.hall_of_fame_migration_interval == 0
-            indiv = copy(rand(hall_of_fame))
+            indiv = deepcopy(rand(hall_of_fame))
             indiv.age = 0
             push!(population[rand(1:ops.general.num_islands)], indiv)
         end
 
         # hall of fame # ---------------------------------------------------------------------------
         for isle in 1:ops.general.num_islands
-            prepend!(hall_of_fame, copy.(population[isle]))
+            prepend!(hall_of_fame, deepcopy.(population[isle]))
         end
 
         # extract objectives # -------------------------------------------------------------
@@ -314,19 +314,19 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         # select parents
         if ops.general.parent_selection
             for i in 1:ops.general.n_children
-                push!(chil, copy(parent_selection(pop)))
+                push!(chil, deepcopy(parent_selection(pop)))
             end
         else
             shuffle!(pop)
             for i in 1:ops.general.n_children
-                push!(chil, copy(pop[mod1(i, length(pop))]))
+                push!(chil, deepcopy(pop[mod1(i, length(pop))]))
             end
         end
 
         apply_genetic_operations!(chil, ops, bank_of_terms)
 
         for _ in 1:ops.general.n_refitting
-            push!(chil, copy(rand(pop)))
+            push!(chil, deepcopy(rand(pop)))
         end
     end
 
@@ -358,6 +358,8 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
 # selection
 # ==================================================================================================
     if length(pop) > ops.general.pop_per_isle
+        sort!(pop, by=i->i.age)
+
         selection_inds = Int64[]
 
         # extract objectives # -------------------------------------------------------------
@@ -388,9 +390,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
 
         # Pareto selection # -------------------------------------------------------------------
         if ops.selection.n_pareto_select_per_isle > 0
-            # sort!(pop)
-            # append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
-
             n_front = 1
             while true
                 n_required = ops.selection.n_pareto_select_per_isle - length(selection_inds)
@@ -402,7 +401,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
                 append!(selection_inds, front)
                 n_front += 1
             end
-
         end
 
         # tournament selection # ---------------------------------------------------------------

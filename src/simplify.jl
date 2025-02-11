@@ -5,72 +5,82 @@
     Like: abs(param) -> param, cos(param) -> param
 """
 function simplify_unary_of_param!(node)
+    c = c_rig = c_lef = false
     if node.ari >= 1
-        simplify_unary_of_param!(node.lef)
+        c_lef = simplify_unary_of_param!(node.lef)
         if node.ari == 2
-            simplify_unary_of_param!(node.rig)
+            c_rig = simplify_unary_of_param!(node.rig)
         end
     end
-
     if node.ari == 1 && node.lef.ari == -1
         node.ari = node.lef.ari
         node.val = node.lef.val
+        c = true
     end
+    return c || c_lef || c_rig # TODO: test
 end
 
 """ Replaces a binary function of two parameters with a parameter.
     Like: param + param -> param, param * param -> param
 """
 function simplify_binary_of_param!(node)
+    c = c_rig = c_lef = false
     if node.ari >= 1
-        simplify_binary_of_param!(node.lef)
+        c_lef = simplify_binary_of_param!(node.lef)
         if node.ari == 2
-            simplify_binary_of_param!(node.rig)
+            c_rig = simplify_binary_of_param!(node.rig)
         end
     end
-
     if node.ari == 2 && node.lef.ari == -1 && node.rig.ari == -1
         node.ari = -1
         node.val = node.lef.val
+        c = true
     end
+    return c || c_lef || c_rig # TODO: test
 end
 
 """ Reorders the children of + and * in decreasing arity.
 """
 function reorder_add_n_mul!(node, ops)
+    c = c_rig = c_lef = false
     if node.ari >= 1
-        reorder_add_n_mul!(node.lef, ops)
+        c_lef = reorder_add_n_mul!(node.lef, ops)
         if node.ari == 2
-            reorder_add_n_mul!(node.rig, ops)
+            c_rig = reorder_add_n_mul!(node.rig, ops)
         end
     end
-
     if node.ari == 2 && ops.binops[node.ind] in (+, *)
         if node.rig.ari < node.lef.ari
             node.lef, node.rig = node.rig, node.lef
+            c = true
         elseif node.rig.ari == node.lef.ari && node.lef.ari != -1
             if node.rig.ind < node.lef.ind
                 node.lef, node.rig = node.rig, node.lef
+                c = true
             end
         end
     end
+    return c || c_lef || c_rig
 end
 
 """ Removes x - x and x / x and replaces by x, where x can be any subtree. Prevents domian errors
     in SymbolicUtils.
 """
 function replace_same_subst_n_div!(node, ops)
+    c = c_rig = c_lef = false
     if node.ari == 1
-        replace_same_subst_n_div!(node.lef, ops)
+        c_lef = replace_same_subst_n_div!(node.lef, ops)
     elseif node.ari == 2
         if ops.binops[node.ind] in (-, /) && isapprox(node.lef, node.rig)
             copy_node_wo_copy!(node, node.lef)
             replace_same_subst_n_div!(node, ops)
+            c = true
         else
-            replace_same_subst_n_div!(node.lef, ops)
-            replace_same_subst_n_div!(node.rig, ops)
+            c_lef = replace_same_subst_n_div!(node.lef, ops)
+            c_rig = replace_same_subst_n_div!(node.rig, ops)
         end
     end
+    return c || c_lef || c_rig
 end
 
 """ Simplifies redunand operations across one tree level.
@@ -85,13 +95,13 @@ global const simplify_binary_across_1_level_dict = Dict(
 )
 
 function simplify_binary_across_1_level!(node, ops)
+    c = c_rig = c_lef = false
     if node.ari >= 1
-        simplify_binary_across_1_level!(node.lef, ops)
+        c_lef = simplify_binary_across_1_level!(node.lef, ops)
         if node.ari == 2
-            simplify_binary_across_1_level!(node.rig, ops)
+            c_rig = simplify_binary_across_1_level!(node.rig, ops)
         end
     end
-
     if node.ari == 2 && xor(node.lef.ari == -1, node.rig.ari == -1) && xor(node.lef.ari == 2, node.rig.ari == 2)
         node_1 = getfield(node, node.lef.ari == 2 ? :lef : :rig)
         node_1_param = getfield(node, node.lef.ari == 2 ? :rig : :lef)
@@ -106,38 +116,37 @@ function simplify_binary_across_1_level!(node, ops)
 
                 setfield!(node, :lef, node_1_param.ari < node_2_param.ari ? node_1_param : node_2_param)
                 setfield!(node, :rig, node_2)
+                c = true
             end
         end
     end
+    return c || c_lef || c_rig
 end
 
 """ Convert x / param to x * param -> better for drastic simplify.
 """
 function div_to_mul_param!(node, ops) # TODO: test
+    c = c_rig = c_lef = false
     if node.ari >= 1
-        div_to_mul_param!(node.lef, ops)
+        c_lef = div_to_mul_param!(node.lef, ops)
         if node.ari == 2
-            div_to_mul_param!(node.rig, ops)
+            c_rig = div_to_mul_param!(node.rig, ops)
         end
     end
-
     if node.ari == 2 && isequal(ops.binops[node.ind], /) && node.rig.ari == -1
         node.ind = findfirst(isequal(*), ops.binops)
         node.rig.val = 1 / node.rig.val
+        c = true
     end
+    return c || c_lef || c_rig
 end
 
 function apply_simple_simplifications!(node, ops)
-    str1 = node_to_string(node, ops) # TODO: avoid going through strings -> return Bool from simplifes
-    while true
-        simplify_unary_of_param!(node)
-        simplify_binary_of_param!(node)
-        simplify_binary_across_1_level!(node, ops)
-        replace_same_subst_n_div!(node, ops)
-        str2 = node_to_string(node, ops)
-        str1 == str2 && break
-        str1 = str2
-    end
+    c1 = simplify_unary_of_param!(node)
+    c2 = simplify_binary_of_param!(node)
+    c3 = simplify_binary_across_1_level!(node, ops)
+    c4 = replace_same_subst_n_div!(node, ops)
+    (c1 || c2 || c3 || c4) && apply_simple_simplifications!(node, ops)
 end
 
 # ==================================================================================================

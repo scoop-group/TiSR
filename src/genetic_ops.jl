@@ -91,7 +91,7 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
             is_drastic_simplifyable(indiv.node, ops; threshold=ops.general.always_drastic_simplify)
             for indiv in indivs
         )
-        drastic_indivs = [copy(indivs[i]) for i in drastic_inds]
+        drastic_indivs = [deepcopy(indivs[i]) for i in drastic_inds]
 
         for indiv in drastic_indivs
             drastic_simplify!(indiv.node, ops, threshold=ops.general.always_drastic_simplify)

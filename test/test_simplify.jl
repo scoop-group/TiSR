@@ -1,4 +1,10 @@
 
+# TODO: test simplify_to_string(node::Node, ops::Options; sigdigits=15, use_simplify=false) # TODO: make nicer, this was quick and dirty
+# TODO: test apply_simple_simplifications!(node, ops)
+# TODO: test div_to_mul_param!(node, ops) # TODO: test
+# TODO: test replace_same_subst_n_div!(node, ops)
+
+
 pow2(x) = x^2
 pow_abs(x, y) = abs(x)^y
 
@@ -233,12 +239,7 @@ end
 
         node = TiSR.grow_equation(rand(3:5), ops, method=:full)
 
-        for _ in 1:5
-            TiSR.simplify_unary_of_param!(node)
-            TiSR.simplify_binary_of_param!(node)
-            TiSR.simplify_binary_across_1_level!(node, ops)
-            TiSR.replace_same_subst_n_div!(node, ops)
-        end
+        TiSR.apply_simple_simplifications!(node, ops)
 
         compl = TiSR.count_nodes(node)
 
@@ -287,12 +288,7 @@ end
 
         node = TiSR.grow_equation(rand(3:5), ops, method=:full)
 
-        for _ in 1:5
-            TiSR.simplify_unary_of_param!(node)
-            TiSR.simplify_binary_of_param!(node)
-            TiSR.simplify_binary_across_1_level!(node, ops)
-            TiSR.replace_same_subst_n_div!(node, ops)
-        end
+        TiSR.apply_simple_simplifications!(node, ops)
 
         compl = TiSR.count_nodes(node)
 
@@ -326,9 +322,6 @@ end
 
     @test count(<=(1e-5), mse_diffs) > 8000
 end
-
-
-
 
 
 

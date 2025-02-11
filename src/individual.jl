@@ -55,31 +55,9 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     end
 end
 
-# ==================================================================================================
-# some helpers
-# ==================================================================================================
 """ prints or displays an Individual
 """
 Base.show(io::IO, indiv::Individual) = println(io, "Indiv($(node_to_string(indiv.node, __operators; sigdigits=3)))")
-
-""" copies an individual.
-"""
-function Base.copy(indiv::Individual)
-    new = Individual()
-    for field_ in fieldnames(Individual)
-        if isdefined(indiv, field_)
-            setfield!(new, field_, deepcopy(getfield(indiv, field_)))
-        end
-    end
-    return new
-end
-
-Base.deepcopy(indiv::Individual)::Individual = Base.copy(indiv)
-
-""" make individual type iterable.
-"""
-Base.iterate(s::Individual, state=1) = state > length(fieldnames(Individual)) ? nothing : ((fieldnames(Individual)[state], getfield(s, state)), state + 1)
-Base.length(s::Individual) = length(fieldnames(Individual))
 
 """ The NSGA-II definition of isless.
 """
@@ -97,9 +75,6 @@ function Base.isless(i1::Individual, i2::Individual)
     end
 end
 
-# ==================================================================================================
-# different remove doubles -> maybe combine somehow with views?
-# ==================================================================================================
 """ Removes similar individual from a population isle. The individuals are considered similar,
     if their MSE and MAE rounded to ops.general.remove_doubles_sigdigits significant digits are
     the same. Of those, the one with the least complexity remains in the population.

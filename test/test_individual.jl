@@ -9,30 +9,6 @@ ops, data_vect = Options(
     ),
 )
 
-@testset "Base.copy(indiv::Individual)" begin
-
-    indiv = nothing
-    while isnothing(indiv)
-        node  = TiSR.grow_equation(rand(4:7), ops, method=:full)
-        list_of_param = TiSR.list_of_param_nodes(node)
-        !isempty(list_of_param) || continue
-        indiv = TiSR.Individual(node)
-        TiSR.fit_individual!(indiv, data_vect, ops, ops.grammar.max_compl, 0)
-        indiv.valid || continue
-    end
-
-    indiv2 = copy(indiv)
-
-    @test !(indiv === indiv2)
-    for (k, v) in indiv
-        @test string(v) == string(getfield(indiv2, k))
-    end
-
-    indiv.measures[:compl] += 1
-    @test indiv.measures[:compl] != indiv2.measures[:compl]
-end
-
-
 @testset "_remove_doubles_helper!" begin
 
     # create population island with mae and mse such that all are different
