@@ -68,7 +68,7 @@ function Base.copy(indiv::Individual)
     new = Individual()
     for field_ in fieldnames(Individual)
         if isdefined(indiv, field_)
-            setfield!(new, field_, copy(getfield(indiv, field_)))
+            setfield!(new, field_, deepcopy(getfield(indiv, field_)))
         end
     end
     return new
