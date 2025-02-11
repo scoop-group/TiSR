@@ -16,7 +16,6 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     indiv.age = 0.0
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
-    apply_simple_simplifications!(indiv.node, ops)
     trim_to_max_nodes_per_term!(indiv.node, ops)
     apply_simple_simplifications!(indiv.node, ops)
     div_to_mul_param!(indiv.node, ops)
