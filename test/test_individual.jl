@@ -1,13 +1,33 @@
 
-# TODO: integration test for Individual()
+# TODO: integration test fit_individual
+# TODO: integration test cur_max_compl
+# TODO: test remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, ops)
 
 data = rand(100, 10)
 ops, data_vect = Options(
     data,
     general                            = general_params(
         remove_doubles_sigdigits       = 2,
-    ),
+    )
 )
+
+@testset "Base.isless" begin
+    indiv1 = TiSR.Individual(TiSR.grow_equation(rand(3:5), ops, method = :asym))
+    indiv2 = TiSR.Individual(TiSR.grow_equation(rand(3:5), ops, method = :asym))
+
+    indiv1.rank = 1
+    indiv2.rank = 2
+    @test indiv1 < indiv2
+
+    indiv1.rank = 1
+    indiv1.crowding = 2.0
+    indiv2.rank = 1
+    indiv2.crowding = 1.0
+    @test indiv1 < indiv2
+
+    vect = [indiv1, indiv2]
+    @test vect == sort(vect)
+end
 
 @testset "_remove_doubles_helper!" begin
 
@@ -51,7 +71,7 @@ end
         # copy individuals but with different complexities
         for i in 1:5
             for j in 1:5
-                indiv = copy(indivs[i])
+                indiv = deepcopy(indivs[i])
                 indiv.measures[:mae]   += rand() * 0.0001
                 indiv.measures[:mse]   += rand() * 0.0001
                 indiv.measures[:compl] += j

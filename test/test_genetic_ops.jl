@@ -1,6 +1,6 @@
 
-# TODO: subtree_mutation
-# TODO: apply_genetic_operations
+# TODO: test add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
+# TODO: apply_genetic_operations!(indivs, ops, bank_of_terms;
 
 data = rand(100, 5)
 ops, data_vect = Options(data)
@@ -101,6 +101,7 @@ end
 
 @testset "point_mutation" begin
 
+    # point_mutation1
     distances = map(1:1000) do _
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
         num_nodes_before = TiSR.count_nodes(node)
@@ -111,13 +112,32 @@ end
         num_nodes_after = TiSR.count_nodes(node)
         str2 = TiSR.encode_single_char(node, ops)
 
-        @test num_nodes_after == num_nodes_after
+        @test num_nodes_after == num_nodes_before
 
-        Levenshtein()(str1, str2)
+        dist = Levenshtein()(str1, str2)
+        @test dist in (0, 1)
+        dist
+    end
+    @test quantile(distances, 0.7) == 1
+
+    # point_mutation2
+    # not the bests test for point_mutation2, but not the worst either
+    distances = map(1:1000) do _
+        node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
+        num_nodes_before = TiSR.count_nodes(node)
+        str1 = TiSR.encode_single_char(node, ops)
+        TiSR.point_mutation2!(node, ops)
+        num_nodes_after = TiSR.count_nodes(node)
+        str2 = TiSR.encode_single_char(node, ops)
+        dist = num_nodes_after - num_nodes_before
+        lev = Levenshtein()(str1, str2)
+        dist, lev/num_nodes_before
     end
 
-    @test all(d in (0, 1) for d in distances)
-    @test quantile(distances, 0.7) == 1
+    @test length(unique(first.(distances))) > 5
+    @test any(>(0), first.(distances))
+    @test any(<(0), first.(distances))
+    @test quantile(last.(distances), 0.5) < 0.5
 end
 
 @testset "insert_mutation!" begin
@@ -230,8 +250,33 @@ end
 end
 
 @testset "subtree_mutation!" begin
-    """ no idea how to test that. num_nodes can be higher or lower & edit distance can be
-        arbitrarily high.
+
+    # not the bests test for point_mutation2, but not the worst either
+    distances = map(1:1000) do _
+        node = nothing
+        num_nodes_before = nothing
+        while true
+            node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
+            num_nodes_before = TiSR.count_nodes(node)
+            num_nodes_before > 1 && break
+        end
+        str1 = TiSR.encode_single_char(node, ops)
+        TiSR.subtree_mutation!(node, ops)
+        num_nodes_after = TiSR.count_nodes(node)
+        str2 = TiSR.encode_single_char(node, ops)
+        dist = num_nodes_after - num_nodes_before
+        lev = Levenshtein()(str1, str2)
+        dist, lev/num_nodes_before
+    end
+
+    @test length(unique(first.(distances))) > 5
+    @test any(>(0), first.(distances))
+    @test any(<(0), first.(distances))
+    @test quantile(last.(distances), 0.5) > 0.5
+end
+
+@testset "apply_genetic_operations" begin
+    """ no idea how to test that
     """
 end
 

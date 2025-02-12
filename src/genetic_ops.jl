@@ -205,7 +205,7 @@ function point_mutation2!(node, ops)
         if !isempty(ops.binops)
             node_elect.ari = 2
             node_elect.ind = rand(1:length(ops.binops))
-            node_elect.rig = grow_equation(1, ops, method = :asym)
+            node_elect.rig = grow_equation(1, ops)
         else
             point_mutation1!(node, ops)
         end

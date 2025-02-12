@@ -1,4 +1,13 @@
 
+# TODO: many integration tests
+# TODO: test start pop, which includes finished equation
+# TODO: test start pop contianing invalids
+# TODO: test start pop with strings and with individuals
+# TODO: test bank of terms with finished equation and with illegal nesting
+# TODO: how to test migration?
+# TODO: how to test island extinction
+# TODO: how to test hall_of_fame migration
+# TODO: how to test hall_of_fame
 
 @testset "stop_msg and callback" begin
 
