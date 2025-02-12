@@ -1,5 +1,5 @@
 
-# TODO: test simplify_to_string(node::Node, ops::Options; sigdigits=15, use_simplify=false) # TODO: make nicer, this was quick and dirty
+# TODO: test simplify_to_string(node::Node, ops::Options; sigdigits=15) # TODO: make nicer, this was quick and dirty
 # TODO: test apply_simple_simplifications!(node, ops)
 # TODO: test div_to_mul_param!(node, ops) # TODO: test
 # TODO: test replace_same_subst_n_div!(node, ops)
