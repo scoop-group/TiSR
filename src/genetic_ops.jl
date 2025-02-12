@@ -56,8 +56,10 @@ function random_node(node::Node; mode=0, scale=1.0)
 end
 
 """ Traversal for the random_node function. Implemented along the lines of
-    SymbolicRegression.jl
-"""                        # TODO: explain scale parameter
+    SymbolicRegression.jl. The scale parameter scews the sampling along the depth.
+    A scale > 1 leads a higher probability to sample nodes closer to the root, while
+    a scale < 1 leads to nodes closer to terminal.
+"""
 function random_node_(node; scale=1.0)
     node.ari <= 0 && return node
 

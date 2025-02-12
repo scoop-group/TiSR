@@ -37,6 +37,7 @@ end
 
         count_map_ = countmap(obj_ids)
 
+        # test whether all nodes have been sampled at least ones
         @test length(count_map_) == TiSR.count_nodes(node)
 
         mean_freq = mean(collect(values(count_map_)))
@@ -44,6 +45,7 @@ end
         outest_lier / mean_freq
     end
 
+    # test whether the sample distribution accross the nodes is approximately uniform
     @test quantile(distribs, 0.95) < 0.2
 
     for _ in 1:1000
@@ -52,39 +54,45 @@ end
 
         obj_ids_mode1 = map(1:1_000) do _
             rand_node = TiSR.random_node(node, mode=1)
+            # test the mode parameter
             @test TiSR.maxim_tree_depth(rand_node) > 1
             obj_id = objectid(rand_node)
         end
 
         obj_ids_mode2 = map(1:1_000) do _
             rand_node = TiSR.random_node(node, mode=2)
+            # test the mode parameter
             @test TiSR.maxim_tree_depth(rand_node) > 2
             obj_id = objectid(rand_node)
         end
 
+        # make sure some nodes are never sampled
         @test TiSR.count_nodes(node) > length(unique(obj_ids_mode1)) > length(unique(obj_ids_mode2))
     end
 
     # # test scale parameter
     # get_freqs = x -> [count(==(i), x) for i in sort(unique(x))]
     #
-    # for _ in 1:1000
+    # issorted_ = map(1:100) do _
     #     max_depth = rand(3:6)
     #     node = TiSR.grow_equation(max_depth, ops, method=:full)
-    #     tree_depths = [TiSR.maxim_tree_depth(n) for n in flatten_node(node)]
+    #     tree_depths = [TiSR.maxim_tree_depth(n) for n in TiSR.flatten_node(node)]
     #     freqs = get_freqs(tree_depths)
-    #     depths = map(1:100_000) do _
-    #         rand_node = TiSR.random_node(node, mode=0, scale=0.8)
+    #     depths = map(1:10_000) do _
+    #         rand_node = TiSR.random_node(node, mode=0, scale=0.5)
     #         TiSR.maxim_tree_depth(rand_node)
     #     end
     #     chosen_freqs = get_freqs(depths)
     #     chosen_freqs ./ freqs
+    #     issorted(chosen_freqs, rev=true)
     # end
+    #
+    # # test whether most of the time, the sample frequencies decends with depth
+    # @test count(issorted_) > 50
+
 end
 
-
 @testset "mutate_left" begin
-
     for _ in 1:1000
         node = TiSR.grow_equation(rand(3:7), ops, method = :full)
         rand_node = TiSR.random_node(node, mode=1)

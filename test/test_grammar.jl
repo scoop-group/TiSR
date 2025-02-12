@@ -1,7 +1,4 @@
 
-# TODO: test get_max_nodes_per_term(node, ops)
-# TODO: test trim_to_max_compl!(node, max_compl, ops)
-
 data = rand(100, 10)
 ops, data_vect = Options(data)
 
