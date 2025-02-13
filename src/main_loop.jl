@@ -371,7 +371,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         ]
 
         # apply niching
-        indiv_obj_vals = normalize_objectives(indiv_obj_vals)
         indiv_obj_vals = [
             round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
             for indiv in indiv_obj_vals
@@ -409,7 +408,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
             remaining_inds = setdiff(eachindex(pop), selection_inds)
 
             if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-                # indiv_obj_vals = normalize_objectives(indiv_obj_vals)
+                indiv_obj_vals = normalize_objectives(indiv_obj_vals)
                 fitness  = get_relative_fitness(indiv_obj_vals)
                 selected = tournament_selection(fitness, remaining_inds,
                     tournament_size = ops.selection.tournament_size,
