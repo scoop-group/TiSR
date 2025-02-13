@@ -18,7 +18,7 @@ end
 
 """ Creates a new node with the specified type.
 """
-function convert_node(node::Node, val_T::T) where {T <: Number}
+function convert_node(node::Node, val_T::T) where {T <: Number} # [x] tested
     if node.ari == -1
         return Node(convert(T, node.val), val_type=val_T)
     elseif node.ari == 0
@@ -33,12 +33,12 @@ function convert_node(node::Node, val_T::T) where {T <: Number}
     end
 end
 
-function Base.convert(::Type{T1}, node::Node{T2}) where {T1 <: Real, T2 <: Real}
+function Base.convert(::Type{T1}, node::Node{T2}) where {T1 <: Real, T2 <: Real} # [x] tested
     T1 == T2 && return node
     return convert_node(node, zero(T1))
 end
 
-function Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, node::Node{T2}) where {T, V, N, T2<:Real}
+function Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, node::Node{T2}) where {T, V, N, T2<:Real} # [x] tested
     T1 = ForwardDiff.Dual{T, V, N}
     T1 == T2 && return node
     return convert_node(node, zero(T1))
@@ -47,7 +47,7 @@ end
 # ==================================================================================================
 # eval equation
 # ==================================================================================================
-@inline bad_array(arr) = any(!isfinite, arr) # !isfinite(sum(arr)) # TODO: is the new version better? 4x slower synthetically, but 0 allocations
+@inline bad_array(arr) = any(!isfinite, arr) # [x] tested
 
 """ Eval a tree with the "cautious" approach -> prevent evaluations, which cause error, rather
     than redefining function like pow(abs(x), y). The faulty and each following one is prevented

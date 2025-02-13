@@ -55,7 +55,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     end
 end
 
-""" prints or displays an Individual
+""" Prints or displays an Individual.
 """
 Base.show(io::IO, indiv::Individual) = println(io, "Indiv($(node_to_string(indiv.node, __operators; sigdigits=3)))")
 

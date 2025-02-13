@@ -1,15 +1,31 @@
 
-# TODO: integration test fit_individual
-# TODO: integration test cur_max_compl
-# TODO: test remove_doubles_across_islands!(individs::Vector{Vector{Individual}}, ops)
+# TODO: integration test fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+    # TODO: integration test cur_max_compl
+    # TODO: integration test fit_iter
 
 data = rand(100, 10)
 ops, data_vect = Options(
     data,
-    general                            = general_params(
-        remove_doubles_sigdigits       = 2,
+    general = general_params(
+        remove_doubles_sigdigits = 2,
+        num_islands              = 3,
     )
 )
+
+# @testset "fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)" begin
+#
+#     indivs = TiSR.Individual[]
+#
+#     while length(indivs) < 5
+#         node  = TiSR.grow_equation(rand(4:7), ops)
+#         indiv = TiSR.Individual(node)
+#     end
+#
+#     TiSR.fit_individual!(indiv, data_vect, ops, ops.grammar.max_compl, 0)
+#     indiv.valid || continue
+#     push!(indivs, indiv)
+#
+# end
 
 @testset "Base.isless" begin
     indiv1 = TiSR.Individual(TiSR.grow_equation(rand(3:5), ops, method = :asym))
@@ -89,4 +105,45 @@ end
     @test isapprox(avg, 5, rtol=0.1)
 end
 
+@testset "remove_doubles_across_islands!" begin
+
+    avg = 0.0
+
+    for iters in 1:100
+        indivs = TiSR.Individual[]
+
+        while length(indivs) < 5
+            node  = TiSR.grow_equation(rand(4:7), ops)
+            indiv = TiSR.Individual(node)
+            TiSR.fit_individual!(indiv, data_vect, ops, ops.grammar.max_compl, 0)
+            indiv.valid || continue
+            push!(indivs, indiv)
+        end
+
+        # copy individuals but with different complexities
+        for i in 1:5
+            for j in 1:5
+                indiv = deepcopy(indivs[i])
+                indiv.measures[:mae]   += rand() * 0.0001
+                indiv.measures[:mse]   += rand() * 0.0001
+                indiv.measures[:compl] += j
+                push!(indivs, indiv)
+            end
+        end
+
+        shuffle!(indivs)
+
+        population = [
+            indivs[isle:ops.general.num_islands:end]
+            for isle in 1:ops.general.num_islands
+        ]
+
+        TiSR.remove_doubles_across_islands!(population, ops)
+        population = reduce(vcat, population)
+
+        avg += (length(population) - avg)/iters
+    end
+
+    @test isapprox(avg, 5, rtol=0.1)
+end
 
