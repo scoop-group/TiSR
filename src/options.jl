@@ -177,6 +177,7 @@ function general_params(;
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 5000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
+    migrate_after_extinction_dist::Float64 = 0.25,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                         # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 1000,                                                     # -> interval in which a random individual from the hall of fame is returned to a random island
     always_drastic_simplify::Float64       = 1e-8,                                                     # -> for individuals with parameters smaller than `always_drastic_simplify` a copy is created, those parameters removed with some probability, and simplified accordingly. -> 0 is off; 1e-10 ... 1e-6
@@ -201,6 +202,7 @@ function general_params(;
     @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1     "
     @assert 0.0 <= children_ratio <= 2.0                "children_ratio should be inbetween 0.0 and 2.0            "
     @assert 0 <= n_refitting <= pop_size / num_islands  "n_refitting should be between 0 and pop_size / num_islands"
+    @assert 0 <= migrate_after_extinction_dist <= 0.5   "migrate_after_extinction_dist must be between 0 and 0.5   "
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -222,6 +224,11 @@ function general_params(;
     # resulting parameters
     pop_per_isle = ceil(Int64, pop_size / num_islands)
     n_children = max(2, round(Int64, children_ratio * pop_per_isle))
+    migrate_after_extinction_num = round(Int64, pop_per_isle * migrate_after_extinction_prob)
+    migrate_after_extinction_dist = round(Int64, num_islands * migrate_after_extinction_dist)
+    if migrate_after_extinction_num > 0
+        @assert migrate_after_extinction_dist > 0 "if migrate_after_extinction_prob is > 0, migrate_after_extinction_dist must be > 0"
+    end
 
     return (
         n_gens                          = n_gens,
@@ -233,7 +240,8 @@ function general_params(;
         migration_interval              = migration_interval,
         hall_of_fame_migration_interval = hall_of_fame_migration_interval,
         island_extinction_interval      = island_extinction_interval,
-        migrate_after_extinction_prob   = migrate_after_extinction_prob,
+        migrate_after_extinction_num    = migrate_after_extinction_num,
+        migrate_after_extinction_dist   = migrate_after_extinction_dist,
         fitting_island_function         = fitting_island_function,
         always_drastic_simplify         = always_drastic_simplify,
         remove_doubles_sigdigits        = remove_doubles_sigdigits,

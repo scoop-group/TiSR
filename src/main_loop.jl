@@ -88,59 +88,21 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 # ==================================================================================================
 # inter-isle
 # ==================================================================================================
-        # remove doubles across islands # ----------------------------------------------------------
         if ops.general.remove_doubles_across_islands && ops.general.remove_doubles_sigdigits > 0
             remove_doubles_across_islands!(population, ops)
         end
 
-        # migration # ------------------------------------------------------------------------------
         if gen % ops.general.migration_interval == 0
-            emmigrate_island = rand(1:ops.general.num_islands)
-            immigrate_island = mod1(emmigrate_island + rand((1, -1)), ops.general.num_islands)
-
-            !isempty(population[emmigrate_island]) || continue
-
-            push!(
-                population[immigrate_island],
-                popat!(
-                    population[emmigrate_island],
-                    rand(1:length(population[emmigrate_island]))
-                )
-            )
+            perform_migration!(population, ops)
         end
 
-        # hall of fame migration # -----------------------------------------------------------------
         if gen % ops.general.hall_of_fame_migration_interval == 0
             indiv = deepcopy(rand(hall_of_fame))
             indiv.age = 0
             push!(population[rand(1:ops.general.num_islands)], indiv)
         end
 
-        # hall of fame # ---------------------------------------------------------------------------
-        for isle in 1:ops.general.num_islands
-            prepend!(hall_of_fame, deepcopy.(population[isle]))
-        end
-
-        # extract objectives # -------------------------------------------------------------
-        indiv_obj_vals = [
-            Float64[
-                indiv.measures[obj] for obj in ops.selection.hall_of_fame_objectives
-            ]
-            for indiv in hall_of_fame
-        ]
-
-        # apply niching
-        indiv_obj_vals = [
-            round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
-            for indiv in indiv_obj_vals
-        ]
-        unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
-        keepat!(indiv_obj_vals, unique_inds)
-        keepat!(hall_of_fame, unique_inds)
-
-        selection_inds = first_pareto_front(indiv_obj_vals)
-
-        keepat!(hall_of_fame, selection_inds)
+        perform_hall_of_fame_selection!(hall_of_fame, population, ops)
 
 # ==================================================================================================
 # every couple of generations
@@ -180,70 +142,12 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
             end
 
             if ops.general.plot_hall_of_fame
-                compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
-                ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
-
-                plt = scatterplot(
-                    compl,
-                    clamp.(ms_processed_e, 1e-30, 1e30),
-                    yscale           = :log10,
-                    title            = "hall of fame",
-                    xlabel           = "compl",
-                    ylabel           = "log10 of ms_processed_e",
-                    marker           = :circle,
-                    unicode_exponent = false,
-                    xlim             = (0, ops.grammar.max_compl),
-                    ylim             = (
-                        10^(floor(log10(minimum(ms_processed_e)))),
-                        10^(ceil(log10(maximum(ms_processed_e))))
-                    ),
-                    compact=true
-                )
-
-                if ops.general.print_hall_of_fame
-                    sort!(hall_of_fame, by=i->i.measures[:compl])
-
-                    inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
-                    unique!(inds_to_show)
-
-                    eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
-
-                    for (ii, i) in enumerate(inds_to_show)
-                        label!(plt, :r, ii, replace(
-                            eq_strs[ii],
-                            " " => "", r"(\d)\.0\b" => s"\1"
-                        ))
-                    end
-                end
-                display(plt)
+                plot_hall_of_fame(hall_of_fame, ops)
             end
         end
 
-# ==================================================================================================
-# island extinction
-# ==================================================================================================
         if gen % ops.general.island_extinction_interval == 0
-            emmigrate_island = rand(1:ops.general.num_islands)
-
-            # both directions, decreasing with distance
-            offsets = -trunc(Int64, 0.25 * ops.general.num_islands):trunc(Int64, 0.25 * ops.general.num_islands)
-            offsets = filter(!=(0), offsets)
-            probs   = (1 ./ abs.(offsets)).^2
-
-            while !isempty(population[emmigrate_island])
-                indiv = popat!(
-                    population[emmigrate_island],
-                    rand(1:length(population[emmigrate_island]))
-                )
-
-                if rand() < ops.general.migrate_after_extinction_prob
-                    immigrate_island = mod1(
-                        emmigrate_island + wsample(offsets, probs),
-                        ops.general.num_islands
-                    )
-                    push!(population[immigrate_island], indiv)
-                end
-            end
+            perform_island_extinction!(population, ops)
         end
 
 # ==================================================================================================
@@ -299,9 +203,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
 
     foreach(indiv -> indiv.age += 1, pop)
 
-# ==================================================================================================
-# genetic operations
-# ==================================================================================================
     # create new children # ----------------------------------------------------------------
     while length(chil) + length(pop) < 0.6 * ops.general.pop_per_isle
         push!(chil,
@@ -309,20 +210,9 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         )
     end
 
+    # genetic operations # -------------------------------------------------------------------------
     if length(pop) > 0.4 * ops.general.pop_per_isle
-
-        # select parents
-        if ops.general.parent_selection
-            for i in 1:ops.general.n_children
-                push!(chil, deepcopy(parent_selection(pop)))
-            end
-        else
-            shuffle!(pop)
-            for i in 1:ops.general.n_children
-                push!(chil, deepcopy(pop[mod1(i, length(pop))]))
-            end
-        end
-
+        perform_parent_selection!(chil, pop, ops)
         apply_genetic_operations!(chil, ops, bank_of_terms)
 
         for _ in 1:ops.general.n_refitting
@@ -330,7 +220,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         end
     end
 
-    # grow them up # -----------------------------------------------------------------------
+    # fitting and evaluation # ---------------------------------------------------------------------
     if ops.general.multithreading
         Threads.@threads :greedy for ii in eachindex(chil)
             fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
@@ -347,83 +237,16 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     prepend!(pop, chil) # prepend, so that children are preferred during niching
     empty!(chil)
 
-    # remove individuals
+    # remove individuals # -------------------------------------------------------------------------
     if ops.general.remove_doubles_sigdigits > 0
         remove_doubles!(pop, ops)
     end
 
     filter!(i -> i.age <= ops.general.max_age, pop)
 
-# ==================================================================================================
-# selection
-# ==================================================================================================
+    # selection # ----------------------------------------------------------------------------------
     if length(pop) > ops.general.pop_per_isle
-        sort!(pop, by=i->i.age)
-
-        selection_inds = Int64[]
-
-        # extract objectives # -------------------------------------------------------------
-        indiv_obj_vals = [
-            Float64[
-                indiv.measures[obj] for obj in ops.selection.selection_objectives
-            ]
-            for indiv in pop
-        ]
-
-        # apply niching
-        indiv_obj_vals = [
-            round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
-            for indiv in indiv_obj_vals
-        ]
-        unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
-        keepat!(indiv_obj_vals, unique_inds)
-        keepat!(pop, unique_inds)
-
-        # determine rank and crowding for all individuals
-        ranks    = non_dominated_sort(indiv_obj_vals)
-        crowding = crowding_distance(indiv_obj_vals)
-
-        for i in eachindex(pop)
-            pop[i].rank     = ranks[i]
-            pop[i].crowding = crowding[i]
-        end
-
-        # Pareto selection # -------------------------------------------------------------------
-        if ops.selection.n_pareto_select_per_isle > 0
-            n_front = 1
-            while true
-                n_required = ops.selection.n_pareto_select_per_isle - length(selection_inds)
-                n_required > 0 || break
-                front = findall(==(n_front), ranks)
-                if n_required < length(front)
-                    front = wsample(front, replace([crowding[f] for f in front], Inf => 1e100, 0.0 => 1e-100), n_required, replace=false)
-                end
-                append!(selection_inds, front)
-                n_front += 1
-            end
-        end
-
-        # tournament selection # ---------------------------------------------------------------
-        if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
-            remaining_inds = setdiff(eachindex(pop), selection_inds)
-
-            if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-                indiv_obj_vals = normalize_objectives(indiv_obj_vals)
-                fitness  = get_relative_fitness(indiv_obj_vals)
-                selected = tournament_selection(fitness, remaining_inds,
-                    tournament_size = ops.selection.tournament_size,
-                    n_select        = ops.general.pop_per_isle - length(selection_inds)
-                )
-            else
-                selected = remaining_inds
-            end
-
-            append!(selection_inds, selected)
-        end
-
-        # apply selection
-        sort!(selection_inds)
-        keepat!(pop, selection_inds)
+        perform_population_selection!(pop, ops)
     end
 end
 
@@ -487,4 +310,88 @@ function check_for_user_quit(reader::StdinReader)::Bool
         end
     end
     return false
+end
+
+""" Performs the migration of individuals form one island to another
+"""
+function perform_migration!(population, ops)
+    emmigrate_island = rand(1:ops.general.num_islands)
+    immigrate_island = mod1(emmigrate_island + rand((1, -1)), ops.general.num_islands)
+
+    if !isempty(population[emmigrate_island])
+        push!(
+            population[immigrate_island],
+            popat!(
+                population[emmigrate_island],
+                rand(1:length(population[emmigrate_island]))
+            )
+        )
+    end
+end
+
+""" Perform island extinction. Chooses a random island, and distributes the best
+    indiviuals into the surrounding islands, while emptying the chosen island.
+"""
+function perform_island_extinction!(population, ops)
+    emmigrate_island = rand(1:ops.general.num_islands)
+
+    # both directions, decreasing with distance
+    offsets = -ops.general.migrate_after_extinction_dist:ops.general.migrate_after_extinction_dist
+    offsets = filter(!=(0), offsets)
+    offsets = length(offsets) < 2 ? [-1, 1] : offsets
+    probs   = (1 ./ abs.(offsets)).^2
+
+    sort!(population[emmigrate_island])
+    for _ in 1:ops.general.migrate_after_extinction_num
+        indiv = popfirst!(population[emmigrate_island])
+        immigrate_island = mod1(
+            emmigrate_island + wsample(offsets, probs),
+            ops.general.num_islands
+        )
+        push!(population[immigrate_island], indiv)
+        isempty(population[emmigrate_island]) && break
+    end
+    empty!(population[emmigrate_island])
+end
+
+""" Plots the current hall_of_fame fame and prints a selection of the equations
+    after simplifying them.
+"""
+function plot_hall_of_fame(hall_of_fame, ops)
+    compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
+    ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
+
+    plt = scatterplot(
+        compl,
+        clamp.(ms_processed_e, 1e-30, 1e30),
+        yscale           = :log10,
+        title            = "hall of fame",
+        xlabel           = "compl",
+        ylabel           = "log10 of ms_processed_e",
+        marker           = :circle,
+        unicode_exponent = false,
+        xlim             = (0, ops.grammar.max_compl),
+        ylim             = (
+            10^(floor(log10(minimum(ms_processed_e)))),
+            10^(ceil(log10(maximum(ms_processed_e))))
+        ),
+        compact=true
+    )
+
+    if ops.general.print_hall_of_fame
+        sort!(hall_of_fame, by=i->i.measures[:compl])
+
+        inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
+        unique!(inds_to_show)
+
+        eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
+
+        for (ii, i) in enumerate(inds_to_show)
+            label!(plt, :r, ii, replace(
+                eq_strs[ii],
+                " " => "", r"(\d)\.0\b" => s"\1"
+            ))
+        end
+    end
+    display(plt)
 end

@@ -1,4 +1,123 @@
 
+""" Perform the parent selection.
+"""
+function perform_parent_selection!(chil, pop, ops)
+    if ops.general.parent_selection
+        for i in 1:ops.general.n_children
+            push!(chil, deepcopy(parent_selection(pop)))
+        end
+    else
+        shuffle!(pop)
+        for i in 1:ops.general.n_children
+            push!(chil, deepcopy(pop[mod1(i, length(pop))]))
+        end
+    end
+end
+
+
+""" Perform the population selection.
+"""
+function perform_population_selection!(pop, ops)
+    sort!(pop, by=i->i.age)
+
+    selection_inds = Int64[]
+
+    # extract objectives # -------------------------------------------------------------
+    indiv_obj_vals = [
+        Float64[
+            indiv.measures[obj] for obj in ops.selection.selection_objectives
+        ]
+        for indiv in pop
+    ]
+
+    # apply niching
+    indiv_obj_vals = [
+        round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
+        for indiv in indiv_obj_vals
+    ]
+    unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
+    keepat!(indiv_obj_vals, unique_inds)
+    keepat!(pop, unique_inds)
+
+    # determine rank and crowding for all individuals
+    ranks    = non_dominated_sort(indiv_obj_vals)
+    crowding = crowding_distance(indiv_obj_vals)
+
+    for i in eachindex(pop)
+        pop[i].rank     = ranks[i]
+        pop[i].crowding = crowding[i]
+    end
+
+    # Pareto selection # -------------------------------------------------------------------
+    if ops.selection.n_pareto_select_per_isle > 0
+        n_front = 1
+        while true
+            n_required = ops.selection.n_pareto_select_per_isle - length(selection_inds)
+            n_required > 0 || break
+            front = findall(==(n_front), ranks)
+            if n_required < length(front)
+                front = wsample(front, replace([crowding[f] for f in front], Inf => 1e100, 0.0 => 1e-100), n_required, replace=false)
+            end
+            append!(selection_inds, front)
+            n_front += 1
+        end
+    end
+
+    # tournament selection # ---------------------------------------------------------------
+    if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
+        remaining_inds = setdiff(eachindex(pop), selection_inds)
+
+        if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
+            indiv_obj_vals = normalize_objectives(indiv_obj_vals)
+            fitness  = get_relative_fitness(indiv_obj_vals)
+            selected = tournament_selection(fitness, remaining_inds,
+                tournament_size = ops.selection.tournament_size,
+                n_select        = ops.general.pop_per_isle - length(selection_inds)
+            )
+        else
+            selected = remaining_inds
+        end
+
+        append!(selection_inds, selected)
+    end
+
+    # apply selection
+    sort!(selection_inds)
+    keepat!(pop, selection_inds)
+end
+
+""" Perfroms the hall_of_fame selection.
+"""
+function perform_hall_of_fame_selection!(hall_of_fame, population, ops)
+    for isle in 1:ops.general.num_islands
+        prepend!(hall_of_fame, deepcopy.(population[isle])) # TODO: maybe only add, and deepcopy only hall_of_fame of itself in the end?
+    end
+
+    indiv_obj_vals = [
+        Float64[
+            indiv.measures[obj] for obj in ops.selection.hall_of_fame_objectives
+        ]
+        for indiv in hall_of_fame
+    ]
+
+    # apply niching
+    indiv_obj_vals = [
+        round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
+        for indiv in indiv_obj_vals
+    ]
+    unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
+    keepat!(indiv_obj_vals, unique_inds)
+    keepat!(hall_of_fame, unique_inds)
+
+    selection_inds = first_pareto_front(indiv_obj_vals)
+
+    keepat!(hall_of_fame, selection_inds)
+end
+
+# ==================================================================================================
+# helpers
+# ==================================================================================================
+
 """ Whether x dominates y.
 """
 dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], eachindex(x))
@@ -51,11 +170,10 @@ function crowding_distance(individs)
     return dists
 end
 
-""" perfrom binary tournament selection for parent selection
+""" Perfrom binary tournament selection for parent selection.
 """
 parent_selection(pop) = min(rand(pop), rand(pop))
 
-# tournament selection # ---------------------------------------------------------------------------
 """ Tournament selection. The proprocessing of the fitness may be adapted. The inds passed into
     this function are modified and should not be used afterwards.
 """
