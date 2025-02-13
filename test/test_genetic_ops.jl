@@ -69,27 +69,6 @@ end
         # make sure some nodes are never sampled
         @test TiSR.count_nodes(node) > length(unique(obj_ids_mode1)) > length(unique(obj_ids_mode2))
     end
-
-    # # test scale parameter
-    # get_freqs = x -> [count(==(i), x) for i in sort(unique(x))]
-    #
-    # issorted_ = map(1:100) do _
-    #     max_depth = rand(3:6)
-    #     node = TiSR.grow_equation(max_depth, ops, method=:full)
-    #     tree_depths = [TiSR.maxim_tree_depth(n) for n in TiSR.flatten_node(node)]
-    #     freqs = get_freqs(tree_depths)
-    #     depths = map(1:10_000) do _
-    #         rand_node = TiSR.random_node(node, mode=0, scale=0.5)
-    #         TiSR.maxim_tree_depth(rand_node)
-    #     end
-    #     chosen_freqs = get_freqs(depths)
-    #     chosen_freqs ./ freqs
-    #     issorted(chosen_freqs, rev=true)
-    # end
-    #
-    # # test whether most of the time, the sample frequencies decends with depth
-    # @test count(issorted_) > 50
-
 end
 
 @testset "mutate_left" begin

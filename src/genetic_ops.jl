@@ -43,12 +43,12 @@ end
     1 -> at least one level above terminal
     2 -> at least two levels above terminal
 """
-function random_node(node::Node; mode=0, scale=1.0)
+function random_node(node::Node; mode=0)
 
     maxim_tree_depth(node, minim=mode + 2) <= mode && return node
 
     while true
-        node_elect = random_node_(node, scale=scale)
+        node_elect = random_node_(node)
         if maxim_tree_depth(node_elect, minim=mode + 2) > mode
             return node_elect
         end
@@ -56,21 +56,19 @@ function random_node(node::Node; mode=0, scale=1.0)
 end
 
 """ Traversal for the random_node function. Implemented along the lines of
-    SymbolicRegression.jl. The scale parameter scews the sampling along the depth.
-    A scale > 1 leads a higher probability to sample nodes closer to the root, while
-    a scale < 1 leads to nodes closer to terminal.
+    SymbolicRegression.jl.
 """
-function random_node_(node; scale=1.0)
+function random_node_(node)
     node.ari <= 0 && return node
 
     n_all = count_nodes(node)
-    rand_ = rand() * (n_all - 1.0 + scale)
-    rand_ <= scale && return node
+    rand_ = rand() * n_all
+    rand_ <= 1.0 && return node
 
     n_lef = count_nodes(node.lef)
-    rand_ <= n_lef + scale && return random_node_(node.lef, scale=scale)
+    rand_ <= n_lef + 1.0 && return random_node_(node.lef)
 
-    return random_node_(node.rig, scale=scale)
+    return random_node_(node.rig)
 end
 
 """ Entrace/switch function for the genetic operations. If nodes are shallow, only insert-,
@@ -253,9 +251,9 @@ end
 
 """ Combines two nodes to create two new ones.
 """
-function crossover_mutation!(node1, node2, ops; scale=1.0) # TODO: maybe somehow decide which parts to merry -> maybe based on so kind of correlation or performace
-    node_elect1 = random_node(node1, mode=2, scale=scale) # TODO: scale>1? -> with larger subtree -> more of 50/50 crossover
-    node_elect2 = random_node(node2, mode=2, scale=scale) # TODO: scale>1? -> with larger subtree -> more of 50/50 crossover
+function crossover_mutation!(node1, node2, ops)
+    node_elect1 = random_node(node1, mode=2)
+    node_elect2 = random_node(node2, mode=2)
 
     lefrig1 = mutate_left(node_elect1, 2) ? :lef : :rig
     lefrig2 = mutate_left(node_elect2, 2) ? :lef : :rig
@@ -277,8 +275,8 @@ end
 
 """ Adds a *parameter to a random subnode.
 """
-function insert_times_param_mutation!(node, ops; scale=1.0)
-    node_elect = random_node(node, mode=1, scale=scale) # TODO: scale<1? -> more likely to occur in a smaller subtree
+function insert_times_param_mutation!(node, ops)
+    node_elect = random_node(node, mode=1)
     lefrig = mutate_left(node_elect, 1) ? :lef : :rig
 
     times_param_node = Node(2, findfirst(==(*), ops.binops))
