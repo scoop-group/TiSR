@@ -112,14 +112,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
         if length(prog_dict["time"]) == 0 || t_since - prog_dict["time"][end] > 5.0
 
             # overwrite references to trash nodes with the null node
-            for isle in population
-                for indiv in isle
-                    clean_trash_nodes!(indiv.node, null_node)
-                end
-            end
-            for indiv in hall_of_fame
-                clean_trash_nodes!(indiv.node, null_node)
-            end
+            clean_trash_nodes!(population, null_node)
+            clean_trash_nodes!(hall_of_fame, null_node)
 
             # current KPIs # -----------------------------------------------------------------------
             get_for_prog = OrderedDict([

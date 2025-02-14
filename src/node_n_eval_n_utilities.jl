@@ -257,7 +257,17 @@ end
 
 """ Search and overwrite nodes, which point to nodes that are no longer required.
 """
-function clean_trash_nodes!(node, null_node)
+function clean_trash_nodes!(pop::Vector, null_node)
+    for elem in pop
+        clean_trash_nodes!(elem, null_node)
+    end
+end
+
+function clean_trash_nodes!(indiv, null_node)
+    clean_trash_nodes!(indiv.node, null_node)
+end
+
+function clean_trash_nodes!(node::Node{T}, null_node) where {T <: Number}
     if node.ari == 1
         clean_trash_nodes!(node.lef, null_node)
         if isdefined(node, :rig)
