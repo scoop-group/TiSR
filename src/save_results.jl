@@ -136,3 +136,24 @@ function pprint_ops(cur::T, sheet; ii=1, jj=1) where T
     return ii
 end
 
+""" Round numbers in an equation string and return a string. It is used for the equation simplified
+    by SymbolicUtils.
+"""
+round_equation_string(str::String; sigdigits=3) = string(round_equation_string(Meta.parse(str), sigdigits=sigdigits))
+round_equation_string(num::Number; sigdigits=3) = round(num, sigdigits=sigdigits)
+round_equation_string(else_; sigdigits=3) = else_
+
+function round_equation_string(expr::Expr; sigdigits=3)
+    map!(s -> round_equation_string(s, sigdigits=sigdigits), expr.args, expr.args)
+    expr
+end
+
+""" Simplifies a node and converts it directly into a string. Prevents
+    re-conversion errors.
+"""
+function simplify_to_string(node::Node, ops::Options; sigdigits=3)
+    sym_eq = node_to_symbolic(node, ops)
+    eq_str = string(sym_eq)
+    return round_equation_string(eq_str, sigdigits=sigdigits)
+end
+
