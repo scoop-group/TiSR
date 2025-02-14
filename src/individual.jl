@@ -6,7 +6,7 @@ mutable struct Individual
     crowding::Float64
     age::Float64
 
-    measures::Dict{Symbol, Float64}
+    measures::NamedTuple
 
     Individual() = new()
     Individual(node::Node) = new(node)
@@ -44,12 +44,12 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     indiv.valid || return
 
     # calculate measures # -------------------------------------------------------------------------
-    indiv.measures = Dict(
+    indiv.measures = NamedTuple(
         m => f(prediction, data[end], indiv.node, ops)
         for (m, f) in ops.measures
     )
 
-    if any(!isfinite(v) for (k, v) in indiv.measures)
+    if any(!isfinite(v) for v in values(indiv.measures))
         indiv.valid = false
         return
     end
