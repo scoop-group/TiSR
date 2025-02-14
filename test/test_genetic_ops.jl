@@ -1,7 +1,4 @@
 
-# TODO: test add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
-# TODO: apply_genetic_operations!(indivs, ops, bank_of_terms;
-
 data = rand(100, 5)
 ops, data_vect = Options(data)
 
@@ -69,6 +66,12 @@ end
         # make sure some nodes are never sampled
         @test TiSR.count_nodes(node) > length(unique(obj_ids_mode1)) > length(unique(obj_ids_mode2))
     end
+end
+
+@testset "apply_genetic_operations" begin
+
+    # TODO: apply_genetic_operations!(indivs, ops, bank_of_terms;
+
 end
 
 @testset "mutate_left" begin
@@ -262,9 +265,33 @@ end
     @test quantile(last.(distances), 0.5) > 0.5
 end
 
-@testset "apply_genetic_operations" begin
-    """ no idea how to test that
-    """
+@testset "insert_times_param_mutation!" begin
+    distances = map(1:1000) do _
+        node = TiSR.grow_equation(rand(4:7), ops, method=:full)
+
+        num_nodes_before = TiSR.count_nodes(node)
+        str1 = TiSR.encode_single_char(node, ops)
+
+        TiSR.insert_times_param_mutation!(node, ops)
+
+        num_nodes_after = TiSR.count_nodes(node)
+        str2 = TiSR.encode_single_char(node, ops)
+
+        cmap1 = countmap(str1)
+        cmap2 = countmap(str2)
+
+        # make sure no node is lost during mutation
+        for char in keys(cmap1)
+            @test cmap2[char] >= cmap1[char]
+        end
+
+        # check if more nodes after mutation
+        @test num_nodes_before < num_nodes_after
+
+        # string distance?
+        dist = Levenshtein()(str1, str2)
+    end
+    @test all(d == 5 for d in distances)
 end
 
 @testset "addterm_mutation!" begin
@@ -296,33 +323,10 @@ end
     @test all(d in (5, 6, 8, 9, 10, 11, 12) for d in distances)
 end
 
-@testset "insert_times_param_mutation!" begin
-    distances = map(1:1000) do _
-        node = TiSR.grow_equation(rand(4:7), ops, method=:full)
+@testset "add_from_bank_of_terms_mutation" begin
 
-        num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+# TODO: test add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
 
-        TiSR.insert_times_param_mutation!(node, ops)
-
-        num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
-
-        cmap1 = countmap(str1)
-        cmap2 = countmap(str2)
-
-        # make sure no node is lost during mutation
-        for char in keys(cmap1)
-            @test cmap2[char] >= cmap1[char]
-        end
-
-        # check if more nodes after mutation
-        @test num_nodes_before < num_nodes_after
-
-        # string distance?
-        dist = Levenshtein()(str1, str2)
-    end
-    @test all(d == 5 for d in distances)
 end
 
 

@@ -1,7 +1,6 @@
 
-# TODO: integration test fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
-    # TODO: integration test cur_max_compl
-    # TODO: integration test fit_iter
+# TODO: integration test cur_max_compl
+# TODO: integration test fit_iter
 
 data = rand(100, 10)
 ops, data_vect = Options(
@@ -12,20 +11,9 @@ ops, data_vect = Options(
     )
 )
 
-# @testset "fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)" begin
-#
-#     indivs = TiSR.Individual[]
-#
-#     while length(indivs) < 5
-#         node  = TiSR.grow_equation(rand(4:7), ops)
-#         indiv = TiSR.Individual(node)
-#     end
-#
-#     TiSR.fit_individual!(indiv, data_vect, ops, ops.grammar.max_compl, 0)
-#     indiv.valid || continue
-#     push!(indivs, indiv)
-#
-# end
+@testset "fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)" begin
+    # TODO: integration test fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+end
 
 @testset "Base.isless" begin
     indiv1 = TiSR.Individual(TiSR.grow_equation(rand(3:5), ops, method = :asym))

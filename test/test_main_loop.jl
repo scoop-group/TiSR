@@ -1,13 +1,17 @@
 
-# TODO: many integration tests
-# TODO: test start pop, which includes finished equation
-# TODO: test start pop contianing invalids
-# TODO: test start pop with strings and with individuals
+# TODO: test start pop with finished equation, invalids, strings, individuals
 # TODO: test bank of terms with finished equation and with illegal nesting
+# TODO: test hall_of_fame migration
+# TODO: test one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl)
+# TODO: test max_age
+# TODO: test perform_migration!(population, ops)
+# TODO: test perform_island_extinction!(population, ops)
+
 # TODO: how to test migration?
 # TODO: how to test island extinction
 # TODO: how to test hall_of_fame migration
 # TODO: how to test hall_of_fame
+# TODO: many integration tests
 
 @testset "stop_msg and callback" begin
 

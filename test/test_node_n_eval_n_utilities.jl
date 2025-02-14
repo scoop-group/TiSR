@@ -1,4 +1,5 @@
 
+
 # TODO: test copy_wo_copy
 # TODO: does this copy with the same type?
 # TODO: test list of param nodes
@@ -10,6 +11,8 @@ include("hardcoded_equations.jl")
 
 data = rand(100, 10)
 ops, data_vect = Options(data)
+
+# TODO: test Node constructors
 
 @testset "convert_node" begin
     node = nothing
@@ -87,6 +90,26 @@ end
     @test all(TiSR.node_to_string.(eqs_dict.vals, Ref(ops), sigdigits=3) .== TiSR.node_to_string.(deepcopy.(eqs_dict.vals), Ref(ops), sigdigits=3))
 end
 
+# TODO: test encode_single_char
+
+@testset "deepcopy and friends" begin
+    eqs_dict = hardcoded_equations(ops)
+    @test all(isapprox.(deepcopy.(eqs_dict.vals), eqs_dict.vals))
+    @test all(isapprox.(eqs_dict.vals, deepcopy.(eqs_dict.vals)))
+end
+
+# TODO: test copy_node_wo_copy!(node1, node2)
+
+@testset "count_nodes" begin
+    eqs_dict = hardcoded_equations(ops)
+    @test all(TiSR.count_nodes.(eqs_dict.vals) .== [6.0, 8.0, 11.0, 17.0, 22.0])
+end
+
+@testset "maxim_tree_depth" begin
+    eqs_dict = hardcoded_equations(ops)
+    @test all(TiSR.maxim_tree_depth.(eqs_dict.vals) .== [3, 4, 5, 6, 7])
+end
+
 @testset "isapprox" begin
 
     eqs_dict1 = hardcoded_equations(ops)
@@ -136,38 +159,9 @@ end
     @test isapprox(node, eqs_dict1.vals[1], rtol=Inf)
 end
 
-@testset "deepcopy and friends" begin
-    eqs_dict = hardcoded_equations(ops)
-    @test all(isapprox.(deepcopy.(eqs_dict.vals), eqs_dict.vals))
-    @test all(isapprox.(eqs_dict.vals, deepcopy.(eqs_dict.vals)))
-end
+# TODO: test Base.:(==)(node1::Node, node2::Node) = Base.isapprox(node1, node2, rtol=0.0)
 
-@testset "count_nodes and friends" begin
-    eqs_dict = hardcoded_equations(ops)
-    @test all(TiSR.count_nodes.(eqs_dict.vals) .== [6.0, 8.0, 11.0, 17.0, 22.0])
-end
-
-@testset "maxim_tree_depth" begin
-    eqs_dict = hardcoded_equations(ops)
-    @test all(TiSR.maxim_tree_depth.(eqs_dict.vals) .== [3, 4, 5, 6, 7])
-end
-
-@testset "eval_equation with the hardcoded_equations" begin
-    eqs_dict = hardcoded_equations(ops)
-
-    data = [rand(100) for _ in 1:ops.data_descript.n_vars]
-
-    eq1(data) = @. ((1.45454545 * -42.0) + sin(1.0)) + data[1] * 0.0
-    eq2(data) = @. ((1.45454545 * -42.0) - exp((1.0 ^ data[1])))
-    eq3(data) = @. ((1.45454545 * exp((1.0 ^ data[1]))) - exp((1.0 ^ data[1])))
-    eq4(data) = @. exp((((data[1] * 0.28282828) + (data[8] ^ 0.9984357489357)) * sin(((data[4] * 19.9832754918) - (data[9] / 9.42394578e11)))))
-    eq5(data) = @. exp(((sin(((data[4] * 19.9832754918) - (data[9] / 9.42394578e11))) + (data[8] ^ 0.9984357489357)) * sin(((data[4] * 19.9832754918) - (data[9] / 9.42394578e11)))))
-
-    @test eq1(data) == TiSR.eval_equation(eqs_dict.vals[1], data, ops)[1]
-    @test eq2(data) == TiSR.eval_equation(eqs_dict.vals[2], data, ops)[1]
-    @test eq3(data) == TiSR.eval_equation(eqs_dict.vals[3], data, ops)[1]
-    @test eq4(data) == TiSR.eval_equation(eqs_dict.vals[4], data, ops)[1]
-    @test eq5(data) == TiSR.eval_equation(eqs_dict.vals[5], data, ops)[1]
-end
-
+# TODO: test list_of_param_nodes
+# TODO: test clean_trash_nodes!(pop::Vector, null_node)
+# TODO: test flatten_node(node::Node)
 

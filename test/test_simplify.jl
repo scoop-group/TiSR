@@ -1,9 +1,21 @@
 
-# TODO: test simplify_to_string(node::Node, ops::Options; sigdigits=15) # TODO: make nicer, this was quick and dirty
 # TODO: test apply_simple_simplifications!(node, ops)
 # TODO: test div_to_mul_param!(node, ops) # TODO: test
 # TODO: test replace_same_subst_n_div!(node, ops)
 
+# TODO: test  simplify_w_symbolic_utils!(node::Node, ops::Options; use_simplify=false, though_polyform=false)
+# TODO: test  node_to_symbolic(node::Node, ops::Options)
+# TODO: test  drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
+# TODO: test  drastic_simplify_!(node, ops; threshold=1e-1)
+# TODO: test  get_drastic_simplify_nodes(node, ops; threshold=1e-1)
+# TODO: test  is_drastic_simplifyable(node, ops; threshold=1e-1)
+# TODO: test  apply_simple_simplifications!(node, ops)
+# TODO: test  div_to_mul_param!(node, ops) # TODO: test
+# TODO: test  simplify_binary_across_1_level!(node, ops)
+# TODO: test  replace_same_subst_n_div!(node, ops)
+# TODO: test  reorder_add_n_mul!(node, ops)
+# TODO: test  simplify_binary_of_param!(node)
+# TODO: test  simplify_unary_of_param!(node)
 
 pow2(x) = x^2
 pow_abs(x, y) = abs(x)^y

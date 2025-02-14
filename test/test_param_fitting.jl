@@ -1,16 +1,20 @@
 
-# TODO: test early stopping
-# TODO: test pre_residual_processing = (x, ind) -> x,
-# TODO: test residual_processing     = (x, ind) -> x,
-# TODO: text t_lim
-# TODO: text rel_f_tol_5_iter
-
-# make some preparations # ------------------------------------------------------------------------
-
 data = rand(100, 5)
 ops, data_vect = Options(data)
 
-@testset "residual after fitting" begin  # integration test
+# TODO: test set_params!(list_of_param, x)
+# TODO: test fitting_residual(x, node, list_of_param, data, inds, ops)
+# TODO: test fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <: Number}
+# TODO: test fit_n_eval!node, data, ops, fit_iter)
+#   - early stopping
+#   - pre_residual_processing
+#   - residual_processing
+#   - t_lim
+#   - rel_f_tol_5_iter
+# TODO: test fit_weights
+
+
+@testset "fitting_LM!" begin
 
     improvements = Float64[]
 
@@ -64,7 +68,7 @@ ops, data_vect = Options(
     )
 )
 
-@testset "lasso_regression" begin
+@testset "fittig_NW!" begin
 
     # first check if no lasso does no minimize the redunded ones
     trash_param  = Float64[]

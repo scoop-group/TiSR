@@ -1,4 +1,17 @@
 
+# TODO: test dominates(x, y)
+# TODO: test non_dominated_sort(individs::Vector{Vector{Float64}})
+# TODO: test first_pareto_front
+# TODO: test crowding_distance(individs)
+# TODO: test parent_selection(pop)
+# TODO: test tournament_selection(fitness, inds; tournament_size=5, n_select=10, modify=true)
+# TODO: test normalize_objectives(indiv_obj_vals) -> median, offset
+# TODO: test get_relative_fitness(indiv_obj_vals)
+
+# TODO: test perform_parent_selection!(chil, pop, ops)
+# TODO: test perform_population_selection!(pop, ops) -> niching, age, last front sampling, pareto, tournament, rank, crowding
+# TODO: test perform_hall_of_fame_selection!(hall_of_fame, population, ops) -> niching, deepcopy, pareto
+
 @testset "non_dominated_sort" begin
     x = 1.0:10.0
     x_data = repeat(x, 10)                                                                           # generate shifted 1/x points
