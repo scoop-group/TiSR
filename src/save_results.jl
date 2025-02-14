@@ -37,10 +37,10 @@ end
 
 """ Save vector of individuals to a fwf-file.
 """
-function save_to_fwf(individuals, ops; sort_by=:ms_processed_e, name_addedum="")
+function save_to_fwf(individuals, ops; sort_by=:ms_processed_e)
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
     str = df_to_fwf_string(df)
-    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * name_addedum
+    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_TiSR"
     open(path * ".txt", "w") do f
         write(f, str)
     end
@@ -48,10 +48,10 @@ end
 
 """ Save vector of individuals to a csv-file.
 """
-function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name_addedum="")
+function save_to_csv(individuals, ops; sort_by=:ms_processed_e)
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
     str = df_to_csv_string(df)
-    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * name_addedum
+    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_TiSR"
     open(path * ".txt", "w") do f
         write(f, str)
     end
