@@ -210,7 +210,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         apply_genetic_operations!(chil, ops, bank_of_terms)
 
         for _ in 1:ops.general.n_refitting
-            push!(chil, deepcopy(rand(pop)))
+            push!(chil, fastcopy(rand(pop)))
         end
     end
 
