@@ -111,7 +111,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         if length(prog_dict["time"]) == 0 || t_since - prog_dict["time"][end] > 5.0
 
-            # overwrite references to trash nodes with the null node
+            # GC.gc()
             clean_trash_nodes!(population, null_node)
             clean_trash_nodes!(hall_of_fame, null_node)
 
