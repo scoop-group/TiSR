@@ -81,14 +81,6 @@ function df_to_csv_string(df)
     return str * join([join(df[row, :], ";") for row in axes(df, 1)], "\n")
 end
 
-# """ Save vector of individuals to a csv-file.
-# """
-# function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name_addedum="")
-#     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
-#     path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * name_addedum
-#     CSV.write(df, path) # -> Some wierd string-char error.
-# end
-
 """ Outputs of a run and the options -> excel file.
     sheet1   -> options with all settings
     sheet2   -> progress
