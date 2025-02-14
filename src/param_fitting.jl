@@ -1,7 +1,37 @@
 
-# ==================================================================================================
-# main fitting functions
-# ==================================================================================================
+""" Set the values of the parameter in a node.
+"""
+function set_params!(list_of_param, x)
+    for i in eachindex(x)
+        list_of_param[i].val = x[i]
+    end
+end
+
+""" Return the fitting residual. Pre-residual_processing! funciton is applied in-place
+"""
+function fitting_residual(x, node, list_of_param, data, inds, ops)
+    set_params!(list_of_param, x)
+
+    dat = [view(d, inds) for d in data]
+    pred, valid = eval_equation(node, dat, ops)
+    pred .= ops.fitting.pre_residual_processing(pred, inds, ops)
+    dat[end] .- pred, valid # TODO: maybe remove the valid here?
+end
+
+""" Calculate the residual and apply pre- and post-processing.
+"""
+function fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <: Number}
+    data_ = data#[convert(Vector{T}, d) for d in data]
+    node_ = convert(T, node)
+    list_of_param_ = list_of_param_nodes(node_)
+
+    res   = fitting_residual(x, node_, list_of_param_, data_, ops.data_descript.split_inds[1], ops)[1]
+    res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1], ops)
+    res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
+    res  .= abs.(res)
+    return res
+end
+
 """ Entrance/switch for parameter fitting. Depending on whether the equation has parameters
     or not, the correspoinding functions are called, and the residual statistics calculated,
     if the fitting was successful (valid).
@@ -86,46 +116,9 @@ function early_stop_check(trace, node, list_of_param, data, ops; n=5)
     return issorted(trace[i].metadata["test_residual_norm"] for i in length(trace)-n:length(trace))
 end
 
-# ==================================================================================================
-# helper functions
-# ==================================================================================================
-""" Set the values of the parameter in a node.
+""" Fitting with Optim fitters. Is utilized for when lasso_factor is > 0 for 3
+    additional iterations.
 """
-function set_params!(list_of_param, x)
-    for i in eachindex(x)
-        list_of_param[i].val = x[i]
-    end
-end
-
-""" Return the fitting residual. Pre-residual_processing! funciton is applied in-place
-"""
-function fitting_residual(x, node, list_of_param, data, inds, ops)
-    set_params!(list_of_param, x)
-
-    dat = [view(d, inds) for d in data]
-    pred, valid = eval_equation(node, dat, ops)
-    pred .= ops.fitting.pre_residual_processing(pred, inds, ops)
-    dat[end] .- pred, valid # TODO: maybe remove the valid here?
-end
-
-""" Calculate the residual and apply pre- and post-processing.
-"""
-function fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <: Number}
-    data_ = data#[convert(Vector{T}, d) for d in data]
-    node_ = convert(T, node)
-    list_of_param_ = list_of_param_nodes(node_)
-
-    res   = fitting_residual(x, node_, list_of_param_, data_, ops.data_descript.split_inds[1], ops)[1]
-    res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1], ops)
-    res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
-    res  .= abs.(res)
-    return res
-end
-
-# ==================================================================================================
-# new one
-# ==================================================================================================
-
 function fitting_NW!(node, data, ops, list_of_param, max_iter)
 
     minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
