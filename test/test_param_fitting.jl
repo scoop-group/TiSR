@@ -33,7 +33,7 @@ ops, data_vect = Options(data)
         x0 = rand(length(orig_params))
         setfield!.(list_of_param, :val, x0)
 
-        mse_before = mean(abs2, TiSR.fitting_residual(x0, node, list_of_param, data_vect, eachindex(data_vect[1]), ops)[1])
+        mse_before = mean(abs2, TiSR.fitting_residual(x0, node, list_of_param, data_vect, eachindex(data_vect[1]), ops))
 
         isfinite(mse_before) || continue
 

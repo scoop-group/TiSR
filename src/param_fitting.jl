@@ -13,9 +13,9 @@ function fitting_residual(x, node, list_of_param, data, inds, ops)
     set_params!(list_of_param, x)
 
     dat = [view(d, inds) for d in data]
-    pred, valid = eval_equation(node, dat, ops)
+    pred, _ = eval_equation(node, dat, ops)
     pred .= ops.fitting.pre_residual_processing(pred, inds, ops)
-    dat[end] .- pred, valid # TODO: maybe remove the valid here?
+    dat[end] .- pred
 end
 
 """ Calculate the residual and apply pre- and post-processing.
@@ -25,7 +25,7 @@ function fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <:
     node_ = convert(T, node)
     list_of_param_ = list_of_param_nodes(node_)
 
-    res   = fitting_residual(x, node_, list_of_param_, data_, ops.data_descript.split_inds[1], ops)[1]
+    res   = fitting_residual(x, node_, list_of_param_, data_, ops.data_descript.split_inds[1], ops)
     res  .= ops.fitting.residual_processing(res, ops.data_descript.split_inds[1], ops)
     res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
     res  .= abs.(res)
@@ -105,7 +105,7 @@ end
 """
 function early_stop_check(trace, node, list_of_param, data, ops; n=5)
     x = trace[end].metadata["x"]
-    res_test = fitting_residual(x, node, list_of_param, data, ops.data_descript.split_inds[2], ops)[1]
+    res_test = fitting_residual(x, node, list_of_param, data, ops.data_descript.split_inds[2], ops)
     res_test .= ops.fitting.residual_processing(res_test, ops.data_descript.split_inds[2], ops)
     res_test .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[2])
     res_test .= abs.(res_test)
