@@ -181,7 +181,7 @@ function point_mutation1!(node, ops)
         node_elect.ind = rand(1:ops.data_descript.n_vars)
 
     elseif node_elect.ari == -1
-        node_elect.val *= rand_mult(;minn=0.5, maxx=2.0)
+        node_elect.val *= rand_mult()
     end
 end
 

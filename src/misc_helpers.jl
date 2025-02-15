@@ -17,7 +17,16 @@ extract_from_dual(v::Number) = extract_from_dual(v.value)
 
 """ return a positive or negative float with an absolute within the specified range.
 """
-rand_mult(;minn=0.5, maxx=2.0) = (rand() * (maxx - minn) + minn) * rand((1.0, -1.0))
+function rand_mult(;minn=2.0, maxx=10.0, sign_flip_prob=0.05)
+    sign_flip = rand() < sign_flip_prob ? -1.0 : 1.0
+    r = rand() * (maxx - minn) + minn
+    r *= sign_flip
+    if rand(Bool)
+        return r
+    else
+        return inv(r)
+    end
+end
 
 """ split a list into several lists of at most length n. Recursion is fun.
 """
@@ -26,3 +35,4 @@ split_list(list, n) = length(list) <= n ? [list] : [list[1:n], split_list(list[n
 """ round to a custom specified base.
 """
 round_to_next(x, base) = round(x / base) * base
+
