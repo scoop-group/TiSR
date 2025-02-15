@@ -185,6 +185,10 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
         push!(prog_dict[k], get_for_prog[k])
     end
 
+    if ops.general.plot_hall_of_fame
+        plot_hall_of_fame(hall_of_fame, ops)
+    end
+
     close_reader!(stdin_reader)
 
     # Post-pare for return
