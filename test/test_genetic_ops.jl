@@ -1,4 +1,9 @@
 
+# TODO: test add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
+# TODO: test apply_genetic_operations!(indivs, ops, bank_of_terms;
+# TODO: test rand_mult(;minn=2.0, maxx=10.0, sign_flip_prob=0.05)
+
+
 data = rand(100, 5)
 ops, data_vect = Options(data)
 
@@ -68,12 +73,6 @@ end
     end
 end
 
-@testset "apply_genetic_operations" begin
-
-    # TODO: apply_genetic_operations!(indivs, ops, bank_of_terms;
-
-end
-
 @testset "mutate_left" begin
     for _ in 1:1000
         node = TiSR.grow_equation(rand(3:7), ops, method = :full)
@@ -89,9 +88,7 @@ end
 
 end
 
-@testset "point_mutation" begin
-
-    # point_mutation1
+@testset "point_mutation1!" begin
     distances = map(1:1000) do _
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
         num_nodes_before = TiSR.count_nodes(node)
@@ -109,9 +106,9 @@ end
         dist
     end
     @test quantile(distances, 0.7) == 1
+end
 
-    # point_mutation2
-    # not the bests test for point_mutation2, but not the worst either
+@testset "point_mutation2!" begin
     distances = map(1:1000) do _
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
         num_nodes_before = TiSR.count_nodes(node)
@@ -323,11 +320,6 @@ end
     @test all(d in (5, 6, 8, 9, 10, 11, 12) for d in distances)
 end
 
-@testset "add_from_bank_of_terms_mutation" begin
-
-# TODO: test add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
-
-end
 
 
 

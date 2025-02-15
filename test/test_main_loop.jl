@@ -1,16 +1,17 @@
 
-# TODO: test start pop with finished equation, invalids, strings, individuals
-# TODO: test bank of terms with finished equation and with illegal nesting
+
+# TODO: test start_pop with finished equation, invalids, strings, individuals
+# TODO: test bank_of_terms with finished equation and with illegal nesting
+# TODO: test cur_max_compl
 # TODO: test hall_of_fame migration
+# TODO: test prog_dict
+# TODO: test t_since
 # TODO: test one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl)
 # TODO: test max_age
+# TODO: test fitting_isle/fit_iter
 # TODO: test perform_migration!(population, ops)
 # TODO: test perform_island_extinction!(population, ops)
-
-# TODO: how to test migration?
-# TODO: how to test island extinction
-# TODO: how to test hall_of_fame migration
-# TODO: how to test hall_of_fame
+# TODO: test hall_of_fame
 # TODO: many integration tests
 
 @testset "stop_msg and callback" begin

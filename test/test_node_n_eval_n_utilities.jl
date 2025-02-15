@@ -1,12 +1,5 @@
 
 
-# TODO: test copy_wo_copy
-# TODO: does this copy with the same type?
-# TODO: test list of param nodes
-# TODO: test encode_single_char(node::Node, ops)
-
-# TODO:  test deepcopy and copy
-
 include("hardcoded_equations.jl")
 
 data = rand(100, 10)
@@ -92,10 +85,14 @@ end
 
 # TODO: test encode_single_char
 
-@testset "deepcopy and friends" begin
+# TODO: test extract_from_dual
+
+@testset "deepcopy and copy" begin
     eqs_dict = hardcoded_equations(ops)
     @test all(isapprox.(deepcopy.(eqs_dict.vals), eqs_dict.vals))
     @test all(isapprox.(eqs_dict.vals, deepcopy.(eqs_dict.vals)))
+    # TODO: test whether same node
+    # TODO: test whether type stays the same
 end
 
 # TODO: test copy_node_wo_copy!(node1, node2)

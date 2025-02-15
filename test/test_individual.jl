@@ -1,6 +1,8 @@
 
 # TODO: integration test cur_max_compl
 # TODO: integration test fit_iter
+# TODO: integration test fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+# TODO: test fastcopy(indiv::Individual) = Individual(deepcopy(indiv.node))
 
 data = rand(100, 10)
 ops, data_vect = Options(
@@ -10,10 +12,6 @@ ops, data_vect = Options(
         num_islands              = 3,
     )
 )
-
-@testset "fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)" begin
-    # TODO: integration test fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
-end
 
 @testset "Base.isless" begin
     indiv1 = TiSR.Individual(TiSR.grow_equation(rand(3:5), ops, method = :asym))
