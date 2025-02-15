@@ -336,7 +336,6 @@ function perform_island_extinction!(population, ops)
     # both directions, decreasing with distance
     offsets = -ops.general.migrate_after_extinction_dist:ops.general.migrate_after_extinction_dist
     offsets = filter(!=(0), offsets)
-    offsets = length(offsets) < 2 ? [-1, 1] : offsets
     probs   = (1 ./ abs.(offsets)).^2
 
     sort!(population[emmigrate_island])

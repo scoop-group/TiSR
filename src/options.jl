@@ -177,13 +177,13 @@ function general_params(;
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 5000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
-    migrate_after_extinction_dist::Float64 = 0.25,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
+    migrate_after_extinction_dist::Int64   = 3,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                         # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 1000,                                                     # -> interval in which a random individual from the hall of fame is returned to a random island
     always_drastic_simplify::Float64       = 1e-8,                                                     # -> for individuals with parameters smaller than `always_drastic_simplify` a copy is created, those parameters removed with some probability, and simplified accordingly. -> 0 is off; 1e-10 ... 1e-6
     remove_doubles_sigdigits::Int64        = 3,                                                        # -> removes individuals in an island if their MAE and MSE rouned to `remove_doubles_sigdigits` digits are the same. The one with the lowest complexity is retained. -> 0 is off; 2 ... 5
     remove_doubles_across_islands::Bool    = false,                                                    # -> same as remove_doubles_sigdigits, but across islands
-    max_age::Int64                         = typemax(Int64),                                           # -> maximal age after which individuals are removed from the popoulation
+    max_age::Int64                         = round(Int64, pop_size / num_islands),                     # -> maximal age after which individuals are removed from the popoulation
     n_refitting::Int64                     = 1,                                                        # -> how many individuals from the hall_of_fame are copied and fitted again
     adaptive_compl_increment::Int64        = 100,                                                      # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
     callback::Function                     = (hall_of_fame, population, gen, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
@@ -192,17 +192,17 @@ function general_params(;
     plot_hall_of_fame::Bool                = true,                                                     # -> whether to plot the hall of fame
     print_hall_of_fame::Bool               = true,                                                     # -> whether to print some of the individuals in the hall of fame. For this, `plot_hall_of_fame` must also be true
 )
-    @assert num_islands > 0                             "num_islands should be at least 1                          "
-    @assert migration_interval > 0                      "migration_interval should be at least 1                   "
-    @assert always_drastic_simplify >= 0                "always_drastic_simplify must be >= 0                      "
-    @assert adaptive_compl_increment > 0                "adaptive_compl_increment must be larger 0                 "
-    @assert island_extinction_interval > 0              "island_extinction_interval must be > 0                    "
-    @assert max_age > 1                                 "max_age must be > 1                                       "
-    @assert hall_of_fame_migration_interval > 0         "hall_of_fame_migration_interval must be larger 0          "
-    @assert 0.0 <= migrate_after_extinction_prob <= 1.0 "migrate_after_extinction_prob must be between 0 and 1     "
-    @assert 0.0 <= children_ratio <= 2.0                "children_ratio should be inbetween 0.0 and 2.0            "
-    @assert 0 <= n_refitting <= pop_size / num_islands  "n_refitting should be between 0 and pop_size / num_islands"
-    @assert 0 <= migrate_after_extinction_dist <= 0.5   "migrate_after_extinction_dist must be between 0 and 0.5   "
+    @assert num_islands > 0                                       "num_islands should be at least 1                                    "
+    @assert migration_interval > 0                                "migration_interval should be at least 1                             "
+    @assert always_drastic_simplify >= 0                          "always_drastic_simplify must be >= 0                                "
+    @assert adaptive_compl_increment > 0                          "adaptive_compl_increment must be larger 0                           "
+    @assert island_extinction_interval > 0                        "island_extinction_interval must be > 0                              "
+    @assert max_age > 1                                           "max_age must be > 1                                                 "
+    @assert hall_of_fame_migration_interval > 0                   "hall_of_fame_migration_interval must be larger 0                    "
+    @assert 0.0 <= migrate_after_extinction_prob <= 1.0           "migrate_after_extinction_prob must be between 0 and 1               "
+    @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0                      "
+    @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands          "
+    @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2   "
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -225,7 +225,6 @@ function general_params(;
     pop_per_isle = ceil(Int64, pop_size / num_islands)
     n_children = max(2, round(Int64, children_ratio * pop_per_isle))
     migrate_after_extinction_num = round(Int64, pop_per_isle * migrate_after_extinction_prob)
-    migrate_after_extinction_dist = round(Int64, num_islands * migrate_after_extinction_dist)
     if migrate_after_extinction_num > 0
         @assert migrate_after_extinction_dist > 0 "if migrate_after_extinction_prob is > 0, migrate_after_extinction_dist must be > 0"
     end
