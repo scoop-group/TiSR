@@ -175,9 +175,9 @@ function general_params(;
     num_islands::Int64                     = 12,                                                       # -> number of parallel islands
     children_ratio::Float64                = 1.0,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
-    island_extinction_interval::Int64      = 5000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
+    island_extinction_interval::Int64      = 1000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
-    migrate_after_extinction_dist::Int64   = 3,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
+    migrate_after_extinction_dist::Int64   = 1,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                         # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 1000,                                                     # -> interval in which a random individual from the hall of fame is returned to a random island
     always_drastic_simplify::Float64       = 1e-8,                                                     # -> for individuals with parameters smaller than `always_drastic_simplify` a copy is created, those parameters removed with some probability, and simplified accordingly. -> 0 is off; 1e-10 ... 1e-6
@@ -393,7 +393,7 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;                     #|-> probabilites for the various mutations (don't need to add up to 1)
-    p_crossover::Float64              = 10.0,  #|
+    p_crossover::Float64              = 5.0,  #|
     p_point::Float64                  = 2.0,   #|
     p_insert::Float64                 = 1.0,   #|
     p_hoist::Float64                  = 1.0,   #|
@@ -403,7 +403,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_add_term::Float64               = 0.1,   #|
     p_simplify::Float64               = 0.1,   #|-> simplify with SymbolicUtils
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
-    p_multiple_mutations::Float64     = 0.2,   # -> probability for more than one mutation
+    p_multiple_mutations::Float64     = 0.5,   # -> probability for more than one mutation
 )
     @assert all(p >= 0 for p in (
         p_crossover, p_point, p_insert, p_hoist, p_subtree, p_drastic_simplify,
