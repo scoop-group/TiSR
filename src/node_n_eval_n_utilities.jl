@@ -157,6 +157,12 @@ function encode_single_char(node::Node, ops)
     end
 end
 
+""" Recursive functions using multiple dispatch to extract a value from arbitrarily
+    nested dual numbers.
+"""
+extract_from_dual(v::AbstractFloat) = v
+extract_from_dual(v::Number) = extract_from_dual(v.value)
+
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
 function Base.copy(node::Node)::Node
