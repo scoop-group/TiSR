@@ -3,7 +3,7 @@
 # TODO: test div_to_mul_param!(node, ops) # TODO: test
 # TODO: test replace_same_subst_n_div!(node, ops)
 
-# TODO: test simplify_w_symbolic_utils!(node::Node, ops::Options; use_simplify=false, though_polyform=false)
+# TODO: test simplify_w_symbolic_utils!(node::Node, ops::Options)
 # TODO: test node_to_symbolic(node::Node, ops::Options)
 # TODO: test drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
 # TODO: test drastic_simplify_!(node, ops; threshold=1e-1)
@@ -310,7 +310,7 @@ end
         prev_node = TiSR.node_to_string(node, ops, sigdigits=2)
 
         try
-            TiSR.simplify_w_symbolic_utils!(node, ops; use_simplify=false, though_polyform=false)
+            TiSR.simplify_w_symbolic_utils!(node, ops)
         catch
             # @show node
             continue

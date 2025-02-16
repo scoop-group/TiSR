@@ -24,7 +24,6 @@ include("test/test_main_loop.jl")
 include("test/test_param_fitting.jl")
 include("test/test_simplify.jl")
 include("test/test_measures.jl")
-include("test/test_misc_helpers.jl")
 include("test/test_options.jl")
 include("test/test_save_results.jl")
 

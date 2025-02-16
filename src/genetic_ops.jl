@@ -191,7 +191,7 @@ function rand_mult(;minn=2.0, maxx=10.0, sign_flip_prob=0.05)
     sign_flip = rand() < sign_flip_prob ? -1.0 : 1.0
     r = rand() * (maxx - minn) + minn
     r *= sign_flip
-    return (rand(Bool) ? r : inv(r)
+    return (rand(Bool) ? r : inv(r))
 end
 
 """ Changes arity 2 to 1 and vv, as well as arity 0 to -1 and vv.

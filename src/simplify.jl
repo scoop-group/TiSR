@@ -274,19 +274,10 @@ function node_to_symbolic(node::Node, ops::Options)
     end
 end
 
-""" Simplify using SymbolicUtils. If through_polyform=true, the expressions converted into
-    polynomial form and further simplified.
+""" Simplify using SymbolicUtils.
 """
-function simplify_w_symbolic_utils!(node::Node, ops::Options; use_simplify=false, though_polyform=false)
+function simplify_w_symbolic_utils!(node::Node, ops::Options)
     sym_eq = node_to_symbolic(node, ops)
-
-    if use_simplify
-        sym_eq = SymbolicUtils.simplify(sym_eq)
-        if though_polyform
-            sym_eq = SymbolicUtils.PolyForm(sym_eq)
-            sym_eq = SymbolicUtils.simplify(sym_eq)
-        end
-    end
 
     expr = SymbolicUtils.Code.toexpr(sym_eq)
     simp_node = string_to_node(expr, ops)
