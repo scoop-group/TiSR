@@ -393,7 +393,7 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;                     #|-> probabilites for the various mutations (don't need to add up to 1)
-    p_crossover::Float64              = 5.0,   #|
+    p_crossover::Float64              = 2.0,   #|
     p_point::Float64                  = 1.0,   #|
     p_point2::Float64                 = 0.5,   #|
     p_insert::Float64                 = 1.0,   #|
