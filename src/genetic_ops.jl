@@ -130,13 +130,12 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
         elseif mut_ind == 4
             addterm_mutation!(indiv.node, ops)
         else
+            # repeated mutations -> insert, point, point2, hoist
             while true
                 until_mut = maxim_tree_depth(indiv.node, minim=3) > 2 ? 4 : 3 # TODO: add also max_compl check
                 rand_mutation = rand() * sum(ops.mutation.multiple_mut_probs[1:until_mut])
-
                 mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation.multiple_mut_probs[1:i]), eachindex(ops.mutation.multiple_mut_probs))
                 repeated_muts![mut_ind](indiv.node, ops)
-
                 rand() < ops.mutation.p_multiple_mutations || break
             end
         end
