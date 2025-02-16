@@ -78,10 +78,11 @@ end
     start point.
 """
 function apply_genetic_operations!(indivs, ops, bank_of_terms;
-    (one_node_muts!)=[
-        insert_mutation!, point_mutation!, addterm_mutation!, insert_times_param_mutation!, # ___ below ar deeper than 2
-        hoist_mutation!, subtree_mutation!, drastic_simplify!
-    ]
+    (one_node_muts!)=(
+        insert_mutation!, point_mutation!, point_mutation2!, addterm_mutation!,  # ___ below ar deeper than 2
+        insert_times_param_mutation!, hoist_mutation!, subtree_mutation!, drastic_simplify!
+    ),
+   (repeated_muts!)=(insert_mutation!, point_mutation!, point_mutation2!, hoist_mutation!),
 )
     eachind = shuffle(eachindex(indivs))
 
@@ -104,33 +105,37 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
     while !isempty(eachind)
         indiv = indivs[popfirst!(eachind)]
 
-        until_mut     = maxim_tree_depth(indiv.node, minim = 3) > 2 ? length(ops.mutation.mut_probs) : 3
+        until_mut     = maxim_tree_depth(indiv.node, minim = 3) > 2 ? length(ops.mutation.mut_probs) : 4
         rand_mutation = rand() * sum(ops.mutation.mut_probs[1:until_mut])
         mut_ind       = findfirst(i -> rand_mutation <= sum(ops.mutation.mut_probs[1:i]), eachindex(ops.mutation.mut_probs))
 
-        if mut_ind == 10 && !isempty(eachind) && any(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
+        if mut_ind == 11 && !isempty(eachind) && any(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
             ind = findfirst(i -> maxim_tree_depth(indivs[i].node, minim=3) > 2, eachind)
             indiv2 = indivs[popat!(eachind, ind)]
             crossover_mutation!(indiv.node, indiv2.node, ops)
-        elseif mut_ind == 9
+        elseif mut_ind == 10
             add_from_bank_of_terms_mutation!(indiv.node, ops, bank_of_terms)
-        elseif mut_ind == 8
+        elseif mut_ind == 9
             try
                 simplify_w_symbolic_utils!(indiv.node, ops)
             catch
                 point_mutation!(indiv.node, ops)
             end
-        elseif mut_ind == 7 && is_drastic_simplifyable(indiv.node, ops)
+        elseif mut_ind == 8 && is_drastic_simplifyable(indiv.node, ops)
             drastic_simplify!(indiv.node, ops)
-        elseif mut_ind == 6
+        elseif mut_ind == 7
             subtree_mutation!(indiv.node, ops)
+        elseif mut_ind == 5
+            insert_times_param_mutation!(indiv.node, ops)
+        elseif mut_ind == 4
+            addterm_mutation!(indiv.node, ops)
         else
             while true
-                until_mut = maxim_tree_depth(indiv.node, minim=3) > 2 ? 5 : 3
-                rand_mutation = rand() * sum(ops.mutation.mut_probs[1:until_mut])
-                mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation.mut_probs[1:i]), eachindex(ops.mutation.mut_probs))
+                until_mut = maxim_tree_depth(indiv.node, minim=3) > 2 ? 4 : 3 # TODO: add also max_compl check
+                rand_mutation = rand() * sum(ops.mutation.multiple_mut_probs[1:until_mut])
 
-                one_node_muts![mut_ind](indiv.node, ops)
+                mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation.multiple_mut_probs[1:i]), eachindex(ops.mutation.multiple_mut_probs))
+                repeated_muts![mut_ind](indiv.node, ops)
 
                 rand() < ops.mutation.p_multiple_mutations || break
             end
@@ -162,13 +167,9 @@ end
 # ==================================================================================================
 # genetic operations
 # ==================================================================================================
-""" Entrace switch for the two point mutations.
-"""
-point_mutation!(node, ops) = rand(Bool) ? point_mutation1!(node, ops) : point_mutation2!(node, ops)
-
 """ Changes one node to another without modifying the structure of the node.
 """
-function point_mutation1!(node, ops)
+function point_mutation!(node, ops)
     node_elect = random_node(node, mode=0)
 
     if node_elect.ari == 2
