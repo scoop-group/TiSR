@@ -143,7 +143,7 @@ function perform_population_selection!(pop, ops)
     # Pareto selection # -------------------------------------------------------------------
     if ops.selection.n_pareto_select_per_isle > 0
         n_front = 1
-        while true
+        while n_front <= maximum(ranks)
             n_required = ops.selection.n_pareto_select_per_isle - length(selection_inds)
             n_required > 0 || break
             front = findall(==(n_front), ranks)
