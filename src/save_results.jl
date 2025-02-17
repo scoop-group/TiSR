@@ -5,10 +5,10 @@ function convert_to_dict(individuals::Vector{Individual}, ops; sort_by=:ms_proce
 
     extracted = map(individuals) do i
         [
-            :eq_orig          => TiSR.node_to_string(i.node,    ops),
-            :eq_rounded       => TiSR.node_to_string(i.node,    ops, sigdigits = 3),
-            :eq_simpl         => replace(TiSR.simplify_to_string(i.node, ops, sigdigits = 15), " " => ""),
-            :eq_simpl_rounded => replace(TiSR.simplify_to_string(i.node, ops, sigdigits = 3), " " => ""),
+            :eq_orig          => node_to_string(i.node,    ops),
+            :eq_rounded       => node_to_string(i.node,    ops, sigdigits = 3),
+            :eq_simpl         => replace(simplify_to_string(i.node, ops, sigdigits = 15), " " => ""),
+            :eq_simpl_rounded => replace(simplify_to_string(i.node, ops, sigdigits = 3), " " => ""),
             zip(keys(i.measures), i.measures)...
         ]
     end
@@ -152,8 +152,14 @@ end
     re-conversion errors.
 """
 function simplify_to_string(node::Node, ops::Options; sigdigits=3)
-    sym_eq = node_to_symbolic(node, ops)
-    eq_str = string(sym_eq)
+    eq_str = ""
+    try
+        sym_eq = node_to_symbolic(node, ops)
+        eq_str = string(sym_eq)
+    catch
+        println("conversion of $(node) to symbolic was not successful") # TODO: remove this at some point. Once in 1e6 bug I don't see
+        eq_str = node_to_string(node, ops)
+    end
     return round_equation_string(eq_str, sigdigits=sigdigits)
 end
 
