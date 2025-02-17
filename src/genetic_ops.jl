@@ -115,7 +115,7 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
             crossover_mutation!(indiv.node, indiv2.node, ops)
         elseif mut_ind == 10
             add_from_bank_of_terms_mutation!(indiv.node, ops, bank_of_terms)
-        elseif mut_ind == 9
+        elseif false #mut_ind == 9
             try
                 simplify_w_symbolic_utils!(indiv.node, ops)
             catch
