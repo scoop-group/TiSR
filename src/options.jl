@@ -402,10 +402,10 @@ function mutation_params(;                     #|-> probabilites for the various
     p_drastic_simplify::Float64       = 0.1,   #|-> remove parameter nodes with small values and simplify accordingly
     p_insert_times_param::Float64     = 0.1,   #|
     p_add_term::Float64               = 0.1,   #|
-    p_simplify::Float64               = 0.1,   #|-> simplify with SymbolicUtils
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
     p_multiple_mutations::Float64     = 0.5,   # -> probability for more than one mutation
 )
+    p_simplify = 0.0,   #|-> simplify with SymbolicUtils # -> does not work in multithreading, and is slow
     @assert all(p >= 0 for p in (
         p_crossover, p_point, p_point2, p_insert, p_hoist, p_subtree, p_drastic_simplify,
         p_insert_times_param, p_add_term, p_simplify, p_add_from_bank_of_terms

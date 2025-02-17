@@ -73,16 +73,30 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
-        for isle in 1:ops.general.num_islands
-            one_isle_one_generation!(
-                population[isle],
-                children[isle],
-                bank_of_terms,
-                data,
-                ops,
-                ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                cur_max_compl
-            )
+        if ops.general.multithreading
+            Threads.@threads :greedy for isle in 1:ops.general.num_islands
+                one_isle_one_generation!(
+                    population[isle],
+                    children[isle],
+                    bank_of_terms,
+                    data,
+                    ops,
+                    ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
+                    cur_max_compl
+                )
+            end
+        else
+            for isle in 1:ops.general.num_islands
+                one_isle_one_generation!(
+                    population[isle],
+                    children[isle],
+                    bank_of_terms,
+                    data,
+                    ops,
+                    ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
+                    cur_max_compl
+                )
+            end
         end
 
 # ==================================================================================================
@@ -219,14 +233,8 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     end
 
     # fitting and evaluation # ---------------------------------------------------------------------
-    if ops.general.multithreading
-        Threads.@threads :greedy for ii in eachindex(chil)
-            fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
-        end
-    else
-        for ii in eachindex(chil)
-            fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
-        end
+    for ii in eachindex(chil)
+        fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
     end
 
     filter!(indiv -> indiv.valid, chil)
