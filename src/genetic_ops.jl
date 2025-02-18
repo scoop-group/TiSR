@@ -207,7 +207,7 @@ function point_mutation2!(node, ops)
                 node_elect.lef = copy(node_elect.rig)
             end
         else
-            point_mutation1!(node, ops)
+            point_mutation!(node, ops)
         end
 
     elseif node_elect.ari == 1
@@ -216,7 +216,7 @@ function point_mutation2!(node, ops)
             node_elect.ind = rand(1:length(ops.binops))
             node_elect.rig = grow_equation(1, ops)
         else
-            point_mutation1!(node, ops)
+            point_mutation!(node, ops)
         end
 
     elseif node_elect.ari == 0
