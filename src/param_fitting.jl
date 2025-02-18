@@ -85,6 +85,7 @@ function fitting_LM!(node, data, ops, list_of_param, max_iter)
 
     x_best, trace = lmfit(minim, x0, autodiff = :forward, max_iter = ops.fitting.max_iter,
         t_lim = ops.fitting.t_lim, rel_f_tol_5_iter = ops.fitting.rel_f_tol_5_iter,
+        x_tol=0.0, g_tol=0.0,
         callback = callback
     )
 
