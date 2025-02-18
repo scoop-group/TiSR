@@ -170,9 +170,9 @@ end
 function general_params(;
     n_gens::Int64                          = typemax(Int64),                                           # -> number of generations to conduct
     t_lim::Float64                         = 60. * 5.,                                                 # -> time limit for the algorithm
-    pop_size::Int64                        = 600,                                                      # -> number of individuals selected for next generation / population size
+    pop_size::Int64                        = 1000,                                                     # -> number of individuals selected for next generation / population size
     parent_selection::Bool                 = true,                                                     # -> wheather to conduct parent selection or to use all individuals in the population as parents
-    num_islands::Int64                     = 16,                                                       # -> number of parallel islands
+    num_islands::Int64                     = 20,                                                       # -> number of parallel islands
     children_ratio::Float64                = 1.0,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 1000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
