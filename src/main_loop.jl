@@ -59,9 +59,10 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
     null_node = Node(0.0)                            # create the null node for some manual garbification
 
-    t_start  = time()
-    gen      = 0.0
-    stop_msg = ""
+    t_start       = time()
+    gen           = 0.0
+    stop_msg      = ""
+    eval_counters = fill(0, ops.general.num_islands)
 
 # ==================================================================================================
 # start generational loop
@@ -75,26 +76,26 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         if ops.general.multithreading
             Threads.@threads :greedy for isle in 1:ops.general.num_islands
-                one_isle_one_generation!(
+                eval_counters[isle] += one_isle_one_generation!(
                     population[isle],
                     children[isle],
                     bank_of_terms,
                     data,
                     ops,
                     ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                    cur_max_compl
+                    cur_max_compl,
                 )
             end
         else
             for isle in 1:ops.general.num_islands
-                one_isle_one_generation!(
+                eval_counters[isle] += one_isle_one_generation!(
                     population[isle],
                     children[isle],
                     bank_of_terms,
                     data,
                     ops,
                     ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                    cur_max_compl
+                    cur_max_compl,
                 )
             end
         end
@@ -119,7 +120,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 # ==================================================================================================
         t_since = time() - t_start
 
-        if length(prog_dict["time"]) == 0 || t_since - prog_dict["time"][end] > 5.0
+        if isempty(prog_dict["time"]) || t_since - prog_dict["time"][end] > 5.0
 
             # GC.gc() # no idea why that is necessary
             clean_trash_nodes!(population, null_node)
@@ -138,7 +139,11 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
             if ops.general.print_progress
                 display(get_for_prog)
-                println("\n", round(Int64, t_since ÷ 60), " min  ", round(Int64, t_since % 60), " sec | type q and enter to finish early")
+                println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
+                if !isempty(prog_dict["time"])
+                    println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
+                end
+                eval_counters .= 0
             end
 
             for k in keys(get_for_prog)
@@ -209,6 +214,8 @@ end
 
 function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl)
 
+    eval_counter = 0
+
     foreach(indiv -> indiv.age += 1, pop)
 
     # create new children # ----------------------------------------------------------------
@@ -230,7 +237,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
 
     # fitting and evaluation # ---------------------------------------------------------------------
     for ii in eachindex(chil)
-        fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
+        eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
     end
 
     filter!(indiv -> indiv.valid, chil)
@@ -246,6 +253,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     if length(pop) > ops.general.pop_per_isle
         perform_population_selection!(pop, ops)
     end
+    return eval_counter
 end
 
 # ==================================================================================================

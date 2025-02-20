@@ -23,24 +23,24 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     # remove invalids # ----------------------------------------------------------------------------
     if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment))
         indiv.valid = false
-        return
+        return 0
     end
 
     if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
         indiv.valid = false
-        return
+        return 0
     end
 
     if !ops.grammar.custom_check_legal(indiv.node, data, ops)
         indiv.valid = false
-        return
+        return 0
     end
 
     # fitting # ------------------------------------------------------------------------------------
-    prediction, valid = fit_n_eval!(indiv.node, data, ops, fit_iter)
+    prediction, valid, eval_counter = fit_n_eval!(indiv.node, data, ops, fit_iter)
 
     indiv.valid = valid
-    indiv.valid || return
+    indiv.valid || return eval_counter
 
     # calculate measures # -------------------------------------------------------------------------
     indiv.measures = NamedTuple(
@@ -50,8 +50,8 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
 
     if any(!isfinite(v) for v in values(indiv.measures))
         indiv.valid = false
-        return
     end
+    return eval_counter
 end
 
 """ Prints or displays an Individual.

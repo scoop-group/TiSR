@@ -84,7 +84,7 @@ function levenberg_marquardt(df::OnceDifferentiable, initial_x::AbstractVector{T
 
     # Maintain a trace of the system # -----------------------------------------
     tr = OptimBase.OptimizationTrace{LevenbergMarquardt}()
-    d = Dict("lambda" => lambda, "x" => initial_x)
+    d = Dict("lambda" => lambda, "x" => initial_x, "f_calls" => df.f_calls)
     os = OptimBase.OptimizationState{LevenbergMarquardt}(iteration, sum(abs2, value(df)), NaN, d)
     push!(tr, os)
 
@@ -167,6 +167,7 @@ function levenberg_marquardt(df::OnceDifferentiable, initial_x::AbstractVector{T
                  "step_norm" => norm(delta_x, 2),
                  "lambda" => lambda,
                  "x" => x,
+                 "f_calls" => df.f_calls,
                  )
         os = OptimBase.OptimizationState{LevenbergMarquardt}(iteration, sum(abs2, value(df)), g_norm, d)
         push!(tr, os)

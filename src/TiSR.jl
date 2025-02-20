@@ -33,6 +33,7 @@ using LineSearches
 using DataFrames
 using XLSX
 using UnicodePlots
+using Printf
 
 include("options.jl")
 include("node_n_eval_n_utilities.jl")

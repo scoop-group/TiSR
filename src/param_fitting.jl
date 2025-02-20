@@ -37,6 +37,7 @@ end
     if the fitting was successful (valid).
 """
 function fit_n_eval!(node, data, ops, fit_iter)
+    eval_counter = 0
     list_of_param = list_of_param_nodes(node)
 
     if length(list_of_param) > length(ops.data_descript.split_inds[1])
@@ -54,19 +55,20 @@ function fit_n_eval!(node, data, ops, fit_iter)
         max_iter_LM = fit_iter - max_iter_NW
 
         if rand() < ops.fitting.NM_prob
-            fitting_NM!(node, data, ops, list_of_param, ops.fitting.max_iter_NM)
+            eval_counter += fitting_NM!(node, data, ops, list_of_param, ops.fitting.max_iter_NM)
         else
-            fitting_LM!(node, data, ops, list_of_param, max_iter_LM)
+            eval_counter += fitting_LM!(node, data, ops, list_of_param, max_iter_LM)
         end
 
         if !iszero(max_iter_NW)
-            fitting_NW!(node, data, ops, list_of_param, max_iter_NW)
+            eval_counter += fitting_NW!(node, data, ops, list_of_param, max_iter_NW)
         end
     end
 
     # final evaluation
     prediction, valid = eval_equation(node, data, ops)
-    return prediction, valid
+    eval_counter += 1
+    return prediction, valid, eval_counter
 end
 
 """ Create the cost function for the fitting and for the early stopping evaluation, fit the
@@ -102,6 +104,7 @@ function fitting_LM!(node, data, ops, list_of_param, max_iter)
     end
 
     set_params!(list_of_param, x_best)
+    return trace[end].metadata["f_calls"][1]
 end
 
 """ Is called during each iteration of the fitting, if early_stop_iter > 0. The
@@ -152,6 +155,7 @@ function fitting_NW!(node, data, ops, list_of_param, max_iter)
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
 
     set_params!(list_of_param, x_best)
+    return res.f_calls
 end
 
 function fitting_NM!(node, data, ops, list_of_param, max_iter)
@@ -182,4 +186,5 @@ function fitting_NM!(node, data, ops, list_of_param, max_iter)
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
 
     set_params!(list_of_param, x_best)
+    return res.f_calls
 end
