@@ -191,7 +191,7 @@ end
     by ops.grammar.weighted_compl_dict. Weights for variables and parameters can be set using "VAR"
     and "PARAM", respectively. For any funciton of terminal not specified, 1.0 is assumed.
 """
-function get_weighted_compl(node, ops) # TODO: test
+function get_weighted_compl(node, ops)
     if node.ari == 2
         cur_fun = string(ops.binops[node.ind])
         compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 1.0)
