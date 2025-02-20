@@ -59,7 +59,9 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
         if !isempty(grammar.weighted_compl_dict)
             :weighted_compl in selection.selection_objectives    || @warn "weighted_compl_dict specified, but :weighted_compl not in selection_objectives"
             :weighted_compl in selection.hall_of_fame_objectives || @warn "weighted_compl_dict specified, but :weighted_compl not in hall_of_fame_objectives"
+            # TODO: add warning, if a funciton is not in weighted_compl_dict
         end
+
 
         # ------------------------------------------------------------------------------------------
         @assert !xor(isempty(grammar.bank_of_terms), mutation.mut_probs[10] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"

@@ -17,7 +17,7 @@ function simplify_unary_of_param!(node)
         node.val = node.lef.val
         c = true
     end
-    return c || c_lef || c_rig # TODO: test
+    return c || c_lef || c_rig
 end
 
 """ Replaces a binary function of two parameters with a parameter.
@@ -36,7 +36,7 @@ function simplify_binary_of_param!(node)
         node.val = node.lef.val
         c = true
     end
-    return c || c_lef || c_rig # TODO: test
+    return c || c_lef || c_rig
 end
 
 """ Reorders the children of + and * in decreasing arity.
@@ -125,7 +125,7 @@ end
 
 """ Convert x / param to x * param -> better for drastic simplify.
 """
-function div_to_mul_param!(node, ops) # TODO: test
+function div_to_mul_param!(node, ops)
     c = c_rig = c_lef = false
     if node.ari >= 1
         c_lef = div_to_mul_param!(node.lef, ops)
