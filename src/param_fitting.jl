@@ -53,7 +53,11 @@ function fit_n_eval!(node, data, ops, fit_iter)
 
         max_iter_LM = fit_iter - max_iter_NW
 
-        fitting_LM!(node, data, ops, list_of_param, max_iter_LM)
+        if rand() < ops.fitting.NM_prob
+            fitting_NM!(node, data, ops, list_of_param, ops.fitting.max_iter_NM)
+        else
+            fitting_LM!(node, data, ops, list_of_param, max_iter_LM)
+        end
 
         if !iszero(max_iter_NW)
             fitting_NW!(node, data, ops, list_of_param, max_iter_NW)
@@ -150,3 +154,32 @@ function fitting_NW!(node, data, ops, list_of_param, max_iter)
     set_params!(list_of_param, x_best)
 end
 
+function fitting_NM!(node, data, ops, list_of_param, max_iter)
+
+    minim = x -> mean(abs2, fitting_objective(x, node, data, ops))
+
+    x0 = Float64[n.val for n in list_of_param]
+
+    # # callback # ----------------------------------------------------------------------------------
+    # function callback(tr)
+    #     length(tr) > 5 || return false
+    #     cur  = tr[end].value
+    #     prev = tr[end-5].value
+    #     return (prev - cur) / prev < ops.fitting.rel_f_tol_5_iter
+    # end
+    # # ----------------------------------------------------------------------------------------------
+
+    res = Optim.optimize(
+        minim, x0,
+        Optim.NelderMead(),
+        Optim.Options(;
+            show_warnings=false,  iterations=max_iter, time_limit=ops.fitting.t_lim,
+            show_trace=false,     store_trace=true,# callback = callback
+            g_abstol = 0.0,       g_reltol = 0.0,
+            outer_g_abstol = 0.0, outer_g_reltol = 0.0,
+        ),
+    )
+    x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
+
+    set_params!(list_of_param, x_best)
+end
