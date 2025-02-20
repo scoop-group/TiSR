@@ -86,21 +86,6 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
 )
     eachind = shuffle(eachindex(indivs))
 
-    # always_drastic_simplify # --------------------------------------------------------------------
-    if !iszero(ops.general.always_drastic_simplify)
-        drastic_inds = findall(
-            is_drastic_simplifyable(indiv.node, ops; threshold=ops.general.always_drastic_simplify)
-            for indiv in indivs
-        )
-        drastic_indivs = [deepcopy(indivs[i]) for i in drastic_inds]
-
-        for indiv in drastic_indivs
-            drastic_simplify!(indiv.node, ops, threshold=ops.general.always_drastic_simplify)
-        end
-
-        append!(indivs, drastic_indivs)
-    end
-
     # mutations # ----------------------------------------------------------------------------------
     while !isempty(eachind)
         indiv = indivs[popfirst!(eachind)]

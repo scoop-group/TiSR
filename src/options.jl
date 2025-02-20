@@ -180,9 +180,6 @@ function general_params(;
     migrate_after_extinction_dist::Int64   = 3,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                         # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 1000,                                                     # -> interval in which a random individual from the hall of fame is returned to a random island
-    always_drastic_simplify::Float64       = 0.0,                                                     # -> for individuals with parameters smaller than `always_drastic_simplify` a copy is created, those parameters removed with some probability, and simplified accordingly. -> 0 is off; 1e-10 ... 1e-6
-    remove_doubles_sigdigits::Int64        = 0,                                                        # -> removes individuals in an island if their MAE and MSE rouned to `remove_doubles_sigdigits` digits are the same. The one with the lowest complexity is retained. -> 0 is off; 2 ... 5
-    remove_doubles_across_islands::Bool    = false,                                                    # -> same as remove_doubles_sigdigits, but across islands
     max_age::Int64                         = round(Int64, pop_size / num_islands),                     # -> maximal age after which individuals are removed from the popoulation
     n_refitting::Int64                     = 1,                                                        # -> how many individuals from the hall_of_fame are copied and fitted again
     adaptive_compl_increment::Int64        = 100,                                                      # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
@@ -194,7 +191,6 @@ function general_params(;
 )
     @assert num_islands > 0                                       "num_islands should be at least 1                                    "
     @assert migration_interval > 0                                "migration_interval should be at least 1                             "
-    @assert always_drastic_simplify >= 0                          "always_drastic_simplify must be >= 0                                "
     @assert adaptive_compl_increment > 0                          "adaptive_compl_increment must be larger 0                           "
     @assert island_extinction_interval > 0                        "island_extinction_interval must be > 0                              "
     @assert max_age > 1                                           "max_age must be > 1                                                 "
@@ -208,12 +204,6 @@ function general_params(;
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
     end
 
-    if !iszero(remove_doubles_sigdigits)
-        remove_doubles_sigdigits > 1     || @warn "a low remove_doubles_sigdigits may filter non-equal individuals "
-        remove_doubles_sigdigits < 6     || @warn "a low remove_doubles_sigdigits may not detect equal individuals "
-    end
-
-    always_drastic_simplify < 1e-3   || @warn "always_drastic_simplify seems high                              "
     adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5                         "
     island_extinction_interval > 500 || @warn "island_extinction_interval seems small                          "
     max_age > 10                     || @warn "max_age seems small                                             "
@@ -245,9 +235,6 @@ function general_params(;
         migrate_after_extinction_num    = migrate_after_extinction_num,
         migrate_after_extinction_dist   = migrate_after_extinction_dist,
         fitting_island_function         = fitting_island_function,
-        always_drastic_simplify         = always_drastic_simplify,
-        remove_doubles_sigdigits        = remove_doubles_sigdigits,
-        remove_doubles_across_islands   = remove_doubles_across_islands,
         max_age                         = max_age,
         n_refitting                     = n_refitting,
         t_lim                           = t_lim,

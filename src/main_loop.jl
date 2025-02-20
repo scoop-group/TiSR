@@ -102,10 +102,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 # ==================================================================================================
 # inter-isle
 # ==================================================================================================
-        if ops.general.remove_doubles_across_islands && ops.general.remove_doubles_sigdigits > 0
-            remove_doubles_across_islands!(population, ops)
-        end
-
         if gen % ops.general.migration_interval == 0
             perform_migration!(population, ops)
         end
@@ -244,10 +240,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     empty!(chil)
 
     # remove individuals # -------------------------------------------------------------------------
-    if ops.general.remove_doubles_sigdigits > 0
-        remove_doubles!(pop, ops)
-    end
-
     filter!(i -> i.age <= ops.general.max_age, pop)
 
     # selection # ----------------------------------------------------------------------------------
