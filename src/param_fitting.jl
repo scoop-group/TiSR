@@ -45,23 +45,10 @@ function fit_n_eval!(node, data, ops, fit_iter)
     end
 
     if fit_iter > 0 && !isempty(list_of_param)
-
-        if !iszero(ops.fitting.lasso_factor)
-            max_iter_NW = 3
-        else
-            max_iter_NW = 0
-        end
-
-        max_iter_LM = fit_iter - max_iter_NW
-
         if rand() < ops.fitting.NM_prob
-            eval_counter += fitting_NM!(node, data, ops, list_of_param, ops.fitting.max_iter_NM)
+            eval_counter += fitting_NM!(node, data, ops, list_of_param, ops.fitting.NM_iter)
         else
-            eval_counter += fitting_LM!(node, data, ops, list_of_param, max_iter_LM)
-        end
-
-        if !iszero(max_iter_NW)
-            eval_counter += fitting_NW!(node, data, ops, list_of_param, max_iter_NW)
+            eval_counter += fitting_LM!(node, data, ops, list_of_param, fit_iter)
         end
     end
 
@@ -133,24 +120,24 @@ function fitting_NW!(node, data, ops, list_of_param, max_iter)
 
     x0 = [n.val for n in list_of_param]
 
-    # # callback # ----------------------------------------------------------------------------------
-    # function callback(tr)
-    #     length(tr) > 5 || return false
-    #     cur  = tr[end].value
-    #     prev = tr[end-5].value
-    #     return (prev - cur) / prev < ops.fitting.rel_f_tol_5_iter
-    # end
-    # # ----------------------------------------------------------------------------------------------
+    # callback # ----------------------------------------------------------------------------------
+    function callback(tr)
+        length(tr) > 5 || return false
+        cur  = tr[end].value
+        prev = tr[end-5].value
+        return (prev - cur) / prev < ops.fitting.rel_f_tol_5_iter
+    end
+    # ----------------------------------------------------------------------------------------------
 
     res = Optim.optimize(
         minim, x0,
         Optim.Newton(;linesearch=LineSearches.BackTracking()),
-        # Optim.LBFGS(;linesearch=LineSearches.BackTracking()),
-        # Optim.GradientDescent(;linesearch=LineSearches.BackTracking()),
         Optim.Options(;
-            show_warnings=false, iterations=max_iter, time_limit=ops.fitting.t_lim,
-            show_trace=false,    store_trace=true,# callback = callback
-        ), autodiff=:forward
+            show_warnings  = false, iterations     = max_iter, time_limit = ops.fitting.t_lim,
+            show_trace     = false, store_trace    = true,     callback   = callback,
+            g_abstol       = 0.0,   g_reltol       = 0.0,
+            outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
+        ), autodiff = :forward
     )
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
 
@@ -160,27 +147,18 @@ end
 
 function fitting_NM!(node, data, ops, list_of_param, max_iter)
 
-    minim = x -> mean(abs2, fitting_objective(x, node, data, ops))
+    minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
 
     x0 = Float64[n.val for n in list_of_param]
-
-    # # callback # ----------------------------------------------------------------------------------
-    # function callback(tr)
-    #     length(tr) > 5 || return false
-    #     cur  = tr[end].value
-    #     prev = tr[end-5].value
-    #     return (prev - cur) / prev < ops.fitting.rel_f_tol_5_iter
-    # end
-    # # ----------------------------------------------------------------------------------------------
 
     res = Optim.optimize(
         minim, x0,
         Optim.NelderMead(),
         Optim.Options(;
-            show_warnings=false,  iterations=max_iter, time_limit=ops.fitting.t_lim,
-            show_trace=false,     store_trace=true,# callback = callback
-            g_abstol = 0.0,       g_reltol = 0.0,
-            outer_g_abstol = 0.0, outer_g_reltol = 0.0,
+            show_warnings  = false, iterations     = max_iter, time_limit = ops.fitting.t_lim,
+            show_trace     = false, store_trace    = true,
+            g_abstol       = 0.0,   g_reltol       = 0.0,
+            outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
         ),
     )
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
@@ -188,3 +166,4 @@ function fitting_NM!(node, data, ops, list_of_param, max_iter)
     set_params!(list_of_param, x_best)
     return res.f_calls
 end
+
