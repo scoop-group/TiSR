@@ -384,7 +384,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
     )
 
     if ops.general.print_hall_of_fame
-        sort!(hall_of_fame, by=i->i.measures[:compl])
+        sort!(hall_of_fame, by=i->i.measures[:ms_processed_e], rev=true)
 
         inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
         unique!(inds_to_show)
