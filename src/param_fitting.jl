@@ -104,7 +104,7 @@ function fitting_LM!(node, data, ops, list_of_param, max_iter)
     end
 
     set_params!(list_of_param, x_best)
-    return trace[end].metadata["f_calls"][1]
+    return trace[end].metadata["f_calls"]
 end
 
 """ Is called during each iteration of the fitting, if early_stop_iter > 0. The
