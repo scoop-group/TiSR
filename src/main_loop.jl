@@ -368,7 +368,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
 
     plt = scatterplot(
         compl,
-        clamp.(ms_processed_e, 1e-30, 1e30),
+        ms_processed_e,
         yscale           = :log10,
         title            = "hall of fame",
         xlabel           = "compl",
