@@ -51,7 +51,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
         @assert ("*" in string.(binops)) "* is required in the function set for some mutations to work"
         :^ in Symbol.(binops) && @warn   "^ is only valid for positive bases. Otherwise provide a pow(abs(x), y) function with its own drawbacks."
 
-        #-------------------------------------------------------------------------------------------
+        # some inter-subsection parameter assertions # ---------------------------------------------
         if fitting.early_stop_iter != 0
             @assert !isempty(data_descript.split_inds[2]) "second data split must contain data for early stopping"
         end
@@ -62,11 +62,9 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
             # TODO: add warning, if a funciton is not in weighted_compl_dict
         end
 
-
-        # ------------------------------------------------------------------------------------------
         @assert !xor(isempty(grammar.bank_of_terms), mutation.mut_probs[10] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
 
-        # resulting parameters
+        # resulting parameters # -------------------------------------------------------------------
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
         selection = (;selection..., n_pareto_select_per_isle = n_pareto_select_per_isle)
 
