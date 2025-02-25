@@ -148,6 +148,20 @@ function round_equation_string(expr::Expr; sigdigits=3)
     expr
 end
 
+""" Convert an expression or a string to a string including all operators, like: 2v1 -> 2 * v1
+"""
+string_expl(e::String) = string_expl(Meta.parse(e))
+string_expl(e) = string(e)
+function string_expl(e::Expr)
+    if length(e.args) == 3
+        return "(" * string_expl(e.args[2]) * string_expl(e.args[1]) * string_expl(e.args[3]) * ")"
+    elseif length(e.args) == 2
+        return string_expl(e.args[1]) * "(" * string_expl(e.args[2]) * ")"
+    else
+        return "(" * join([string_expl(arg) for arg in e.args[2:end]], string_expl(e.args[1])) * ")"
+    end
+end
+
 """ Simplifies a node and converts it directly into a string. Prevents
     re-conversion errors.
 """
