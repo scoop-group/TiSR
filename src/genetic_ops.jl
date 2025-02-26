@@ -101,11 +101,6 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
         elseif mut_ind == 10
             add_from_bank_of_terms_mutation!(indiv.node, ops, bank_of_terms)
         elseif false #mut_ind == 9
-            try
-                simplify_w_symbolic_utils!(indiv.node, ops)
-            catch
-                point_mutation!(indiv.node, ops)
-            end
         elseif mut_ind == 8 && is_drastic_simplifyable(indiv.node, ops)
             drastic_simplify!(indiv.node, ops)
         elseif mut_ind == 7

@@ -274,15 +274,3 @@ function node_to_symbolic(node::Node, ops::Options)
     end
 end
 
-""" Simplify using SymbolicUtils.
-"""
-function simplify_w_symbolic_utils!(node::Node, ops::Options)
-    sym_eq = node_to_symbolic(node, ops)
-
-    expr = SymbolicUtils.Code.toexpr(sym_eq)
-    simp_node = string_to_node(expr, ops)
-
-    reorder_add_n_mul!(simp_node, ops)
-    copy_node_wo_copy!(node, simp_node)
-end
-

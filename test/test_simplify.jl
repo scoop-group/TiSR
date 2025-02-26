@@ -3,7 +3,6 @@
 # TODO: test div_to_mul_param!(node, ops) # TODO: test
 # TODO: test replace_same_subst_n_div!(node, ops)
 
-# TODO: test simplify_w_symbolic_utils!(node::Node, ops::Options)
 # TODO: test node_to_symbolic(node::Node, ops::Options)
 # TODO: test drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
 # TODO: test drastic_simplify_!(node, ops; threshold=1e-1)
@@ -290,51 +289,4 @@ end
 
     @test count(<=(1e-3), mse_diffs) > 8000
 end
-
-@testset "simplify_w_symbolic_utils!" begin
-
-    mse_diffs = Float64[]
-    compl_diffs = Float64[]
-
-    while length(mse_diffs) < 10000
-
-        node = TiSR.grow_equation(rand(3:5), ops, method=:full)
-
-        TiSR.apply_simple_simplifications!(node, ops)
-
-        compl = TiSR.count_nodes(node)
-
-        compl > 5 || continue
-
-        mse = mean(abs2, TiSR.eval_equation(node, data_vect, ops)[1])
-        prev_node = TiSR.node_to_string(node, ops, sigdigits=2)
-
-        try
-            TiSR.simplify_w_symbolic_utils!(node, ops)
-        catch
-            # @show node
-            continue
-        end
-
-        re_noded_compl = TiSR.count_nodes(node)
-        compl_diff     = compl - re_noded_compl
-
-        # if compl_diff > 5
-        #     println("----")
-        #     println(prev_node)
-        #     println(TiSR.node_to_string(node, ops, sigdigits=2))
-        # end
-
-        re_noded_mse   = mean(abs2, TiSR.eval_equation(node, data_vect, ops)[1])
-        mse_diff       = mse - re_noded_mse
-
-        push!(compl_diffs, compl_diff)
-        push!(mse_diffs, abs(mse_diff))
-    end
-
-    @test count(<=(1e-5), mse_diffs) > 8000
-end
-
-
-
 
