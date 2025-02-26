@@ -252,6 +252,9 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     # selection # ----------------------------------------------------------------------------------
     if length(pop) > ops.general.pop_per_isle
         perform_population_selection!(pop, ops)
+    elseif isempty(pop)
+        println("all individuals filtered, redoing generation")
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl)
     end
     return eval_counter
 end
