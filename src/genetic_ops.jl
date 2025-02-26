@@ -111,7 +111,10 @@ function apply_genetic_operations!(indivs, ops, bank_of_terms;
             addterm_mutation!(indiv.node, ops)
         else
             # repeated mutations -> insert, point, point2, hoist
-            while true
+            max_muts = max(1.0, count_nodes(indiv.node) * ops.mutation.max_muts_ratio)
+            i_muts = 0
+            while i_muts < max_muts
+                i_muts += 1
                 rand_mutation = rand() * sum(ops.mutation.multiple_mut_probs)
                 mut_ind = findfirst(i -> rand_mutation <= sum(ops.mutation.multiple_mut_probs[1:i]), eachindex(ops.mutation.multiple_mut_probs))
 

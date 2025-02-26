@@ -398,6 +398,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_add_term::Float64               = 0.1,   #|
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
     p_multiple_mutations::Float64     = 0.5,   # -> probability for more than one mutation
+    max_muts_ratio                    = 0.5,   # -> max ratio of multiple mutations wrt to the complexity of the expression
 )
     p_simplify = 0.0 #|-> simplify with SymbolicUtils # -> does not work in multithreading, and is slow
     @assert all(p >= 0 for p in (
@@ -409,6 +410,9 @@ function mutation_params(;                     #|-> probabilites for the various
 
     @assert p_multiple_mutations < 1         "p_multiple_mutations must be < 1"
     0 <= p_multiple_mutations < 0.9 || @warn "p_multiple_mutations should be between 0 and 0.9"
+
+    @assert 0.0 <= max_muts_ratio            "max_muts_ratio must be >= 0                 "
+    0.0 <= max_muts_ratio <= 1.0    || @warn "max_muts_ratio should be between 0.0 and 2.0"
 
     mut_probs = (
         p_insert,
@@ -429,8 +433,9 @@ function mutation_params(;                     #|-> probabilites for the various
     mut_probs          = mut_probs          ./ sum(mut_probs)
     multiple_mut_probs = multiple_mut_probs ./ sum(multiple_mut_probs)
     return (
-        mut_probs = mut_probs,
-        multiple_mut_probs = multiple_mut_probs,
+        mut_probs            = mut_probs,
+        multiple_mut_probs   = multiple_mut_probs,
         p_multiple_mutations = p_multiple_mutations,
+        max_muts_ratio       = max_muts_ratio,
     )
 end
