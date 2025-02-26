@@ -123,13 +123,15 @@ function perform_population_selection!(pop, ops)
     ]
 
     # apply niching
-    indiv_obj_vals = [
-        round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
-        for indiv in indiv_obj_vals
-    ]
-    unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
-    keepat!(indiv_obj_vals, unique_inds)
-    keepat!(pop, unique_inds)
+    if ops.selection.population_niching_sigdigits > 0
+        indiv_obj_vals = [
+            round.(indiv, sigdigits=ops.selection.population_niching_sigdigits)
+            for indiv in indiv_obj_vals
+        ]
+        unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
+        keepat!(indiv_obj_vals, unique_inds)
+        keepat!(pop, unique_inds)
+    end
 
     # determine rank and crowding for all individuals
     ranks    = non_dominated_sort(indiv_obj_vals)
@@ -193,13 +195,15 @@ function perform_hall_of_fame_selection!(hall_of_fame, population, ops)
     ]
 
     # apply niching
-    indiv_obj_vals = [
-        round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
-        for indiv in indiv_obj_vals
-    ]
-    unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
-    keepat!(indiv_obj_vals, unique_inds)
-    keepat!(hall_of_fame, unique_inds)
+    if ops.selection.hall_of_fame_niching_sigdigits > 0
+        indiv_obj_vals = [
+            round.(indiv, sigdigits=ops.selection.hall_of_fame_niching_sigdigits)
+            for indiv in indiv_obj_vals
+        ]
+        unique_inds = unique(i -> indiv_obj_vals[i], 1:length(indiv_obj_vals))
+        keepat!(indiv_obj_vals, unique_inds)
+        keepat!(hall_of_fame, unique_inds)
+    end
 
     selection_inds = first_pareto_front(indiv_obj_vals)
 
