@@ -64,6 +64,17 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
 
         @assert !xor(isempty(grammar.bank_of_terms), mutation.mut_probs[10] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
 
+        # test measures requrie data split # -------------------------------------------------------
+        test_funcs = [
+            get_measure_max_ae_test, get_measure_mae_test, get_measure_mse_test, get_measure_one_minus_r2_test,
+            get_measure_one_minus_abs_spearman_test, get_measure_mare_test, get_measure_q75_are_test,
+            get_measure_max_are_test, get_measure_ms_processed_e_test
+        ]
+
+        if any(t in values(measures) for t in test_funcs)
+            @assert !isempty(data_descript.split_inds[3]) "for the test measures, the data split in position 3 must not be empty"
+        end
+
         # resulting parameters # -------------------------------------------------------------------
         n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
         selection = (;selection..., n_pareto_select_per_isle = n_pareto_select_per_isle)
@@ -177,7 +188,7 @@ function general_params(;
     migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 1000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
-    migrate_after_extinction_dist::Int64   = 3,                                                     # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
+    migrate_after_extinction_dist::Int64   = 3,                                                        # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                         # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 1000,                                                     # -> interval in which a random individual from the hall of fame is returned to a random island
     max_age::Int64                         = round(Int64, pop_size / num_islands),                     # -> maximal age after which individuals are removed from the popoulation
