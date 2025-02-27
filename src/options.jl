@@ -179,26 +179,26 @@ end
     parameters are also calculated and included.
 """
 function general_params(;
-    n_gens::Int64                          = typemax(Int64),                                           # -> number of generations to conduct
-    t_lim::Float64                         = 60. * 5.,                                                 # -> time limit for the algorithm
-    pop_size::Int64                        = 1000,                                                     # -> number of individuals selected for next generation / population size
-    parent_selection::Bool                 = true,                                                     # -> wheather to conduct parent selection or to use all individuals in the population as parents
-    num_islands::Int64                     = 20,                                                       # -> number of parallel islands
-    children_ratio::Float64                = 1.0,                                                      # -> the ratio of children that should be generated in each generation 0 ... 2
-    migration_interval::Int64              = 200,                                                      # -> generation interval, in which an individual is moved to other islands. (ring topology)
-    island_extinction_interval::Int64      = 1000,                                                     # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
-    migrate_after_extinction_prob::Float64 = 1.0,                                                      # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
-    migrate_after_extinction_dist::Int64   = 3,                                                        # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
-    fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                         # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
-    hall_of_fame_migration_interval::Int64 = 1000,                                                     # -> interval in which a random individual from the hall of fame is returned to a random island
-    max_age::Int64                         = round(Int64, pop_size / num_islands),                     # -> maximal age after which individuals are removed from the popoulation
-    n_refitting::Int64                     = 1,                                                        # -> how many individuals from the hall_of_fame are copied and fitted again
-    adaptive_compl_increment::Int64        = 100,                                                      # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
-    callback::Function                     = (hall_of_fame, population, gen, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
-    multithreading::Bool                   = false,                                                    # -> whether to use multithreading for the fitting (most expensive). Not always faster -> depends on how expensive fitting is for the problem at hand. Also, for this to apply, Julia needs to be started with more threads, like `julia -t 4`.
-    print_progress::Bool                   = true,                                                     # -> whether to print the elapsed time and some other KPIs.
-    plot_hall_of_fame::Bool                = true,                                                     # -> whether to plot the hall of fame
-    print_hall_of_fame::Bool               = true,                                                     # -> whether to print some of the individuals in the hall of fame. For this, `plot_hall_of_fame` must also be true
+    n_gens::Int64                          = typemax(Int64),                                                    # -> number of generations to conduct
+    t_lim::Float64                         = 60. * 5.,                                                          # -> time limit for the algorithm
+    pop_size::Int64                        = 1000,                                                              # -> number of individuals selected for next generation / population size
+    parent_selection::Bool                 = true,                                                              # -> wheather to conduct parent selection or to use all individuals in the population as parents
+    num_islands::Int64                     = 20,                                                                # -> number of parallel islands
+    children_ratio::Float64                = 1.0,                                                               # -> the ratio of children that should be generated in each generation 0 ... 2
+    migration_interval::Int64              = 200,                                                               # -> generation interval, in which an individual is moved to other islands. (ring topology)
+    island_extinction_interval::Int64      = 1000,                                                              # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
+    migrate_after_extinction_prob::Float64 = 1.0,                                                               # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
+    migrate_after_extinction_dist::Int64   = 3,                                                                 # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
+    fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                                  # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
+    hall_of_fame_migration_interval::Int64 = 1000,                                                              # -> interval in which a random individual from the hall of fame is returned to a random island
+    max_age::Int64                         = round(Int64, pop_size / num_islands),                              # -> maximal age after which individuals are removed from the popoulation
+    n_refitting::Int64                     = 1,                                                                 # -> how many individuals from the hall_of_fame are copied and fitted again
+    adaptive_compl_increment::Int64        = 100,                                                               # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
+    callback::Function                     = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
+    multithreading::Bool                   = false,                                                             # -> whether to use multithreading for the fitting (most expensive). Not always faster -> depends on how expensive fitting is for the problem at hand. Also, for this to apply, Julia needs to be started with more threads, like `julia -t 4`.
+    print_progress::Bool                   = true,                                                              # -> whether to print the elapsed time and some other KPIs.
+    plot_hall_of_fame::Bool                = true,                                                              # -> whether to plot the hall of fame
+    print_hall_of_fame::Bool               = true,                                                              # -> whether to print some of the individuals in the hall of fame. For this, `plot_hall_of_fame` must also be true
 )
     @assert num_islands > 0                                       "num_islands should be at least 1                                    "
     @assert migration_interval > 0                                "migration_interval should be at least 1                             "
