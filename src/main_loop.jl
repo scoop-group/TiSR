@@ -349,15 +349,15 @@ function perform_island_extinction!(population, ops)
     emmigrate_island = rand(1:ops.general.num_islands)
 
     # both directions, decreasing with distance
-    offsets = -ops.general.migrate_after_extinction_dist:ops.general.migrate_after_extinction_dist
+    # offsets = -ops.general.migrate_after_extinction_dist:ops.general.migrate_after_extinction_dist
+    offsets = 1:ops.general.migrate_after_extinction_dist
     offsets = filter(!=(0), offsets)
-    probs   = (1 ./ abs.(offsets)).^2
 
     sort!(population[emmigrate_island])
     for _ in 1:ops.general.migrate_after_extinction_num
         indiv = popfirst!(population[emmigrate_island])
         immigrate_island = mod1(
-            emmigrate_island + wsample(offsets, probs),
+            emmigrate_island + rand(offsets),
             ops.general.num_islands
         )
         push!(population[immigrate_island], indiv)
