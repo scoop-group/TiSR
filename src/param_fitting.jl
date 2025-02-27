@@ -41,7 +41,7 @@ function fit_n_eval!(node, data, ops, fit_iter)
     list_of_param = list_of_param_nodes(node)
 
     if length(list_of_param) > length(ops.data_descript.split_inds[1])
-        return data[end], false
+        return data[end], false, 0
     end
 
     if fit_iter > 0 && !isempty(list_of_param)
