@@ -47,7 +47,7 @@ end
 # ==================================================================================================
 # eval equation
 # ==================================================================================================
-@inline bad_array(arr) = any(!isfinite, arr) # [x] tested
+@inline bad_array(arr) = any(!isfinite, arr) # TODO: compare performance
 
 """ Eval a tree with the "cautious" approach -> prevent evaluations, which cause error, rather
     than redefining function like pow(abs(x), y). The faulty and each following one is prevented
@@ -59,7 +59,7 @@ function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{
     if node.ari == -1
         return fill(node.val, size(data[1])), true
     elseif node.ari == 0
-        return convert.(T, data[node.ind]), true
+        return data[node.ind], true
     elseif node.ari == 1
         arr_l, finite = eval_equation(node.lef, data, ops)
         (!finite || bad_array(arr_l)) && return arr_l, false
@@ -72,7 +72,7 @@ function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{
             return arr_l, false
         end
 
-        arr_l .= ops.unaops[node.ind].(arr_l)
+        arr_l = ops.unaops[node.ind].(arr_l)
         return arr_l, true
     else
         arr_l, finite = eval_equation(node.lef, data, ops)
@@ -91,7 +91,7 @@ function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{
             return arr_l, false
         end
 
-        arr_l .= ops.binops[node.ind].(arr_l, arr_r)
+        arr_l = ops.binops[node.ind].(arr_l, arr_r)
         return arr_l, true
     end
 end
