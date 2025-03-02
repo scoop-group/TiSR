@@ -158,7 +158,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
         end
 
         if gen % ops.general.island_extinction_interval == 0
-            perform_island_extinction!(population, ops)
+            perform_island_extinction!(population, gen, ops)
         end
 
 # ==================================================================================================
@@ -345,8 +345,12 @@ end
 """ Perform island extinction. Chooses a random island, and distributes the best
     indiviuals into the surrounding islands, while emptying the chosen island.
 """
-function perform_island_extinction!(population, ops)
-    emmigrate_island = rand(1:ops.general.num_islands)
+function perform_island_extinction!(population, gen, ops)
+    if ops.general.island_extinction_rotation
+        emmigrate_island = div(gen, inter)
+    else
+        emmigrate_island = rand(1:ops.general.num_islands)
+    end
 
     # both directions, decreasing with distance
     # offsets = -ops.general.migrate_after_extinction_dist:ops.general.migrate_after_extinction_dist

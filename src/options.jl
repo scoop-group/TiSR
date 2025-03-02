@@ -187,8 +187,9 @@ function general_params(;
     children_ratio::Float64                = 1.0,                                                               # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                               # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 1000,                                                              # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
+    island_extinction_rotation::Bool       = false,
     migrate_after_extinction_prob::Float64 = 1.0,                                                               # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
-    migrate_after_extinction_dist::Int64   = 3,                                                                 # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
+    migrate_after_extinction_dist::Int64   = 4,                                                                 # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                                  # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 1000,                                                              # -> interval in which a random individual from the hall of fame is returned to a random island
     max_age::Int64                         = round(Int64, pop_size / num_islands),                              # -> maximal age after which individuals are removed from the popoulation
@@ -243,6 +244,7 @@ function general_params(;
         migration_interval              = migration_interval,
         hall_of_fame_migration_interval = hall_of_fame_migration_interval,
         island_extinction_interval      = island_extinction_interval,
+        island_extinction_rotation      = island_extinction_rotation,
         migrate_after_extinction_num    = migrate_after_extinction_num,
         migrate_after_extinction_dist   = migrate_after_extinction_dist,
         fitting_island_function         = fitting_island_function,
