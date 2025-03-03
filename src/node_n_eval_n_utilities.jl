@@ -47,7 +47,7 @@ end
 # ==================================================================================================
 # eval equation
 # ==================================================================================================
-@inline bad_array(arr) = any(!isfinite, arr) # TODO: compare performance
+@inline bad_array(arr) = !isfinite(sum(arr))
 
 """ Eval a tree with the "cautious" approach -> prevent evaluations, which cause error, rather
     than redefining function like pow(abs(x), y). The faulty and each following one is prevented
