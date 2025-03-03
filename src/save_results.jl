@@ -185,7 +185,6 @@ function pretty_print(obj; indent=0, indent_step=2, sigdigits=3)
     else
         output *= prefix * string(obj)
     end
-    @show obj
     return output
 end
 
