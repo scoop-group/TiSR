@@ -6,9 +6,9 @@ using TiSR
 using DataFrames
 using CSV
 
-# # ==================================================================================================
-# # preparation
-# # ==================================================================================================
+# ==================================================================================================
+# preparation
+# ==================================================================================================
 # # load data # ------------------------------------------------------------------------------------
 # file_path = "path_to_your_data_file.txt"
 #
@@ -29,16 +29,16 @@ data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 +
 # pow(x, y) = abs(x)^y
 # pow2(x) = x^2
 
-ops, data                       = Options(
+ops, data              = Options(
     data_matr,
-    binops                      = (+, -, *, /, ^),
-    unaops                      = (exp, log, sqrt),
-    general                     = general_params(
-        t_lim                   = 60 * 5.0,
-        multithreading          = true,
+    binops             = (+, -, *, /, ^),
+    unaops             = (exp, log, sqrt),
+    general            = general_params(
+        t_lim          = 60 * 5.0,
+        multithreading = true,
     ),
-    grammar                     = grammar_params(
-        max_compl               = 30,
+    grammar            = grammar_params(
+        max_compl      = 30,
     ),
 );
 
