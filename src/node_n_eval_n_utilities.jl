@@ -129,39 +129,9 @@ function node_to_string_(node::Node, ops, sigdigits)
         return "v$(string(node.ind))"
 
     elseif node.ari == -1
-        return string(round(extract_from_dual(node.val), sigdigits=sigdigits))
+        return string(round(node.val, sigdigits=sigdigits))
     end
 end
-
-""" Encode the equation to a string where each operation is only one char. For string distance
-    purposes.
-"""
-function encode_single_char(node::Node, ops)
-    if node.ari == 2
-        op_num = node.ind + length(ops.unaops)
-        lef = encode_single_char(node.lef, ops)
-        rig = encode_single_char(node.rig, ops)
-        return "$(Char(96 + op_num))($lef,$rig)"
-
-    elseif node.ari == 1
-        op_num = node.ind
-        lef = encode_single_char(node.lef, ops)
-        return "$(Char(96 + op_num))($lef)"
-
-    elseif node.ari == 0
-        return "V$(string(node.ind))"
-
-    elseif node.ari == -1
-        # only last character should suffice for comparison
-        return string(round(extract_from_dual(node.val), sigdigits=1))[end]
-    end
-end
-
-""" Recursive functions using multiple dispatch to extract a value from arbitrarily
-    nested dual numbers.
-"""
-extract_from_dual(v::AbstractFloat) = v
-extract_from_dual(v::Number) = extract_from_dual(v.value)
 
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """

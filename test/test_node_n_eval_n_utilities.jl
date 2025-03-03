@@ -83,10 +83,6 @@ end
     @test all(TiSR.node_to_string.(eqs_dict.vals, Ref(ops), sigdigits=3) .== TiSR.node_to_string.(deepcopy.(eqs_dict.vals), Ref(ops), sigdigits=3))
 end
 
-# TODO: test encode_single_char
-
-# TODO: test extract_from_dual
-
 @testset "deepcopy and copy" begin
     eqs_dict = hardcoded_equations(ops)
     @test all(isapprox.(deepcopy.(eqs_dict.vals), eqs_dict.vals))
