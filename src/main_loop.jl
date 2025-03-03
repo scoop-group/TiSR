@@ -84,7 +84,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                     ops,
                     ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                     cur_max_compl,
-                    1
                 )
             end
         else
@@ -97,7 +96,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                     ops,
                     ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                     cur_max_compl,
-                    1
                 )
             end
         end
@@ -214,7 +212,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     return hall_of_fame, population, prog_dict, stop_msg
 end
 
-function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial; DEBUG=false)
+function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl; trial=1, DEBUG=false)
 
     eval_counter = 0
 
@@ -289,10 +287,10 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         perform_population_selection!(pop, ops)
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial+1)
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial=trial+1)
     elseif isempty(pop) && trial == 100
         println("all individuals filtered, redoing generation a last time, with debugging information")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial+1, DEBUG=true)
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial=trial+1, DEBUG=true)
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end
