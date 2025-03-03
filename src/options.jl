@@ -4,7 +4,7 @@
     There are also some safeguards, preventing certain settings combinations or warn the user,
     which may not cover all cases.
 """
-struct Options{A, B, C, D, F, G, H, I, J, K}
+struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
     general::A
     unaops::B
     binops::C
@@ -16,6 +16,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
     grammar::I
     data_descript::J
     meta_data::K
+    # dynam_expr::L
 
     function Options(
         data::Matrix;                                             # -> nxm matrix containing the n data points, m-1 variables and the output
@@ -81,6 +82,11 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
 
         global __operators = (unaops = unaops, binops = binops) # required for Base.show() Nodes
 
+        # # dynamic expressions # --------------------------------------------------------------------
+        # operators      = DynamicExpressions.OperatorEnum(; binary_operators=collect(binops), unary_operators=collect(unaops))
+        # variable_names = ["v$i" for i in 1:data_descript.n_vars]
+        # dynam_expr     = (operators = operators, variable_names = variable_names)
+
         return new{typeof(general),
                    typeof(unaops),
                    typeof(binops),
@@ -90,7 +96,9 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
                    typeof(mutation),
                    typeof(grammar),
                    typeof(data_descript),
-                   typeof(meta_data)}(
+                   typeof(meta_data),
+                   # typeof(dynam_expr),
+                   }(
                        general,
                        unaops,
                        binops,
@@ -100,7 +108,8 @@ struct Options{A, B, C, D, F, G, H, I, J, K}
                        mutation,
                        grammar,
                        data_descript,
-                       meta_data
+                       meta_data,
+                       # dynam_expr,
         ), data_vect
     end
 end

@@ -167,3 +167,61 @@ function fitting_NM!(node, data, ops, list_of_param, max_iter)
     return res.f_calls
 end
 
+# # ==================================================================================================
+# # DynamicExpressions
+# # ==================================================================================================
+# function convert_to_dynamic_expression(node, ops)
+#     if node.ari == 2
+#         return ops.binops[node.ind](
+#             convert_to_dynamic_expression(node.lef, ops),
+#             convert_to_dynamic_expression(node.rig, ops),
+#         )
+#     elseif node.ari == 1
+#         return ops.unaops[node.ind](
+#             convert_to_dynamic_expression(node.lef, ops)
+#         )
+#     elseif node.ari == 0
+#         return DynamicExpressions.Expression(
+#             DynamicExpressions.Node{Float64}(feature=node.ind); ops.dynam_expr.operators,
+#             ops.dynam_expr.variable_names
+#         )
+#     elseif node.ari == -1
+#         # return DynamicExpressions.Node{Float64}(node.val)
+#         return node.val
+#     end
+# end
+
+# function fitting_NM!(node, data, ops, list_of_param, max_iter)
+#
+#     mnode = convert_to_dynamic_expression(node, ops)
+#
+#     x0, refs = DynamicExpressions.get_constants(mnode)
+#     X        = reduce(hcat, data)'[:, ops.data_descript.split_inds[1]]
+#
+#     minim = x -> begin
+#         DynamicExpressions.set_constants!(mnode, x, refs)
+#         res, valid = TiSR.DynamicExpressions.eval_tree_array(mnode, X, ops.dynam_expr.operators)
+#         # TODO: add pre_residual_processing
+#         res .= X[end, :] .- res
+#         # TODO: add residual_processing
+#         res .*= view(ops.data_descript.fit_weights, ops.data_descript.split_inds[1])
+#         return mean(abs2, res)
+#     end
+#
+#     res = Optim.optimize(
+#         minim, x0,
+#         Optim.NelderMead(),
+#         Optim.Options(;
+#             show_warnings  = false, iterations     = max_iter, time_limit = ops.fitting.t_lim,
+#             show_trace     = false, store_trace    = true,
+#             g_abstol       = 0.0,   g_reltol       = 0.0,
+#             outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
+#         ),
+#     )
+#     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
+#
+#     set_params!(list_of_param, x_best)
+#     return res.f_calls
+# end
+
+
