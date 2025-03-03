@@ -55,9 +55,9 @@ end
     For now, the following evalulations are prevented:
     log(x <= 0), pow(x < 0, y), x / 0
 """
-function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{AbstractArray{T},Bool} where {T <: Real}
+function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{Union{AbstractArray{T}, T},Bool} where {T <: Real}
     if node.ari == -1
-        return fill(node.val, size(data[1])), true
+        return node.val, true
     elseif node.ari == 0
         return data[node.ind], true
     elseif node.ari == 1
