@@ -53,7 +53,7 @@ end
 function get_measure_ms_processed_e(prediction, target, node, ops)
     inds = ops.data_descript.split_inds[end]
     residual = target .- prediction
-    @views mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops)[inds]
+    @views mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops)[inds] # TODO: are inds and eachindex(residual) right?
                             .* ops.data_descript.fit_weights[inds])
 end
 
