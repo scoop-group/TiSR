@@ -1,8 +1,6 @@
 
 # TODO: test add_from_bank_of_terms_mutation!(node, ops, bank_of_terms)
 # TODO: test apply_genetic_operations!(indivs, ops, bank_of_terms;
-# TODO: test rand_mult(;minn=2.0, maxx=10.0, sign_flip_prob=0.05)
-
 
 data = rand(100, 5)
 ops, data_vect = Options(data)
@@ -321,8 +319,14 @@ end
 end
 
 
+@testset "rand_mult" begin
+    len = 1000000
+    a = [TiSR.rand_mult(;minn=2.0, maxx=10.0, sign_flip_prob=0.05) for i in 1:len]
 
-
+    @test isapprox(count(<=(0), a), len * 0.05, rtol=0.1)
+    @test isapprox(minimum(abs(a_) for a_ in a), 1/10, rtol=0.1)
+    @test isapprox(maximum(abs(a_) for a_ in a), 10.0, rtol=0.1)
+end
 
 
 
