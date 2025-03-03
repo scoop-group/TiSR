@@ -413,6 +413,10 @@ function plot_hall_of_fame(hall_of_fame, ops)
     compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
     ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
 
+    for indiv in hall_of_fame
+        @assert indiv.measures[:ms_processed_e] >= 0 "<= 0 ?? \n$(pretty_print(indiv))"
+    end
+
     plt = scatterplot(
         compl,
         ms_processed_e,
