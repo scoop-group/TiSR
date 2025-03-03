@@ -289,14 +289,3 @@ function clean_trash_nodes!(node::Node{T}, null_node) where {T <: Number}
         end
     end
 end
-
-""" Get a list of all nodes attached to this node.
-"""
-function flatten_node(node::Node)
-    node.ari <= 0 && return [node]
-    if node.ari == 1
-        return vcat(node, flatten_node(node.lef))
-    elseif node.ari == 2
-        return vcat(node, flatten_node(node.lef), flatten_node(node.rig))
-    end
-end

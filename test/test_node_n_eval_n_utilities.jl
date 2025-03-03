@@ -160,5 +160,4 @@ end
 
 # TODO: test list_of_param_nodes
 # TODO: test clean_trash_nodes!(pop::Vector, null_node)
-# TODO: test flatten_node(node::Node)
 
