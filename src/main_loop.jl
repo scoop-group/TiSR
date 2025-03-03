@@ -413,8 +413,14 @@ function plot_hall_of_fame(hall_of_fame, ops)
     compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
     ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
 
-    for indiv in hall_of_fame
-        @assert indiv.measures[:ms_processed_e] >= 0 "ms_processed_e <= 0 ?? \n$(pretty_print(indiv))"
+    ymin = 10^(floor(log10(minimum(ms_processed_e))))
+    ymax = 10^(ceil(log10(maximum(ms_processed_e))))
+
+    if any(!(1e-200 < m < 1e200) for m in ms_processed_e)
+        println("ms_processed_e clamped to in-between 1e-100 and 1e100 for hall_of_fame plot")
+        clamp!(ms_processed_e, 1e-100, 1e100)
+        ymin = max(ymin, 1e-100)
+        ymax = min(ymax, 1e100)
     end
 
     plt = scatterplot(
@@ -427,10 +433,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
         marker           = :circle,
         unicode_exponent = false,
         xlim             = (0, ops.grammar.max_compl),
-        ylim             = (
-            10^(floor(log10(minimum(ms_processed_e)))),
-            10^(ceil(log10(maximum(ms_processed_e))))
-        ),
+        ylim             = (ymin, ymax),
         compact=true
     )
 
