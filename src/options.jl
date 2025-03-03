@@ -200,8 +200,8 @@ function general_params(;
     migrate_after_extinction_prob::Float64 = 1.0,                                                               # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
     migrate_after_extinction_dist::Int64   = 4,                                                                 # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                                  # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
-    hall_of_fame_migration_interval::Int64 = 1000,                                                              # -> interval in which a random individual from the hall of fame is returned to a random island
-    max_age::Int64                         = round(Int64, pop_size / num_islands),                              # -> maximal age after which individuals are removed from the popoulation
+    hall_of_fame_migration_interval::Int64 = 500,                                                               # -> interval in which a random individual from the hall of fame is returned to a random island
+    max_age::Int64                         = 2 * round(Int64, pop_size / num_islands),                          # -> maximal age after which individuals are removed from the popoulation
     n_refitting::Int64                     = 1,                                                                 # -> how many individuals from the hall_of_fame are copied and fitted again
     adaptive_compl_increment::Int64        = 100,                                                               # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
     callback::Function                     = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
@@ -299,8 +299,8 @@ end
 function selection_params(;
     hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :compl],                          # -> objectives for the hall_of_fame
     selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :compl], # -> objectives for the Pareto-optimal selection part of selection
-    hall_of_fame_niching_sigdigits::Int64      = 2,                                                  # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
-    population_niching_sigdigits::Int64        = 3,                                                  # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
+    hall_of_fame_niching_sigdigits::Int64      = 5,                                                  # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
+    population_niching_sigdigits::Int64        = 5,                                                  # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
     ratio_pareto_tournament_selection::Float64 = 0.5,                                                # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
     tournament_size::Int64                     = 5,                                                  # -> tournament size
 )
@@ -409,7 +409,7 @@ end
     up to 1, since they are normalized here.
 """
 function mutation_params(;                     #|-> probabilites for the various mutations (don't need to add up to 1)
-    p_crossover::Float64              = 0.25,  #|
+    p_crossover::Float64              = 0.5,   #|
     p_point::Float64                  = 1.0,   #|
     p_point2::Float64                 = 0.3,   #|
     p_insert::Float64                 = 2.0,   #|
