@@ -18,7 +18,7 @@ end
 
 """ Creates a new node with the specified type.
 """
-function convert_node(node::Node, val_T::T) where {T <: Number} # [x] tested
+function convert_node(node::Node, val_T::T) where {T <: Number}
     if node.ari == -1
         return Node(convert(T, node.val), val_type=val_T)
     elseif node.ari == 0
@@ -33,12 +33,12 @@ function convert_node(node::Node, val_T::T) where {T <: Number} # [x] tested
     end
 end
 
-function Base.convert(::Type{T1}, node::Node{T2}) where {T1 <: Real, T2 <: Real} # [x] tested
+function Base.convert(::Type{T1}, node::Node{T2}) where {T1 <: Real, T2 <: Real}
     T1 == T2 && return node
     return convert_node(node, zero(T1))
 end
 
-function Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, node::Node{T2}) where {T, V, N, T2<:Real} # [x] tested
+function Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, node::Node{T2}) where {T, V, N, T2<:Real}
     T1 = ForwardDiff.Dual{T, V, N}
     T1 == T2 && return node
     return convert_node(node, zero(T1))

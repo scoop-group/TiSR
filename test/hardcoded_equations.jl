@@ -74,31 +74,3 @@ function hardcoded_equations(ops)
 
     return eqs_dict
 end
-
-
-
-
-# gaussian
-# magnetic manipulator
-# vanderwaals
-# gravity
-# relativity
-# spring force
-#
-
-# BenchmarkProblem1 = (
-#     name = "I.12.4 - magnitude of electric field",
-#     str = "E = q1 / (4 * pi * epsilon * r^2)",
-#     func = (q1, r) -> q1 / (4 * pi * 8.854e-12 * r^2),
-#     node = Node(
-#             findfirst(==(/), ops.binops),
-#                   Node(1),
-#                   Node(findfirst(*),
-#                        Node(4.0),
-#                        Node(findfirst(
-#                  )
-#     )
-# )
-
-
-
