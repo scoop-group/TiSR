@@ -381,15 +381,12 @@ end
 """
 function perform_island_extinction!(population, gen, ops)
     if ops.general.island_extinction_rotation
-        emmigrate_island = div(gen, inter)
+        emmigrate_island = div(gen, ops.general.island_extinction_interval)
     else
         emmigrate_island = rand(1:ops.general.num_islands)
     end
 
-    # both directions, decreasing with distance
-    # offsets = -ops.general.migrate_after_extinction_dist:ops.general.migrate_after_extinction_dist
     offsets = 1:ops.general.migrate_after_extinction_dist
-    offsets = filter(!=(0), offsets)
 
     sort!(population[emmigrate_island])
     for _ in 1:ops.general.migrate_after_extinction_num
