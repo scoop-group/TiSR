@@ -414,7 +414,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
     ymin = 10^(floor(log10(minimum(ms_processed_e))))
     ymax = 10^(ceil(log10(maximum(ms_processed_e))))
 
-    if any(!(1e-200 < m < 1e200) for m in ms_processed_e)
+    if any(!(1e-100 < m < 1e100) for m in ms_processed_e)
         println("ms_processed_e clamped to in-between 1e-100 and 1e100 for hall_of_fame plot")
         clamp!(ms_processed_e, 1e-100, 1e100)
         ymin = max(ymin, 1e-100)
