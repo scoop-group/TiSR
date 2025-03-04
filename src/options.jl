@@ -19,10 +19,10 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
     # dynam_expr::L
 
     function Options(
-        data::Matrix;                                                                     # -> nxm matrix containing the n data points, m-1 variables and the output
-        fit_weights::Vector{Float64} = (1.0 ./ (abs.(data[:, end]) .+ 1e-100) .+ 1e-100), # -> weights for the data fitting -> residual .* weight
-        binops                       = (+,   -,   *,   /,   ^  ),                         # -> binary function set to choose from
-        unaops                       = (exp, log, sin, cos, abs),                         # -> unary function set to choose from
+        data::Matrix;                                                           # -> nxm matrix containing the n data points, m-1 variables and the output
+        fit_weights::Vector{Float64} = (1.0 ./ (abs.(data[:, end]) .+ 1e-300)), # -> weights for the data fitting -> residual .* weight
+        binops                       = (+,   -,   *,   /,   ^  ),               # -> binary function set to choose from
+        unaops                       = (exp, log, sin, cos, abs),               # -> unary function set to choose from
         data_split                   = data_split_params(),
         general                      = general_params(),
         measures                     = measure_params(),
