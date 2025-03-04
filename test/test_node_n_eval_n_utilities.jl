@@ -1,11 +1,8 @@
 
-
-include("hardcoded_equations.jl")
-
 data = rand(100, 10)
 ops, data_vect = Options(data)
 
-# TODO: test Node constructors
+include("hardcoded_equations.jl") # tests also the Node constructors
 
 @testset "convert_node" begin
     node = nothing
@@ -53,9 +50,47 @@ end
     @test eq4(data) == TiSR.eval_equation(eqs_dict.vals[4], data, ops)[1]
     @test eq5(data) == TiSR.eval_equation(eqs_dict.vals[5], data, ops)[1]
 
-    # TODO: test eval with bad values -> -5^1.5
+    # test with many many # ------------------------------------------------------------------------
+    data = [rand(100) .- 0.5 for _ in 1:ops.data_descript.n_vars] # also negative values; should not error
+    v1 = data[1]
+    v2 = data[2]
+    v3 = data[3]
+    v4 = data[4]
+    v5 = data[5]
+    v6 = data[6]
+    v7 = data[7]
+    v8 = data[8]
+    v9 = data[9]
+
+    function gen_valid_node(ops, data, compl)
+        node = TiSR.grow_equation(5, ops)
+        pred, valid = TiSR.eval_equation(node, data, ops)
+        if valid
+            return node, pred
+        else
+            return gen_valid_node(ops, data, compl)
+        end
+    end
+
+    max_diffs = map(1:500) do _
+        node, pred = gen_valid_node(ops, data, rand(1:6))
+        str = TiSR.node_to_string(node, ops) # TODO: continue here
+
+        julia_pred = eval(Meta.parse("@. " * str))
+
+        a_diff = abs.((julia_pred .- pred))
+
+        if maximum(a_diff) < 1e-14 || any(iszero, julia_pred)
+            return maximum(a_diff)
+        end
+        r_diff = abs.(a_diff ./ julia_pred)
+
+        return maximum(min.(a_diff, r_diff))
+    end
+
+    @test count(>(1e-10), max_diffs) < 10
+
     # TODO: test ForwardDiff with eval_equation
-    # TODO: test log(-1) etc
 
 end
 
