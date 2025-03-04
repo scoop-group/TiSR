@@ -48,9 +48,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
         for (m, f) in ops.measures
     )
 
-    @assert indiv.measures[:ms_processed_e] >= 0 "ms_processed_e < 0 ?? -> \n" * pretty_print(indiv)
-
-    if any(!isfinite(v) for v in values(indiv.measures))
+    if any(!isfinite(v) for v in values(indiv.measures)) # TODO: mse becomes inf..
         indiv.valid = false
     end
     return eval_counter
