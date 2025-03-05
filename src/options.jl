@@ -177,7 +177,7 @@ function prepare_data(data, fit_weights, replace_inf)
     if any(!isfinite, fit_weights)
         println("some fit_weights are nonfinite, replacing those with ops.general.replace_inf")
         replace!(fit_weights, Inf => replace_inf)
-        @assert any(!isfinite, fit_weights) "fit_weights still nonfinite after replacing Infs, there might be -Inf or NaN"
+        @assert all(isfinite, fit_weights) "fit_weights still nonfinite after replacing Infs, there might be -Inf or NaN"
     end
 
     @assert all(fit_weights .> 0.0)              "fit_weights must be larger than 0"
