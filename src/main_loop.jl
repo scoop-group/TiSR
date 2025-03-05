@@ -356,7 +356,7 @@ end
 """
 function perform_island_extinction!(population, gen, ops)
     if ops.general.island_extinction_rotation
-        emmigrate_island = div(gen, ops.general.island_extinction_interval)
+        emmigrate_island = Int(div(gen, ops.general.island_extinction_interval))
     else
         emmigrate_island = rand(1:ops.general.num_islands)
     end
