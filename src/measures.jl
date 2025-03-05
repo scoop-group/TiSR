@@ -30,21 +30,21 @@ function get_measure_one_minus_abs_spearman(prediction, target, node, ops)
 end
 
 function get_measure_mare(prediction, target, node, ops)
-    guard = 1e-300
+    guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[end]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views mean(abs, rel_residual[inds])
 end
 
 function get_measure_q75_are(prediction, target, node, ops)
-    guard = 1e-300
+    guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[end]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views quantile(abs.(rel_residual[inds]), 0.75)
 end
 
 function get_measure_max_are(prediction, target, node, ops)
-    guard = 1e-300
+    guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[end]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     maximum(abs, rel_residual[inds])
@@ -88,21 +88,21 @@ function get_measure_one_minus_abs_spearman_test(prediction, target, node, ops)
 end
 
 function get_measure_mare_test(prediction, target, node, ops)
-    guard = 1e-300
+    guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[3]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views mean(abs, rel_residual[inds])
 end
 
 function get_measure_q75_are_test(prediction, target, node, ops)
-    guard = 1e-300
+    guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[3]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views quantile(abs.(rel_residual[inds]), 0.75)
 end
 
 function get_measure_max_are_test(prediction, target, node, ops)
-    guard = 1e-300
+    guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[3]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     maximum(abs, rel_residual[inds])

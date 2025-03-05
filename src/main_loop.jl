@@ -146,6 +146,17 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 eval_counters .= 0
             end
 
+            # check for replace_inf behavior
+            obj_replace_inf_error = findfirst(
+                all(indiv.measures[obj] == ops.general.replace_inf for indiv in hall_of_fame)
+                for obj in ops.selection.hall_of_fame_objectives
+            )
+            if !isnothing(obj_replace_inf_error)
+                @warn """all individual in the hall_of_fame have the ops.general.replace_inf for
+                    objective '$(ops.selection.hall_of_fame_objectives[obj_replace_inf_error])'.
+                    Please check for correctness or increase the ops.general.replace_inf value."""
+            end
+
             for k in keys(get_for_prog)
                 push!(prog_dict[k], get_for_prog[k])
             end
@@ -212,7 +223,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     return hall_of_fame, population, prog_dict, stop_msg
 end
 
-function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl; trial=1, DEBUG=false)
+function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl; trial=1)
 
     eval_counter = 0
 
@@ -225,17 +236,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         )
     end
 
-    if DEBUG
-        println("population:")
-        for indiv in pop
-            pretty_print(indiv)
-        end
-        println("children:")
-        for indiv in chil
-            pretty_print(indiv)
-        end
-    end
-
     # genetic operations # -------------------------------------------------------------------------
     if length(pop) > 0.4 * ops.general.pop_per_isle
         perform_parent_selection!(chil, pop, ops)
@@ -246,31 +246,9 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
         end
     end
 
-    if DEBUG
-        println("population:")
-        for indiv in pop
-            pretty_print(indiv)
-        end
-        println("children:")
-        for indiv in chil
-            pretty_print(indiv)
-        end
-    end
-
     # fitting and evaluation # ---------------------------------------------------------------------
     for ii in eachindex(chil)
         eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
-    end
-
-    if DEBUG
-        println("population:")
-        for indiv in pop
-            pretty_print(indiv)
-        end
-        println("children:")
-        for indiv in chil
-            pretty_print(indiv)
-        end
     end
 
     filter!(indiv -> indiv.valid, chil)
@@ -288,9 +266,6 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
         one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial=trial+1)
-    elseif isempty(pop) && trial == 100
-        println("all individuals filtered, redoing generation a last time, with debugging information")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial=trial+1, DEBUG=true)
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end

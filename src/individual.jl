@@ -44,11 +44,15 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
 
     # calculate measures # -------------------------------------------------------------------------
     indiv.measures = NamedTuple(
-        m => f(prediction, data[end], indiv.node, ops)
+        m => clamp(
+            f(prediction, data[end], indiv.node, ops),
+            -ops.general.replace_inf,
+            ops.general.replace_inf
+        )
         for (m, f) in ops.measures
     )
 
-    if any(!isfinite(v) for v in values(indiv.measures)) # TODO: mse becomes inf..
+    if any(!isfinite(v) for v in values(indiv.measures))
         indiv.valid = false
     end
     return eval_counter

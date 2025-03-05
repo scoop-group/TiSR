@@ -20,7 +20,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
 
     function Options(
         data::Matrix;                                                           # -> nxm matrix containing the n data points, m-1 variables and the output
-        fit_weights::Vector{Float64} = (1.0 ./ (abs.(data[:, end]) .+ 1e-300)), # -> weights for the data fitting -> residual .* weight
+        fit_weights::Vector{Float64} = inv.(abs.(data[:, end])),                # -> weights for the data fitting -> residual .* weight
         binops                       = (+,   -,   *,   /,   ^  ),               # -> binary function set to choose from
         unaops                       = (exp, log, sin, cos, abs),               # -> unary function set to choose from
         data_split                   = data_split_params(),
@@ -38,7 +38,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
         @assert all(s in keys(measures) for s in selection.hall_of_fame_objectives) "some hall_of_fame_objectives are not specified in the meausres"
 
         # prepare data and its params --------------------------------------------------------------
-        data_vect, data_descript = prepare_data(data, fit_weights)
+        data_vect, data_descript = prepare_data(data, fit_weights, general.replace_inf)
 
         split_inds = _data_split_params(data, data_split...)
         data_descript = (data_descript..., split_inds = split_inds)
@@ -162,7 +162,7 @@ function _data_split_params(data, parts::Nothing, split_inds::Vector{Vector{Int6
     return split_inds
 end
 
-function prepare_data(data, fit_weights)
+function prepare_data(data, fit_weights, replace_inf)
     data_vect = [data[:, i] for i in 1:size(data, 2)]
 
     # prepare data # ---------------------------------------------------------------------------
@@ -171,9 +171,16 @@ function prepare_data(data, fit_weights)
     @assert size(data, 2) <= 128 + 1      "TiSR cannot handle more than 128 variables out of the box"
     !any(length(unique(d)) == 1 for d in data_vect) || @warn "data containts columns, which are constant"
 
-    @assert length(fit_weights) == size(data, 1) "fit_weights seems to have too many or to few entries"
-    @assert all(fit_weights .>= 0.0)             "fit_weights must be larger than 0"
-    @assert all(isfinite, fit_weights)           "some non finite values in fit_weights"
+
+    @assert length(fit_weights) == size(data, 1) "fit_weights must have the same length as the data points"
+
+    if any(!isfinite, fit_weights)
+        println("some fit_weights are nonfinite, replacing those with ops.general.replace_inf")
+        replace!(fit_weights, Inf => replace_inf)
+        @assert any(!isfinite, fit_weights) "fit_weights still nonfinite after replacing Infs, there might be -Inf or NaN"
+    end
+
+    @assert all(fit_weights .> 0.0)              "fit_weights must be larger than 0"
 
     return data_vect, (
         data_type   = eltype(data_vect[1]),
@@ -204,6 +211,7 @@ function general_params(;
     max_age::Int64                         = 2 * round(Int64, pop_size / num_islands),                          # -> maximal age after which individuals are removed from the popoulation
     n_refitting::Int64                     = 1,                                                                 # -> how many individuals from the hall_of_fame are copied and fitted again
     adaptive_compl_increment::Int64        = 100,                                                               # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
+    replace_inf::Float64                   = 1e100,                                                             # -> the value infs measures should be replaced with. The inverse is also used as the guarding offset g -> 1/(0 + g)
     callback::Function                     = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
     multithreading::Bool                   = false,                                                             # -> whether to use multithreading for the fitting (most expensive). Not always faster -> depends on how expensive fitting is for the problem at hand. Also, for this to apply, Julia needs to be started with more threads, like `julia -t 4`.
     print_progress::Bool                   = true,                                                              # -> whether to print the elapsed time and some other KPIs.
@@ -220,6 +228,7 @@ function general_params(;
     @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0                      "
     @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands          "
     @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2   "
+    @assert !isnan(replace_inf)                                   "replace_inf must not be NaN"
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -263,6 +272,7 @@ function general_params(;
         multithreading                  = multithreading,
         adaptive_compl_increment        = adaptive_compl_increment,
         callback                        = callback,
+        replace_inf                     = replace_inf,
         print_progress                  = print_progress,
         plot_hall_of_fame               = plot_hall_of_fame,
         print_hall_of_fame              = print_hall_of_fame,
