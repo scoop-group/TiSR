@@ -119,16 +119,16 @@ end
 
 end
 
-@testset "point_mutation1!" begin
+@testset "point_mutation!" begin
     distances = map(1:1000) do _
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
 
-        TiSR.point_mutation1!(node, ops)
+        TiSR.point_mutation!(node, ops)
 
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
 
         @test num_nodes_after == num_nodes_before
 
@@ -143,10 +143,10 @@ end
     distances = map(1:1000) do _
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
         TiSR.point_mutation2!(node, ops)
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
         dist = num_nodes_after - num_nodes_before
         lev = Levenshtein()(str1, str2)
         dist, lev/num_nodes_before
@@ -164,12 +164,12 @@ end
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
 
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
 
         TiSR.insert_mutation!(node, ops)
 
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
 
         cmap1 = countmap(str1)
         cmap2 = countmap(str2)
@@ -195,12 +195,12 @@ end
         TiSR.maxim_tree_depth(node, minim=3) > 2 || return 0
 
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
 
         TiSR.hoist_mutation!(node, ops)
 
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
 
         cmap1 = countmap(str1)
         cmap2 = countmap(str2)
@@ -236,8 +236,8 @@ end
         node2 = TiSR.grow_equation(rand(4:7), ops, method=:asym)
         TiSR.maxim_tree_depth(node2, minim=3) > 2 || return 0
 
-        str1_before = TiSR.encode_single_char(node1, ops)
-        str2_before = TiSR.encode_single_char(node2, ops)
+        str1_before = encode_single_char(node1, ops)
+        str2_before = encode_single_char(node2, ops)
 
         num_nodes1_before = TiSR.count_nodes(node1)
         num_nodes2_before = TiSR.count_nodes(node2)
@@ -249,8 +249,8 @@ end
 
         @test num_nodes1_after + num_nodes2_after == num_nodes1_before + num_nodes2_before
 
-        str1_after = TiSR.encode_single_char(node1, ops)
-        str2_after = TiSR.encode_single_char(node2, ops)
+        str1_after = encode_single_char(node1, ops)
+        str2_after = encode_single_char(node2, ops)
 
         str_before = str1_before * str2_before
         str_after = str1_after * str2_after
@@ -278,10 +278,10 @@ end
             num_nodes_before = TiSR.count_nodes(node)
             num_nodes_before > 1 && break
         end
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
         TiSR.subtree_mutation!(node, ops)
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
         dist = num_nodes_after - num_nodes_before
         lev = Levenshtein()(str1, str2)
         dist, lev/num_nodes_before
@@ -298,12 +298,12 @@ end
         node = TiSR.grow_equation(rand(4:7), ops, method=:full)
 
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
 
         TiSR.insert_times_param_mutation!(node, ops)
 
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
 
         cmap1 = countmap(str1)
         cmap2 = countmap(str2)
@@ -327,12 +327,12 @@ end
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
 
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = encode_single_char(node, ops)
 
         TiSR.addterm_mutation!(node, ops, subtree_depth=1)
 
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = encode_single_char(node, ops)
 
         cmap1 = countmap(str1)
         cmap2 = countmap(str2)

@@ -5,12 +5,7 @@
 # TODO: test fastcopy(indiv::Individual) = Individual(deepcopy(indiv.node))
 
 data = rand(100, 10)
-ops, data_vect = Options(
-    data,
-    general = general_params(
-        num_islands              = 3,
-    )
-)
+ops, data_vect = Options(data)
 
 @testset "Base.isless" begin
     indiv1 = TiSR.Individual(TiSR.grow_equation(rand(3:5), ops, method = :asym))

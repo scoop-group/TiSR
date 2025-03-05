@@ -52,15 +52,15 @@ end
 
     # test with many many # ------------------------------------------------------------------------
     data = [rand(100) .- 0.5 for _ in 1:ops.data_descript.n_vars] # also negative values; should not error
-    v1 = data[1]
-    v2 = data[2]
-    v3 = data[3]
-    v4 = data[4]
-    v5 = data[5]
-    v6 = data[6]
-    v7 = data[7]
-    v8 = data[8]
-    v9 = data[9]
+    global v1 = data[1]
+    global v2 = data[2]
+    global v3 = data[3]
+    global v4 = data[4]
+    global v5 = data[5]
+    global v6 = data[6]
+    global v7 = data[7]
+    global v8 = data[8]
+    global v9 = data[9]
 
     function gen_valid_node(ops, data, compl)
         node = TiSR.grow_equation(5, ops)
@@ -91,7 +91,6 @@ end
     @test count(>(1e-10), max_diffs) < 10
 
     # TODO: test ForwardDiff with eval_equation
-
 end
 
 @testset "node_to_string" begin
@@ -120,13 +119,43 @@ end
 
 @testset "deepcopy and copy" begin
     eqs_dict = hardcoded_equations(ops)
+
+    # test whether node is the same
     @test all(isapprox.(deepcopy.(eqs_dict.vals), eqs_dict.vals))
     @test all(isapprox.(eqs_dict.vals, deepcopy.(eqs_dict.vals)))
-    # TODO: test whether same node
+
+    # test whether node is not the same instance -> perform mutation on copyied
+    copied = deepcopy.(eqs_dict.vals)
+    for node in copied
+        TiSR.hoist_mutation!(node, ops)
+    end
+    @test all(.!isapprox.(copied, eqs_dict.vals))
+
     # TODO: test whether type stays the same
+    # copied = map(copied) do node
+    #     TiSR.convert_node(node, 1f0)
+    # end
+    # copied isa Vector{Node{Float32}}
+    #
+    # deepcopy.(copied)
+    #
+    # deepcopy.(eqs_dict.vals)
+    #
+    # @test all(.!isapprox.(copied, eqs_dict.vals))
 end
 
-# TODO: test copy_node_wo_copy!(node1, node2)
+@testset "copy_node_wo_copy!" begin
+    eqs_dict = hardcoded_equations(ops)
+
+    copied = deepcopy.(eqs_dict.vals)
+    for node in copied
+        TiSR.hoist_mutation!(node, ops)
+    end
+    @assert all(.!isapprox.(copied, eqs_dict.vals))
+
+    TiSR.copy_node_wo_copy!.(copied, eqs_dict.vals)
+    @test all(isapprox.(copied, eqs_dict.vals))
+end
 
 @testset "count_nodes" begin
     eqs_dict = hardcoded_equations(ops)
@@ -153,19 +182,19 @@ end
     eqs_dict2["copy_modif_5"] = node_complex
 
 
-    for (i, eq1) in enumerate(eqs_dict1.vals)                                                        # same same?
+    for (i, eq1) in enumerate(eqs_dict1.vals)
         for (j, eq2) in enumerate(eqs_dict2.vals)
             @test !(isapprox(eq1, eq2, rtol=0.0) ⊻ i == j)
         end
     end
 
-    for (i, eq1) in enumerate(eqs_dict1.vals)                                                        # 1e-9 - same
+    for (i, eq1) in enumerate(eqs_dict1.vals)
         for (j, eq2) in enumerate(eqs_dict2.vals)
             @test !(isapprox(eq1, eq2, rtol=1e-9) ⊻ i == j)
         end
     end
 
-    for (i, eq1) in enumerate(eqs_dict1.vals)                                                        # 1e-4
+    for (i, eq1) in enumerate(eqs_dict1.vals)
         for (j, eq2) in enumerate(eqs_dict2.vals)
             @test !(isapprox(eq1, eq2, rtol=1e-4) ⊻ (
                 i == j || (i == 5 && j == 7)
@@ -173,7 +202,7 @@ end
         end
     end
 
-    for (i, eq1) in enumerate(eqs_dict1.vals)                                                        # 1e-2
+    for (i, eq1) in enumerate(eqs_dict1.vals)
         for (j, eq2) in enumerate(eqs_dict2.vals)
             @test !(isapprox(eq1, eq2, rtol=1e-2) ⊻ (
                 i == j || (i == 5 && j == 7) || (i == 1 && j == 6)
@@ -181,14 +210,56 @@ end
         end
     end
 
-    node = deepcopy(eqs_dict1.vals[1])                                                                # and test with one of the simple nodes
+    node = deepcopy(eqs_dict1.vals[1])
     node.lef.rig.val = 1e100
 
     @test isapprox(node, eqs_dict1.vals[1], rtol=Inf)
 end
 
-# TODO: test Base.:(==)(node1::Node, node2::Node) = Base.isapprox(node1, node2, rtol=0.0)
+@testset "Base.:(==)" begin
+    eqs_dict = hardcoded_equations(ops).vals
+    copied = deepcopy.(eqs_dict)
 
-# TODO: test list_of_param_nodes
-# TODO: test clean_trash_nodes!(pop::Vector, null_node)
+    copied[1].lef.lef.val *= 1.1
+    copied[2].lef.lef.val *= 1.1
+    copied[3].lef.lef.val *= 1.1
+    copied[4].lef.lef.lef.rig.val *= 1.1
+    copied[5].lef.lef.lef.lef.rig.rig.val *= 1.1
+
+    @assert all(isapprox.(eqs_dict, copied, rtol=Inf))
+    @assert all(.!isapprox.(eqs_dict, copied, rtol=0))
+    @test all(.!.==(eqs_dict, copied))
+end
+
+@testset "list_of_param_nodes" begin
+    eqs_dict = hardcoded_equations(ops).vals
+
+    list_of_params = TiSR.list_of_param_nodes.(eqs_dict)
+    list_of_params isa Vector{Vector{Node}}
+
+    vals = [[round(n.val, sigdigits=3) for n in list_of_param] for list_of_param in list_of_params]
+
+    @test all(vals .== [
+        [1.45, -42.0, 1.0],
+        [1.45, -42.0, 1.0],
+        [1.45, 1.0, 1.0],
+        [0.283, 0.998, 20.0, 9.42e11],
+        [20.0, 9.42e11, 0.998, 20.0, 9.42e11],
+    ])
+end
+
+@testset "list_of_param_nodes" begin
+    eqs_dict = hardcoded_equations(ops).vals
+
+    node = eqs_dict[1]
+    node.ari = 0
+
+    @assert TiSR.count_nodes(node) == 1
+    @assert TiSR.count_nodes(node.lef) > 1
+
+    null_node = Node(0.0)
+    TiSR.clean_trash_nodes!(node, null_node)
+    @test TiSR.count_nodes(node.lef) == 1
+end
+
 
