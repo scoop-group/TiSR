@@ -1,10 +1,5 @@
 
-# TODO: test dominates(x, y)
-# TODO: test non_dominated_sort(individs::Vector{Vector{Float64}})
-# TODO: test first_pareto_front
-# TODO: test crowding_distance(individs)
 # TODO: test parent_selection(pop)
-# TODO: test tournament_selection(fitness, inds; tournament_size=5, n_select=10, modify=true)
 # TODO: test normalize_objectives(indiv_obj_vals) -> median, offset
 # TODO: test get_relative_fitness(indiv_obj_vals)
 
