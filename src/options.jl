@@ -58,13 +58,13 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
         end
 
         if :weighted_compl in selection.selection_objectives || :weighted_compl in selection.hall_of_fame_objectives
-            "VAR"   in grammar.weighted_compl_dict || @warn "'VAR' not specified in weighted_compl_dict -> 3.0 is assumed"
-            "PARAM" in grammar.weighted_compl_dict || @warn "'PARAM' not specified in weighted_compl_dict -> 3.0 is assumed"
+            "VAR"   in keys(grammar.weighted_compl_dict) || @warn "'VAR' not specified in weighted_compl_dict -> 3.0 is assumed"
+            "PARAM" in keys(grammar.weighted_compl_dict) || @warn "'PARAM' not specified in weighted_compl_dict -> 3.0 is assumed"
             for op in binops
-                string(op) in grammar.weighted_compl_dict || @warn "$op not specified in weighted_compl_dict -> 3.0 is assumed"
+                string(op) in keys(grammar.weighted_compl_dict) || @warn "$op not specified in weighted_compl_dict -> 3.0 is assumed"
             end
             for op in unaops
-                string(op) in grammar.weighted_compl_dict || @warn "$op not specified in weighted_compl_dict -> 3.0 is assumed"
+                string(op) in keys(grammar.weighted_compl_dict) || @warn "$op not specified in weighted_compl_dict -> 3.0 is assumed"
             end
         end
 
