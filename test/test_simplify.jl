@@ -1,6 +1,5 @@
 
 # TODO: test apply_simple_simplifications!(node, ops)
-# TODO: test div_to_mul_param!(node, ops) # TODO: test
 # TODO: test replace_same_subst_n_div!(node, ops)
 
 # TODO: test node_to_symbolic(node::Node, ops::Options)
@@ -9,10 +8,8 @@
 # TODO: test get_drastic_simplify_nodes(node, ops; threshold=1e-1)
 # TODO: test is_drastic_simplifyable(node, ops; threshold=1e-1)
 # TODO: test apply_simple_simplifications!(node, ops)
-# TODO: test div_to_mul_param!(node, ops) # TODO: test
 # TODO: test simplify_binary_across_1_level!(node, ops)
 # TODO: test replace_same_subst_n_div!(node, ops)
-# TODO: test reorder_add_n_mul!(node, ops)
 # TODO: test simplify_binary_of_param!(node)
 # TODO: test simplify_unary_of_param!(node)
 
@@ -22,8 +19,8 @@ pow_abs(x, y) = abs(x)^y
 data = rand(100, 10)
 ops, data_vect = Options(
     data,
-    binops                             = (+,   -,   *,   /,   ^, pow_abs),
-    unaops                             = (exp, log, sin, cos, abs, pow2, sqrt),
+    binops = (+,   -,   *,   /,   ^, pow_abs),
+    unaops = (exp, log, sin, cos, abs, pow2, sqrt),
 )
 
 @testset "simplify_unary_of_param!" begin
@@ -174,6 +171,75 @@ end
 
     @test right_ones == simplified
 end
+
+@testset "div_to_mul_param!" begin
+    for _ in 1:100
+        node = TiSR.grow_equation(rand(3:5), ops)
+        TiSR.count_nodes(node) > 1 || continue
+
+        node_elect = TiSR.random_node(node, mode=1)
+        lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
+        div_param_node = TiSR.Node(2, findfirst(==(/), ops.binops));
+        div_param_node.lef = getfield(node_elect, lefrig)
+        div_param_node.rig = TiSR.Node(2.0)
+        setfield!(node_elect, lefrig, div_param_node)
+
+        str = TiSR.node_to_string(node, ops)
+        @test occursin("/2.0", str)
+
+        TiSR.div_to_mul_param!(node, ops)
+        str = TiSR.node_to_string(node, ops)
+
+        @test !occursin("/2.0", str)
+        @test occursin("*0.5", str)
+    end
+end
+
+
+# function findfirstnode(f::Function, node::Node)
+#
+#     f(node) && return node
+#
+#     if node.ari == 2
+#         ret = findfirstnode(
+#
+#
+# end
+#
+#
+# @testset "replace_same_subst_n_div!!" begin
+# # TODO: test replace_same_subst_n_div!(node, ops)
+#
+#     for _ in 1:100
+#         node = TiSR.grow_equation(rand(3:5), ops)
+#         str = TiSR.node_to_string(node, ops)
+#         occursin("/", str) || occursin("-", str) || continue
+#
+#
+#
+#
+#
+#
+#         node_elect = TiSR.random_node(n, mode=1)
+#         lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
+#         div_param_node = TiSR.Node(2, findfirst(==(/), ops.binops));
+#         div_param_node.lef = getfield(node_elect, lefrig)
+#         div_param_node.rig = TiSR.Node(2.0)
+#         setfield!(node_elect, lefrig, div_param_node)
+#
+#         str = TiSR.node_to_string(n, ops)
+#         @test occursin("/2.0", str)
+#
+#         TiSR.div_to_mul_param!(n, ops)
+#         str = TiSR.node_to_string(n, ops)
+#
+#         @test !occursin("/2.0", str)
+#         @test occursin("*0.5", str)
+#     end
+# end
+
+
+
 
 data = rand(100, 5)
 ops, data_vect = Options(

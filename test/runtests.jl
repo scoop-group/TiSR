@@ -8,8 +8,8 @@ using StringDistances
 using Test
 using Random
 
-import Pkg
-Pkg.develop(path=".")
+# import Pkg
+# Pkg.develop(path=".")
 
 using Revise
 using TiSR
