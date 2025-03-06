@@ -57,10 +57,15 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
             @assert !isempty(data_descript.split_inds[2]) "second data split must contain data for early stopping"
         end
 
-        if !isempty(grammar.weighted_compl_dict)
-            :weighted_compl in selection.selection_objectives    || @warn "weighted_compl_dict specified, but :weighted_compl not in selection_objectives"
-            :weighted_compl in selection.hall_of_fame_objectives || @warn "weighted_compl_dict specified, but :weighted_compl not in hall_of_fame_objectives"
-            # TODO: add warning, if a funciton is not in weighted_compl_dict
+        if :weighted_compl in selection.selection_objectives || :weighted_compl in selection.hall_of_fame_objectives
+            "VAR"   in grammar.weighted_compl_dict || @warn "'VAR' not specified in weighted_compl_dict -> 3.0 is assumed"
+            "PARAM" in grammar.weighted_compl_dict || @warn "'PARAM' not specified in weighted_compl_dict -> 3.0 is assumed"
+            for op in binops
+                string(op) in grammar.weighted_compl_dict || @warn "$op not specified in weighted_compl_dict -> 3.0 is assumed"
+            end
+            for op in unaops
+                string(op) in grammar.weighted_compl_dict || @warn "$op not specified in weighted_compl_dict -> 3.0 is assumed"
+            end
         end
 
         @assert !xor(isempty(grammar.bank_of_terms), mutation.mut_probs[10] == 0) "for p_add_from_bank_of_terms != 0, bank_of_terms cannot be empty and vv"
