@@ -373,10 +373,19 @@ function grammar_params(;
     min_compl::Int64                           = 3,                         # -> min allowed complexity. -> 2 ... 3
     init_tree_depth::Int64                     = 4,                         # -> maximal initial tree depth. -> 3 ... 6
     max_nodes_per_term::Int64                  = typemax(Int64),            # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold
-    weighted_compl_dict::Dict{String, Float64} = Dict{String, Float64}(),   # -> weights for weighted_compl calculation. For any that are not included, 1.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
     bank_of_terms::Vector{String}              = String[],                  # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
     illegal_dict::Dict                         = Dict(),                    # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
     custom_check_legal::Function               = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
+    weighted_compl_dict::Dict{String, Float64} = Dict(                      # -> weights for weighted_compl calculation. For any that are not included, 3.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
+        "PARAM" => 1.2, "VAR"  => 1.0,
+        "+"     => 1.2, "-"    => 1.4,
+        "*"     => 1.0, "/"    => 1.6,
+        "^"     => 3.0, "pow"  => 3.5,
+        "neg"   => 1.4,
+        "sqrt"  => 2.0, "pow2" => 2.0, "pow3" => 2.1,
+        "sin"   => 3.0, "cos"  => 3.0, "tanh" => 3.0,
+        "exp"   => 3.0, "log"  => 3.0,
+    ),
 )
     @assert max_compl > 3             "max_compl must be larger than 3          "
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"

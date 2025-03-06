@@ -186,21 +186,21 @@ get_measure_n_params(prediction, target, node, ops)        = length(list_of_para
 
 """ calculate the weighted_coml of a node. The weights for the functions and terminals are provided
     by ops.grammar.weighted_compl_dict. Weights for variables and parameters can be set using "VAR"
-    and "PARAM", respectively. For any funciton of terminal not specified, 1.0 is assumed.
+    and "PARAM", respectively. For any funciton or terminal not specified, 3.0 is assumed.
 """
 function get_weighted_compl(node, ops)
     if node.ari == 2
         cur_fun = string(ops.binops[node.ind])
-        compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 1.0)
+        compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 3.0)
         return compl + get_weighted_compl(node.lef, ops) + get_weighted_compl(node.rig, ops)
     elseif node.ari == 1
         cur_fun = string(ops.unaops[node.ind])
-        compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 1.0)
+        compl   = get(ops.grammar.weighted_compl_dict, cur_fun, 3.0)
         return compl + get_weighted_compl(node.lef, ops)
     elseif node.ari == 0
-        return get(ops.grammar.weighted_compl_dict, "VAR", 1.0)
+        return get(ops.grammar.weighted_compl_dict, "VAR", 3.0)
     elseif node.ari == -1
-        return get(ops.grammar.weighted_compl_dict, "PARAM", 1.0)
+        return get(ops.grammar.weighted_compl_dict, "PARAM", 3.0)
     end
 end
 
