@@ -296,6 +296,7 @@ function measure_params(;
         :one_minus_abs_spearman => get_measure_one_minus_abs_spearman,
         :mare                   => get_measure_mare,
         :max_are                => get_measure_max_are,
+        :weighted_compl         => get_measure_weighted_compl,
     )
 )
     :ms_processed_e in keys(additional_measures) && @warn "ms_processed_e is overwritten in measures"
@@ -312,12 +313,12 @@ function measure_params(;
 end
 
 function selection_params(;
-    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :compl],                          # -> objectives for the hall_of_fame
-    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :compl], # -> objectives for the Pareto-optimal selection part of selection
-    hall_of_fame_niching_sigdigits::Int64      = 5,                                                  # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
-    population_niching_sigdigits::Int64        = 5,                                                  # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
-    ratio_pareto_tournament_selection::Float64 = 0.5,                                                # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
-    tournament_size::Int64                     = 5,                                                  # -> tournament size
+    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :weighted_compl],                          # -> objectives for the hall_of_fame
+    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the Pareto-optimal selection part of selection
+    hall_of_fame_niching_sigdigits::Int64      = 5,                                                           # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
+    population_niching_sigdigits::Int64        = 5,                                                           # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
+    ratio_pareto_tournament_selection::Float64 = 0.5,                                                         # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
+    tournament_size::Int64                     = 5,                                                           # -> tournament size
 )
     @assert tournament_size > 1                             "tournament size must be greater than 1"
     @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
