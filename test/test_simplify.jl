@@ -105,47 +105,26 @@ end
     end
 end
 
-# function findfirstnode(f::Function, node::Node)
-#
-#     f(node) && return node
-#
-#     if node.ari == 2
-#         ret = findfirstnode(
-#
-#
-# end
-#
-#
-# @testset "replace_same_subst_n_div!!" begin
-# # TODO: test replace_same_subst_n_div!(node, ops)
-#
-#     for _ in 1:100
-#         node = TiSR.grow_equation(rand(3:5), ops)
-#         str = TiSR.node_to_string(node, ops)
-#         occursin("/", str) || occursin("-", str) || continue
-#
-#
-#
-#
-#
-#
-#         node_elect = TiSR.random_node(n, mode=1)
-#         lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
-#         div_param_node = TiSR.Node(2, findfirst(==(/), ops.binops));
-#         div_param_node.lef = getfield(node_elect, lefrig)
-#         div_param_node.rig = TiSR.Node(2.0)
-#         setfield!(node_elect, lefrig, div_param_node)
-#
-#         str = TiSR.node_to_string(n, ops)
-#         @test occursin("/2.0", str)
-#
-#         TiSR.div_to_mul_param!(n, ops)
-#         str = TiSR.node_to_string(n, ops)
-#
-#         @test !occursin("/2.0", str)
-#         @test occursin("*0.5", str)
-#     end
-# end
+@testset "replace_same_subst_n_div!!" begin
+    for _ in 1:100
+        node = TiSR.grow_equation(rand(3:5), ops)
+        TiSR.count_nodes(node) > 1 || continue
+        node_elect = TiSR.random_node(node, mode=1)
+        lefrig = TiSR.mutate_left(node_elect, 1) ? :lef : :rig
+
+        which_op = rand((-, /))
+        new_node = TiSR.Node(2, findfirst(==(which_op), ops.binops));
+        new_node.lef = TiSR.grow_equation(rand(1:5), ops, method=:full)
+        new_node.rig = copy(new_node.lef)
+        setfield!(node_elect, lefrig, new_node)
+
+        compl_bef = TiSR.count_nodes(node)
+
+        @test TiSR.replace_same_subst_n_div!(node, ops)
+        @test TiSR.count_nodes(node) < compl_bef
+        @test !TiSR.replace_same_subst_n_div!(node, ops)
+    end
+end
 
 @testset "simplify_binary_across_1_level!" begin
 
