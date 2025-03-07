@@ -151,7 +151,7 @@ get_measure_n_params(prediction, target, node, ops)        = length(list_of_para
 # end
 #
 # # more nuanced recursive_compl
-# global const recursive_compl_dict = Dict(
+# global const recursive_compl_dict = (
 #     :+           => (lef, rig) -> lef + rig,
 #     :-           => (lef, rig) -> lef + rig,
 #     :*           => (lef, rig) -> (lef + rig)           + 1.0,
