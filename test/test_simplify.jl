@@ -1,17 +1,9 @@
 
-# TODO: test apply_simple_simplifications!(node, ops)
-# TODO: test replace_same_subst_n_div!(node, ops)
-
 # TODO: test node_to_symbolic(node::Node, ops::Options)
 # TODO: test drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
 # TODO: test drastic_simplify_!(node, ops; threshold=1e-1)
 # TODO: test get_drastic_simplify_nodes(node, ops; threshold=1e-1)
 # TODO: test is_drastic_simplifyable(node, ops; threshold=1e-1)
-# TODO: test apply_simple_simplifications!(node, ops)
-# TODO: test simplify_binary_across_1_level!(node, ops)
-# TODO: test replace_same_subst_n_div!(node, ops)
-# TODO: test simplify_binary_of_param!(node)
-# TODO: test simplify_unary_of_param!(node)
 
 pow2(x) = x^2
 pow_abs(x, y) = abs(x)^y
@@ -256,52 +248,32 @@ end
 
 @testset "node_to_symbolic" begin
 
-    # TODO: following symbolic do not convert to nodes -> 1//0 ; Inf ;
-
     mse_diffs = Float64[]
     compl_diffs = Float64[]
 
     while length(mse_diffs) < 10000
-
         node = TiSR.grow_equation(rand(3:5), ops, method=:full)
-
         TiSR.apply_simple_simplifications!(node, ops)
 
         compl = TiSR.count_nodes(node)
-
         compl > 5 || continue
 
-        mse       = mean(abs2, TiSR.eval_equation(node, data_vect, ops)[1])
+        pred, valid = TiSR.eval_equation(node, data_vect, ops)
+        valid     || continue
 
-        symbolic = nothing
-        try
-            symbolic = TiSR.node_to_symbolic(node, ops)
-        catch
-            # println("----symbolics")
-            # @show node
-            continue
-        end
+        mse = mean(abs2, pred .- data_vect[end])
 
-        re_noded = nothing
-        try
-            re_noded       = TiSR.string_to_node(symbolic, ops)
-        catch
-            # println("----re_noded")
-            # @show symbolic
-            # @show re_noded
-            continue
-        end
+        symbolic = TiSR.node_to_symbolic(node, ops)
+        re_noded = TiSR.string_to_node(symbolic, ops)
 
         re_noded_compl = TiSR.count_nodes(re_noded)
         compl_diff     = compl - re_noded_compl
-
-        re_noded_mse   = mean(abs2, TiSR.eval_equation(re_noded, data_vect, ops)[1])
-        mse_diff       = mse - re_noded_mse
-
         push!(compl_diffs, compl_diff)
+
+        re_noded_mse   = mean(abs2, TiSR.eval_equation(re_noded, data_vect, ops)[1] .- data_vect[end])
+        mse_diff       = mse - re_noded_mse
         push!(mse_diffs, abs(mse_diff))
     end
 
     @test count(<=(1e-3), mse_diffs) > 8000
 end
-
