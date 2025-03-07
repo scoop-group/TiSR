@@ -444,7 +444,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_insert_times_param::Float64     = 0.1,   #|
     p_add_term::Float64               = 0.1,   #|
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
-    p_multiple_mutations::Float64     = 0.75,  # -> probability for more than one mutation
+    p_multiple_mutations::Float64     = 0.5,   # -> probability for more than one mutation
     max_muts_ratio::Float64           = 0.75,  # -> max ratio of multiple mutations wrt to the complexity of the expression
 )
     p_simplify = 0.0 #|-> simplify with SymbolicUtils # -> does not work in multithreading, and is slow
