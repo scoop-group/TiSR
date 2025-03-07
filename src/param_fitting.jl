@@ -54,6 +54,7 @@ function fit_n_eval!(node, data, ops, fit_iter)
 
     # final evaluation
     prediction, valid = eval_equation(node, data, ops)
+    prediction .= ops.fitting.pre_residual_processing(pred, inds, ops)
     eval_counter += 1
     return prediction, valid, eval_counter
 end
