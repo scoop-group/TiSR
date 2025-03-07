@@ -87,13 +87,6 @@ end
     Like: (x + param) + param -> x + param, (x * param) / param -> x * param
     Idea from SymbolicRegression.jl
 """
-global const simplify_binary_across_1_level_dict = Dict(
-    :+ => (+, -),
-    :- => (+, -),
-    :* => (*, /),
-    :/ => (*, /),
-)
-
 function simplify_binary_across_1_level!(node, ops)
     c = c_rig = c_lef = false
     if node.ari >= 1
@@ -108,6 +101,10 @@ function simplify_binary_across_1_level!(node, ops)
 
         par_op_str = Symbol(ops.binops[node.ind])
         chi_op_str = ops.binops[node_1.ind]
+
+        simplify_binary_across_1_level_dict = (
+            :+ => (+, -), :- => (+, -), :* => (*, /), :/ => (*, /),
+        )
 
         if par_op_str in keys(simplify_binary_across_1_level_dict) && chi_op_str in simplify_binary_across_1_level_dict[par_op_str]
             if xor(node_1.lef.ari == -1, node_1.rig.ari == -1)
