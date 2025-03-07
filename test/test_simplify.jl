@@ -178,6 +178,17 @@ end
     end
 end
 
+@testset "apply_simple_simplifications" begin
+    # just a test whether the equaitons get shorter on average. All components have are tested
+    shorter = map(1:1000) do _
+        node = TiSR.grow_equation(rand(4:7), ops)
+        bef = TiSR.count_nodes(node)
+        TiSR.apply_simple_simplifications!(node, ops)
+        bef - TiSR.count_nodes(node)
+    end
+    @test all(shorter .>= 0)
+    @test count(shorter .> 0) > 100
+end
 
 data = rand(100, 5)
 ops, data_vect = Options(

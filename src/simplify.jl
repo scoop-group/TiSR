@@ -138,6 +138,8 @@ function div_to_mul_param!(node, ops)
     return c || c_lef || c_rig
 end
 
+""" Keeps applying the simple simplifications until the expression does no longer change.
+"""
 function apply_simple_simplifications!(node, ops)
     c1 = simplify_unary_of_param!(node)
     c2 = simplify_binary_of_param!(node)
