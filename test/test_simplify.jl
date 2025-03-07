@@ -1,5 +1,4 @@
 
-# TODO: test node_to_symbolic(node::Node, ops::Options)
 # TODO: test drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
 # TODO: test drastic_simplify_!(node, ops; threshold=1e-1)
 # TODO: test get_drastic_simplify_nodes(node, ops; threshold=1e-1)
