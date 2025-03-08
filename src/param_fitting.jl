@@ -53,10 +53,10 @@ function fit_n_eval!(node, data, ops, fit_iter)
     end
 
     # final evaluation
-    prediction, valid = eval_equation(node, data, ops)
-    prediction .= ops.fitting.pre_residual_processing(pred, inds, ops)
+    pred, valid = eval_equation(node, data, ops)
+    pred .= ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
     eval_counter += 1
-    return prediction, valid, eval_counter
+    return pred, valid, eval_counter
 end
 
 """ Create the cost function for the fitting and for the early stopping evaluation, fit the
@@ -64,7 +64,7 @@ end
     stopping is used, the data is fit onto split_inds[1] and validated only split_inds[2].
     After fitting with early stopping, the parameters are selected for the best fit over all
     data."""
-function fitting_LM!(node, data, ops, list_of_param, max_iter)
+function fitting_LM!(node, data, ops, list_of_param, fit_iter)
 
     minim = x -> fitting_objective(x, node, data, ops)
 
@@ -72,12 +72,12 @@ function fitting_LM!(node, data, ops, list_of_param, max_iter)
         callback = trace -> early_stop_check(trace, node, list_of_param, data, ops,
             n=ops.fitting.early_stop_iter)
     else
-        callback = trace -> false
+        callback = _ -> false
     end
 
     x0 = [n.val for n in list_of_param]
 
-    x_best, trace = lmfit(minim, x0, autodiff = :forward, max_iter = ops.fitting.max_iter,
+    x_best, trace = lmfit(minim, x0, autodiff = :forward, max_iter = fit_iter,
         t_lim = ops.fitting.t_lim, rel_f_tol_5_iter = ops.fitting.rel_f_tol_5_iter,
         x_tol=0.0, g_tol=0.0,
         callback = callback
@@ -115,7 +115,7 @@ end
 """ Fitting with Optim fitters. Is utilized for when lasso_factor is > 0 for 3
     additional iterations.
 """
-function fitting_NW!(node, data, ops, list_of_param, max_iter)
+function fitting_NW!(node, data, ops, list_of_param, fit_iter)
 
     minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
 
@@ -134,7 +134,7 @@ function fitting_NW!(node, data, ops, list_of_param, max_iter)
         minim, x0,
         Optim.Newton(;linesearch=LineSearches.BackTracking()),
         Optim.Options(;
-            show_warnings  = false, iterations     = max_iter, time_limit = ops.fitting.t_lim,
+            show_warnings  = false, iterations     = fit_iter, time_limit = ops.fitting.t_lim,
             show_trace     = false, store_trace    = true,     callback   = callback,
             g_abstol       = 0.0,   g_reltol       = 0.0,
             outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
@@ -146,7 +146,7 @@ function fitting_NW!(node, data, ops, list_of_param, max_iter)
     return res.f_calls
 end
 
-function fitting_NM!(node, data, ops, list_of_param, max_iter)
+function fitting_NM!(node, data, ops, list_of_param, fit_iter)
 
     minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
 
@@ -156,7 +156,7 @@ function fitting_NM!(node, data, ops, list_of_param, max_iter)
         minim, x0,
         Optim.NelderMead(),
         Optim.Options(;
-            show_warnings  = false, iterations     = max_iter, time_limit = ops.fitting.t_lim,
+            show_warnings  = false, iterations     = fit_iter, time_limit = ops.fitting.t_lim,
             show_trace     = false, store_trace    = true,
             g_abstol       = 0.0,   g_reltol       = 0.0,
             outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
@@ -192,7 +192,7 @@ end
 #     end
 # end
 
-# function fitting_NM!(node, data, ops, list_of_param, max_iter)
+# function fitting_NM!(node, data, ops, list_of_param, fit_iter)
 #
 #     mnode = convert_to_dynamic_expression(node, ops)
 #
@@ -213,7 +213,7 @@ end
 #         minim, x0,
 #         Optim.NelderMead(),
 #         Optim.Options(;
-#             show_warnings  = false, iterations     = max_iter, time_limit = ops.fitting.t_lim,
+#             show_warnings  = false, iterations     = fit_iter, time_limit = ops.fitting.t_lim,
 #             show_trace     = false, store_trace    = true,
 #             g_abstol       = 0.0,   g_reltol       = 0.0,
 #             outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
