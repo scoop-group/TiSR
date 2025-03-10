@@ -396,9 +396,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
         ymax = 10^(ceil(log10(maximum(ms_processed_e)))+1)
     end
 
-    plt = scatterplot(
-        compl,
-        ms_processed_e,
+    plt = scatterplot(compl, ms_processed_e,
         yscale           = :log10,
         title            = "hall of fame",
         xlabel           = "compl",
@@ -407,7 +405,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
         unicode_exponent = false,
         xlim             = (0, ops.grammar.max_compl),
         ylim             = (ymin, ymax),
-        compact=true
+        compact          = true,
     )
 
     if ops.general.print_hall_of_fame
@@ -418,9 +416,9 @@ function plot_hall_of_fame(hall_of_fame, ops)
 
         eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
 
-        for (ii, i) in enumerate(inds_to_show)
-            label!(plt, :r, ii, replace(
-                eq_strs[ii],
+        for i in eachindex(eq_strs)
+            label!(plt, :r, i, replace(
+                eq_strs[i],
                 " " => "", r"(\d)\.0\b" => s"\1"
             ))
         end

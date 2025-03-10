@@ -96,7 +96,7 @@ get_relative_fitness(indiv_obj_vals) = -sum.(indiv_obj_vals)
 """
 function perform_parent_selection!(chil, pop, ops)
     if ops.general.parent_selection
-        for i in 1:ops.general.n_children
+        for _ in 1:ops.general.n_children
             push!(chil, fastcopy(parent_selection(pop)))
         end
     else
