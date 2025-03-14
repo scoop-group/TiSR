@@ -323,8 +323,8 @@ function selection_params(;
     @assert tournament_size > 1                             "tournament size must be greater than 1"
     @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
 
-    0 <= hall_of_fame_niching_sigdigits < 5 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
-    0 <= population_niching_sigdigits   < 5 || @warn "population_niching_sigdigits should be between 0 and 5"
+    0 <= hall_of_fame_niching_sigdigits < 10 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
+    0 <= population_niching_sigdigits   < 10 || @warn "population_niching_sigdigits should be between 0 and 5"
 
     return (
         hall_of_fame_objectives           = hall_of_fame_objectives,
