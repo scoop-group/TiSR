@@ -11,21 +11,21 @@ using Random
 # import Pkg
 # Pkg.develop(path=".")
 
-using Revise
+# using Revise
 using TiSR
 
-include("test/test_node_n_eval_n_utilities.jl")
-include("test/test_individual.jl")
-include("test/test_string_to_node.jl")
-include("test/test_selection.jl")
-include("test/test_genetic_ops.jl")
-include("test/test_grammar.jl")
-include("test/test_main_loop.jl")
-include("test/test_param_fitting.jl")
-include("test/test_simplify.jl")
-include("test/test_measures.jl")
-include("test/test_options.jl")
-include("test/test_save_results.jl")
+include("test_node_n_eval_n_utilities.jl")
+include("test_individual.jl")
+include("test_string_to_node.jl")
+include("test_selection.jl")
+include("test_genetic_ops.jl")
+include("test_grammar.jl")
+include("test_main_loop.jl")
+include("test_param_fitting.jl")
+include("test_simplify.jl")
+include("test_measures.jl")
+include("test_options.jl")
+include("test_save_results.jl")
 
 # include("test_ParameterEstimation")
 
