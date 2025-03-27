@@ -1,7 +1,4 @@
 
-# import Pkg
-# Pkg.develop(path=".")
-
 using TiSR
 using DataFrames
 using CSV
