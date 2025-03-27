@@ -102,7 +102,7 @@ function simplify_binary_across_1_level!(node, ops)
         par_op_str = Symbol(ops.binops[node.ind])
         chi_op_str = ops.binops[node_1.ind]
 
-        simplify_binary_across_1_level_dict = (
+        simplify_binary_across_1_level_dict = Dict(
             :+ => (+, -), :- => (+, -), :* => (*, /), :/ => (*, /),
         )
 
