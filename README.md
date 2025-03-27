@@ -29,13 +29,13 @@ data_matr = rand(100, 3)
 data_matr[:, end] .= 3.0 .* (data_matr[:, 1] .* 5.0 .+ data_matr[:, 2]) .^ 7.0 + exp.(data_matr[:, 1] .* 5.0 .+ data_matr[:, 2])
 # -> 3 * (v1 * 5 + v2)^7 + exp(v1 * 5 + v2)
 
-ops, data =  Options(
+ops, data = Options(
     data_matr,
     general = general_params(
-        t_lim     =  60 * 10.0,
+        t_lim = 60 * 10.0,
     ),
     grammar = grammar_params(
-        max_compl =  30,
+        max_compl = 30,
     ),
 );
 
