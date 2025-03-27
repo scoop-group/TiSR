@@ -208,7 +208,7 @@ function general_params(;
     children_ratio::Float64                = 1.0,                                                               # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                               # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 1000,                                                              # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
-    island_extinction_rotation::Bool       = false,
+    island_extinction_rotation::Bool       = false,                                                             # -> whether the island extinctions should rotate as opposed to random islands
     migrate_after_extinction_prob::Float64 = 1.0,                                                               # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
     migrate_after_extinction_dist::Int64   = 4,                                                                 # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                                  # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
