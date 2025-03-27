@@ -87,12 +87,18 @@ end
     Like: (x + param) + param -> x + param, (x * param) / param -> x * param
     Idea from SymbolicRegression.jl
 """
-function simplify_binary_across_1_level!(node, ops)
+function simplify_binary_across_1_level!(
+    node,
+    ops;
+    simplify_dict = Dict(
+        :+ => (+, -), :- => (+, -), :* => (*, /), :/ => (*, /),
+    ),
+)
     c = c_rig = c_lef = false
     if node.ari >= 1
-        c_lef = simplify_binary_across_1_level!(node.lef, ops)
+        c_lef = simplify_binary_across_1_level!(node.lef, ops, simplify_dict = simplify_dict)
         if node.ari == 2
-            c_rig = simplify_binary_across_1_level!(node.rig, ops)
+            c_rig = simplify_binary_across_1_level!(node.rig, ops, simplify_dict = simplify_dict)
         end
     end
     if node.ari == 2 && xor(node.lef.ari == -1, node.rig.ari == -1) && xor(node.lef.ari == 2, node.rig.ari == 2)
@@ -102,11 +108,7 @@ function simplify_binary_across_1_level!(node, ops)
         par_op_str = Symbol(ops.binops[node.ind])
         chi_op_str = ops.binops[node_1.ind]
 
-        simplify_binary_across_1_level_dict = Dict(
-            :+ => (+, -), :- => (+, -), :* => (*, /), :/ => (*, /),
-        )
-
-        if par_op_str in keys(simplify_binary_across_1_level_dict) && chi_op_str in simplify_binary_across_1_level_dict[par_op_str]
+        if par_op_str in keys(simplify_dict) && chi_op_str in simplify_dict[par_op_str]
             if xor(node_1.lef.ari == -1, node_1.rig.ari == -1)
                 node_2       = getfield(node_1, node_1.lef.ari == -1 ? :rig : :lef)
                 node_2_param = getfield(node_1, node_1.lef.ari == -1 ? :lef : :rig)
