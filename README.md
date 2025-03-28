@@ -162,6 +162,27 @@ ops, data = Options(
 # )
 ```
 
+# Cite this work
+
+```
+@ONLINE{MartinekFrotscherRichterHerzog:2023:1,
+    AUTHOR       = {Martinek, Viktor and Frotscher, Ophelia and Richter, Markus and Herzog, Roland},
+    DATE         = {2023},
+    EPRINT       = {2309.02805},
+    EPRINTTYPE   = {arXiv},
+    TITLE        = {Introducing thermodynamics-informed symbolic regression -- a tool for thermodynamic equations of state development},
+}
+
+@software{martinek202514800761,
+    AUTHOR    = {Martinek, Viktor and Frotscher, Ophelia and Richter, Markus and Herzog, Roland},
+    TITLE     = {Thermodynamics-informed Symbolic Regression - A Tool for the Thermodynamic Equation of State Development - v1.0.1-beta },
+    MONTH     = feb,
+    YEAR      = 2025,
+    PUBLISHER = {Zenodo},
+    DOI       = {10.5281/zenodo.8317546},
+    URL       = {https://doi.org/10.5281/zenodo.8317546},
+}
+```
 # Funding
 
 This work was funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) within the Priority Programme SPP 2331: "Machine Learning in Chemical Engineering" - project no. 466528284 - HE 6077/14-1 and RI 2482/10-1
