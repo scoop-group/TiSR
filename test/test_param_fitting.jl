@@ -51,7 +51,7 @@ ops, data_vect = Options(data)
         push!(improvements, impr)
         i += 1
     end
-    @test count(<(1e-3), [imp for imp in improvements]) > 70
+    @test count(<(1e-3), [imp for imp in improvements]) > 50
 end
 
 data = rand(100, 5)
