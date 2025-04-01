@@ -87,28 +87,22 @@ end
     Like: (x + param) + param -> x + param, (x * param) / param -> x * param
     Idea from SymbolicRegression.jl
 """
-function simplify_binary_across_1_level!(
-    node,
-    ops;
-    simplify_dict = Dict(
-        :+ => (+, -), :- => (+, -), :* => (*, /), :/ => (*, /),
-    ),
-)
+function simplify_binary_across_1_level!(node, ops)
     c = c_rig = c_lef = false
     if node.ari >= 1
-        c_lef = simplify_binary_across_1_level!(node.lef, ops, simplify_dict = simplify_dict)
+        c_lef = simplify_binary_across_1_level!(node.lef, ops)
         if node.ari == 2
-            c_rig = simplify_binary_across_1_level!(node.rig, ops, simplify_dict = simplify_dict)
+            c_rig = simplify_binary_across_1_level!(node.rig, ops)
         end
     end
     if node.ari == 2 && xor(node.lef.ari == -1, node.rig.ari == -1) && xor(node.lef.ari == 2, node.rig.ari == 2)
         node_1 = getfield(node, node.lef.ari == 2 ? :lef : :rig)
         node_1_param = getfield(node, node.lef.ari == 2 ? :rig : :lef)
 
-        par_op_str = Symbol(ops.binops[node.ind])
-        chi_op_str = ops.binops[node_1.ind]
-
-        if par_op_str in keys(simplify_dict) && chi_op_str in simplify_dict[par_op_str]
+        if (
+            ops.binops[node.ind] in (+, -) && ops.binops[node_1.ind] in (+, -) ||
+            ops.binops[node.ind] in (*, /) && ops.binops[node_1.ind] in (*, /)
+        )
             if xor(node_1.lef.ari == -1, node_1.rig.ari == -1)
                 node_2       = getfield(node_1, node_1.lef.ari == -1 ? :rig : :lef)
                 node_2_param = getfield(node_1, node_1.lef.ari == -1 ? :lef : :rig)
