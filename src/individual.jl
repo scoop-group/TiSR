@@ -15,42 +15,50 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
     indiv.age = 0.0
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
-    trim_to_max_nodes_per_term!(indiv.node, ops)
-    apply_simple_simplifications!(indiv.node, ops)
-    div_to_mul_param!(indiv.node, ops)
-    reorder_add_n_mul!(indiv.node, ops)
+#     @timeit to "prepare node" begin
+        trim_to_max_nodes_per_term!(indiv.node, ops)
+        apply_simple_simplifications!(indiv.node, ops)
+        div_to_mul_param!(indiv.node, ops)
+        reorder_add_n_mul!(indiv.node, ops)
+#     end # @timeit
 
     # remove invalids # ----------------------------------------------------------------------------
-    if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment))
-        indiv.valid = false
-        return 0
-    end
+#     @timeit to "remove invalids" begin
+        if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment))
+            indiv.valid = false
+            return 0
+        end
 
-    if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
-        indiv.valid = false
-        return 0
-    end
+        if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
+            indiv.valid = false
+            return 0
+        end
 
-    if !ops.grammar.custom_check_legal(indiv.node, data, ops)
-        indiv.valid = false
-        return 0
-    end
+        if !ops.grammar.custom_check_legal(indiv.node, data, ops)
+            indiv.valid = false
+            return 0
+        end
+#     end # @timeit
 
     # fitting # ------------------------------------------------------------------------------------
-    prediction, valid, eval_counter = fit_n_eval!(indiv.node, data, ops, fit_iter)
+#     @timeit to "fitting" begin
+        prediction, valid, eval_counter = fit_n_eval!(indiv.node, data, ops, fit_iter)
+#     end # @timeit
 
     indiv.valid = valid
     indiv.valid || return eval_counter
 
     # calculate measures # -------------------------------------------------------------------------
-    indiv.measures = NamedTuple(
-        m => clamp(
-            f(prediction, data[end], indiv.node, ops),
-            -ops.general.replace_inf,
-            ops.general.replace_inf
+#     @timeit to "calc measures" begin
+        indiv.measures = NamedTuple(
+            m => clamp(
+                f(prediction, data[end], indiv.node, ops),
+                -ops.general.replace_inf,
+                ops.general.replace_inf
+            )
+            for (m, f) in ops.measures
         )
-        for (m, f) in ops.measures
-    )
+#     end # @timeit
 
     if any(!isfinite(v) for v in values(indiv.measures))
         indiv.valid = false

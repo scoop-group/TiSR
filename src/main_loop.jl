@@ -64,6 +64,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     stop_msg      = ""
     eval_counters = fill(0, ops.general.num_islands)
 
+#     reset_timer!(to) # @timeit
+
 # ==================================================================================================
 # start generational loop
 # ==================================================================================================
@@ -74,101 +76,110 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
-        if ops.general.multithreading
-            Threads.@threads :greedy for isle in 1:ops.general.num_islands
-                eval_counters[isle] += one_isle_one_generation!(
-                    population[isle],
-                    children[isle],
-                    bank_of_terms,
-                    data,
-                    ops,
-                    ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                    cur_max_compl,
-                )
+#         @timeit to "one generation" begin
+            if ops.general.multithreading
+                Threads.@threads :greedy for isle in 1:ops.general.num_islands
+                    eval_counters[isle] += one_isle_one_generation!(
+                        population[isle],
+                        children[isle],
+                        bank_of_terms,
+                        data,
+                        ops,
+                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
+                        cur_max_compl,
+                    )
+                end
+            else
+                for isle in 1:ops.general.num_islands
+                    eval_counters[isle] += one_isle_one_generation!(
+                        population[isle],
+                        children[isle],
+                        bank_of_terms,
+                        data,
+                        ops,
+                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
+                        cur_max_compl,
+                    )
+                end
             end
-        else
-            for isle in 1:ops.general.num_islands
-                eval_counters[isle] += one_isle_one_generation!(
-                    population[isle],
-                    children[isle],
-                    bank_of_terms,
-                    data,
-                    ops,
-                    ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                    cur_max_compl,
-                )
-            end
-        end
+#         end # @timeit
 
 # ==================================================================================================
 # inter-isle
 # ==================================================================================================
-        if gen % ops.general.migration_interval == 0
-            perform_migration!(population, ops)
-        end
+#         @timeit to "inter isle" begin
+            if gen % ops.general.migration_interval == 0
+                perform_migration!(population, ops)
+            end
 
-        if gen % ops.general.hall_of_fame_migration_interval == 0
-            indiv = deepcopy(rand(hall_of_fame))
-            indiv.age = 0
-            push!(population[rand(1:ops.general.num_islands)], indiv)
-        end
+            if gen % ops.general.hall_of_fame_migration_interval == 0
+                indiv = deepcopy(rand(hall_of_fame))
+                indiv.age = 0
+                push!(population[rand(1:ops.general.num_islands)], indiv)
+            end
 
-        perform_hall_of_fame_selection!(hall_of_fame, population, ops)
-
+#             @timeit to "hall_of_fame_selection" begin
+                perform_hall_of_fame_selection!(hall_of_fame, population, ops)
+#             end # @timeit
+#         end # @timeit
 # ==================================================================================================
 # every couple of generations
 # ==================================================================================================
         t_since = time() - t_start
 
-        if isempty(prog_dict["time"]) || t_since - prog_dict["time"][end] > 5.0
+#         @timeit to "every couple of gens" begin
+            if isempty(prog_dict["time"]) || t_since - prog_dict["time"][end] > 5.0
 
-            # GC.gc() # no idea why that is necessary
-            clean_trash_nodes!(population, null_node)
-            clean_trash_nodes!(hall_of_fame, null_node)
+                # GC.gc() # no idea why that is necessary
+                clean_trash_nodes!(population, null_node)
+                clean_trash_nodes!(hall_of_fame, null_node)
 
-            # current KPIs # -----------------------------------------------------------------------
-            get_for_prog = OrderedDict([
-                "time"          => t_since,
-                "generation"    => gen,
-                "mean age"      => mean(i.age for i in hall_of_fame),
-                "cur_max_compl" => cur_max_compl,
-                "mean compl"    => mean(i.measures[:compl] for i in hall_of_fame),
-                ["min " * string(m) => minimum([i.measures[m] for i in hall_of_fame])
-                 for m in keys(ops.measures)]...
-           ])
+                # current KPIs # -----------------------------------------------------------------------
+                get_for_prog = OrderedDict([
+                    "time"          => t_since,
+                    "generation"    => gen,
+                    "mean age"      => mean(i.age for i in hall_of_fame),
+                    "cur_max_compl" => cur_max_compl,
+                    "mean compl"    => mean(i.measures[:compl] for i in hall_of_fame),
+                    ["min " * string(m) => minimum([i.measures[m] for i in hall_of_fame])
+                     for m in keys(ops.measures)]...
+               ])
 
-            if ops.general.print_progress
-                display(get_for_prog)
-                println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
-                if !isempty(prog_dict["time"])
-                    println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
+                if ops.general.print_progress
+                    display(get_for_prog)
+                    println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
+                    if !isempty(prog_dict["time"])
+                        println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
+                    end
+                    eval_counters .= 0
                 end
-                eval_counters .= 0
+
+                # check for replace_inf behavior
+                obj_replace_inf_error = findfirst(
+                    all(indiv.measures[obj] == ops.general.replace_inf for indiv in hall_of_fame)
+                    for obj in ops.selection.hall_of_fame_objectives
+                )
+                if !isnothing(obj_replace_inf_error)
+                    @warn """all individual in the hall_of_fame have the ops.general.replace_inf for
+                        objective '$(ops.selection.hall_of_fame_objectives[obj_replace_inf_error])'.
+                        Please check for correctness or increase the ops.general.replace_inf value."""
+                end
+
+                for k in keys(get_for_prog)
+                    push!(prog_dict[k], get_for_prog[k])
+                end
+
+#                 @timeit to "plot and show equations" begin
+                    if ops.general.plot_hall_of_fame
+                        plot_hall_of_fame(hall_of_fame, ops)
+                    end
+#                 end # @timeit
             end
 
-            # check for replace_inf behavior
-            obj_replace_inf_error = findfirst(
-                all(indiv.measures[obj] == ops.general.replace_inf for indiv in hall_of_fame)
-                for obj in ops.selection.hall_of_fame_objectives
-            )
-            if !isnothing(obj_replace_inf_error)
-                @warn """all individual in the hall_of_fame have the ops.general.replace_inf for
-                    objective '$(ops.selection.hall_of_fame_objectives[obj_replace_inf_error])'.
-                    Please check for correctness or increase the ops.general.replace_inf value."""
+            if gen % ops.general.island_extinction_interval == 0
+                perform_island_extinction!(population, gen, ops)
             end
-
-            for k in keys(get_for_prog)
-                push!(prog_dict[k], get_for_prog[k])
-            end
-
-            if ops.general.plot_hall_of_fame
-                plot_hall_of_fame(hall_of_fame, ops)
-            end
-        end
-
-        if gen % ops.general.island_extinction_interval == 0
-            perform_island_extinction!(population, gen, ops)
-        end
+#         end # @timeit
 
 # ==================================================================================================
 # termination criteria
@@ -220,7 +231,10 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     # Post-pare for return
     population = reduce(vcat, population)
 
-    return hall_of_fame, population, prog_dict, stop_msg
+    return (
+        hall_of_fame, population, prog_dict, stop_msg,
+#         to # @timeit
+    )
 end
 
 function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl; trial=1)
@@ -230,26 +244,32 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
     foreach(indiv -> indiv.age += 1, pop)
 
     # create new children # ----------------------------------------------------------------
-    while length(chil) + length(pop) < 0.6 * ops.general.pop_per_isle
-        push!(chil,
+#     @timeit to "new children" begin
+        while length(chil) + length(pop) < 0.6 * ops.general.pop_per_isle
+            push!(chil,
             Individual(grow_equation(ops.grammar.init_tree_depth, ops))
-        )
-    end
+            )
+        end
+#     end # @timeit
 
     # genetic operations # -------------------------------------------------------------------------
-    if length(pop) > 0.4 * ops.general.pop_per_isle
-        perform_parent_selection!(chil, pop, ops)
-        apply_genetic_operations!(chil, ops, bank_of_terms)
+#     @timeit to "genetic ops" begin
+        if length(pop) > 0.4 * ops.general.pop_per_isle
+            perform_parent_selection!(chil, pop, ops)
+            apply_genetic_operations!(chil, ops, bank_of_terms)
 
-        for _ in 1:ops.general.n_refitting
-            push!(chil, fastcopy(rand(pop)))
+            for _ in 1:ops.general.n_refitting
+                push!(chil, fastcopy(rand(pop)))
+            end
         end
-    end
+#     end # @timeit
 
     # fitting and evaluation # ---------------------------------------------------------------------
-    for ii in eachindex(chil)
-        eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
-    end
+#     @timeit to "Individual" begin
+        for ii in eachindex(chil)
+            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
+        end
+#     end # @timeit
 
     filter!(indiv -> indiv.valid, chil)
 
@@ -262,7 +282,9 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter,
 
     # selection # ----------------------------------------------------------------------------------
     if length(pop) > ops.general.pop_per_isle
-        perform_population_selection!(pop, ops)
+#         @timeit to "selection" begin
+            perform_population_selection!(pop, ops)
+#         end # @timeit
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
         one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial=trial+1)
@@ -396,32 +418,36 @@ function plot_hall_of_fame(hall_of_fame, ops)
         ymax = 10^(ceil(log10(maximum(ms_processed_e)))+1)
     end
 
-    plt = scatterplot(compl, ms_processed_e,
-        yscale           = :log10,
-        title            = "hall of fame",
-        xlabel           = "compl",
-        ylabel           = "log10 of ms_processed_e",
-        marker           = :circle,
-        unicode_exponent = false,
-        xlim             = (0, ops.grammar.max_compl),
-        ylim             = (ymin, ymax),
-        compact          = true,
-    )
+#     @timeit to "scatterplot" begin
+        plt = scatterplot(compl, ms_processed_e,
+            yscale           = :log10,
+            title            = "hall of fame",
+            xlabel           = "compl",
+            ylabel           = "log10 of ms_processed_e",
+            marker           = :circle,
+            unicode_exponent = false,
+            xlim             = (0, ops.grammar.max_compl),
+            ylim             = (ymin, ymax),
+            compact          = true,
+        )
+#     end # @timeit
 
     if ops.general.print_hall_of_fame
-        sort!(hall_of_fame, by=i->i.measures[:ms_processed_e], rev=true)
+#         @timeit to "simplify equations to show" begin
+            sort!(hall_of_fame, by=i->i.measures[:ms_processed_e], rev=true)
 
-        inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
-        unique!(inds_to_show)
+            inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
+            unique!(inds_to_show)
 
-        eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
+            eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
 
-        for i in eachindex(eq_strs)
-            label!(plt, :r, i, replace(
-                eq_strs[i],
-                " " => "", r"(\d)\.0\b" => s"\1"
-            ))
-        end
+            for i in eachindex(eq_strs)
+                label!(plt, :r, i, replace(
+                    eq_strs[i],
+                    " " => "", r"(\d)\.0\b" => s"\1"
+                ))
+            end
+#         end # @timeit
     end
     display(plt)
 end
