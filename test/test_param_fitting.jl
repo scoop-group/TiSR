@@ -120,7 +120,7 @@ ops, data_vect = Options(
 
         valid || continue
 
-        TiSR.fitting_NW!(node, data_vect, ops, list_of_param, 10)
+        TiSR.fitting_Optim!(node, data_vect, ops, list_of_param, 10, TiSR.Optim.Newton(;linesearch=TiSR.LineSearches.BackTracking()))
         prediction, valid = TiSR.eval_equation(node, data_vect, ops)
         after_lasso = abs(list_of_param[ind_of_added].val)
 
