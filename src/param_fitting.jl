@@ -46,9 +46,13 @@ function fit_n_eval!(node, data, ops, fit_iter)
 
     if fit_iter > 0 && !isempty(list_of_param)
         if rand() < ops.fitting.NM_prob
-            eval_counter += fitting_NM!(node, data, ops, list_of_param, ops.fitting.NM_iter)
+            eval_counter += fitting_Optim!(node, data, ops, list_of_param, ops.fitting.NM_iter, Optim.NelderMead())
         else
-            eval_counter += fitting_LM!(node, data, ops, list_of_param, fit_iter)
+            if iszero(ops.fitting.lasso_factor)
+                eval_counter += fitting_LM!(node, data, ops, list_of_param, fit_iter)
+            else
+                eval_counter += fitting_Optim!(node, data, ops, list_of_param, fit_iter, Optim.Newton(;linesearch=LineSearches.BackTracking()))
+            end
         end
     end
 
@@ -112,10 +116,9 @@ function early_stop_check(trace, node, list_of_param, data, ops; n=5)
     return issorted(trace[i].metadata["test_residual_norm"] for i in length(trace)-n:length(trace))
 end
 
-""" Fitting with Optim fitters. Is utilized for when lasso_factor is > 0 for 3
-    additional iterations.
+""" Fitting with Optim fitters.
 """
-function fitting_NW!(node, data, ops, list_of_param, fit_iter)
+function fitting_Optim!(node, data, ops, list_of_param, fit_iter, algo)
 
     minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
 
@@ -131,36 +134,13 @@ function fitting_NW!(node, data, ops, list_of_param, fit_iter)
     # ----------------------------------------------------------------------------------------------
 
     res = Optim.optimize(
-        minim, x0,
-        Optim.Newton(;linesearch=LineSearches.BackTracking()),
+        minim, x0, algo,
         Optim.Options(;
             show_warnings  = false, iterations     = fit_iter, time_limit = ops.fitting.t_lim,
             show_trace     = false, store_trace    = true,     callback   = callback,
             g_abstol       = 0.0,   g_reltol       = 0.0,
             outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
         ), autodiff = :forward
-    )
-    x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
-
-    set_params!(list_of_param, x_best)
-    return res.f_calls
-end
-
-function fitting_NM!(node, data, ops, list_of_param, fit_iter)
-
-    minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
-
-    x0 = Float64[n.val for n in list_of_param]
-
-    res = Optim.optimize(
-        minim, x0,
-        Optim.NelderMead(),
-        Optim.Options(;
-            show_warnings  = false, iterations     = fit_iter, time_limit = ops.fitting.t_lim,
-            show_trace     = false, store_trace    = true,
-            g_abstol       = 0.0,   g_reltol       = 0.0,
-            outer_g_abstol = 0.0,   outer_g_reltol = 0.0,
-        ),
     )
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
 
