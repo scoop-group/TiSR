@@ -138,15 +138,11 @@ function fitting_Optim!(node, data, ops, list_of_param, fit_iter, algo)
         Optim.Options(;
             show_warnings  = false, iterations       = fit_iter, time_limit     = ops.fitting.t_lim,
             show_trace     = false, store_trace      = true,     callback       = callback,
-            x_tol          = 0.0,   f_tol            = 0.0,      g_tol          = 0.0,
-            x_abstol       = 0.0,   x_reltol         = 0.0,      f_abstol       = 0.0,
-            f_reltol       = 0.0,   g_abstol         = 0.0,      outer_x_tol    = 0.0,
-            outer_f_tol    = 0.0,   outer_g_tol      = 0.0,      outer_x_abstol = 0.0,
-            outer_x_reltol = 0.0,   outer_f_abstol   = 0.0,      outer_f_reltol = 0.0,
-            outer_g_abstol = 0.0,   successive_f_tol = 0,
+            x_abstol = 0.0, x_reltol = 0.0, f_abstol = 0.0, f_reltol = 0.0, g_abstol = 0.0,
         ), autodiff = :forward
     )
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
+
 
     set_params!(list_of_param, x_best)
     return res.f_calls
@@ -208,5 +204,3 @@ end
 #     set_params!(list_of_param, x_best)
 #     return res.f_calls
 # end
-
-
