@@ -126,7 +126,7 @@ function fitting_NW!(node, data, ops, list_of_param, fit_iter)
         length(tr) > 5 || return false
         cur  = tr[end].value
         prev = tr[end-5].value
-        return (prev - cur) / prev < ops.fitting.rel_f_tol_5_iter
+        return abs((prev - cur) / prev) < ops.fitting.rel_f_tol_5_iter
     end
     # ----------------------------------------------------------------------------------------------
 
