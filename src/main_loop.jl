@@ -85,8 +85,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         bank_of_terms,
                         data,
                         ops,
-                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                         cur_max_compl,
+                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                     )
                 end
             else
@@ -97,8 +97,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         bank_of_terms,
                         data,
                         ops,
-                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                         cur_max_compl,
+                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                     )
                 end
             end
@@ -237,7 +237,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     )
 end
 
-function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl; trial=1)
+function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter; trial=1)
 
     eval_counter = 0
 
