@@ -63,8 +63,9 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     gen           = 0.0
     stop_msg      = ""
     eval_counters = fill(0, ops.general.num_islands)
+    one_tree      = State()
 
-#     reset_timer!(to) # @timeit
+    #reset_timer!(to) # @timeit
 
 # ==================================================================================================
 # start generational loop
@@ -76,7 +77,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
-#         @timeit to "one generation" begin
+        #@timeit to "one generation" begin
             if ops.general.multithreading
                 Threads.@threads :greedy for isle in 1:ops.general.num_islands
                     eval_counters[isle] += one_isle_one_generation!(
@@ -87,6 +88,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         ops,
                         cur_max_compl,
                         ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
+                        one_tree,
                     )
                 end
             else
@@ -99,15 +101,16 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         ops,
                         cur_max_compl,
                         ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
+                        one_tree,
                     )
                 end
             end
-#         end # @timeit
+        #end # @timeit
 
 # ==================================================================================================
 # inter-isle
 # ==================================================================================================
-#         @timeit to "inter isle" begin
+        #@timeit to "inter isle" begin
             if gen % ops.general.migration_interval == 0
                 perform_migration!(population, ops)
             end
@@ -118,16 +121,16 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 push!(population[rand(1:ops.general.num_islands)], indiv)
             end
 
-#             @timeit to "hall_of_fame_selection" begin
+            #@timeit to "hall_of_fame_selection" begin
                 perform_hall_of_fame_selection!(hall_of_fame, population, ops)
-#             end # @timeit
-#         end # @timeit
+            #end # @timeit
+        #end # @timeit
 # ==================================================================================================
 # every couple of generations
 # ==================================================================================================
         t_since = time() - t_start
 
-#         @timeit to "every couple of gens" begin
+        #@timeit to "every couple of gens" begin
             if isempty(prog_dict["time"]) || t_since - prog_dict["time"][end] > 5.0
 
                 # GC.gc() # no idea why that is necessary
@@ -145,9 +148,14 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                      for m in keys(ops.measures)]...
                ])
 
+               #@timeit to "garbage_collect log" begin
+                   garbage_collect!(one_tree; forget_rate = ops.general.seen_forget_rate)
+               #end # @timeit
+
                 if ops.general.print_progress
                     display(get_for_prog)
                     println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
+                    println("entries in forgetting expression log -> ", count_terminals(one_tree))
                     if !isempty(prog_dict["time"])
                         println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
                     end
@@ -169,17 +177,17 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                     push!(prog_dict[k], get_for_prog[k])
                 end
 
-#                 @timeit to "plot and show equations" begin
+                #@timeit to "plot and show equations" begin
                     if ops.general.plot_hall_of_fame
                         plot_hall_of_fame(hall_of_fame, ops)
                     end
-#                 end # @timeit
+                #end # @timeit
             end
 
             if gen % ops.general.island_extinction_interval == 0
                 perform_island_extinction!(population, gen, ops)
             end
-#         end # @timeit
+        #end # @timeit
 
 # ==================================================================================================
 # termination criteria
@@ -233,27 +241,27 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
     return (
         hall_of_fame, population, prog_dict, stop_msg,
-#         to # @timeit
+        #to # @timeit
     )
 end
 
-function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter; trial=1)
+function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, one_tree; trial=1)
 
     eval_counter = 0
 
     foreach(indiv -> indiv.age += 1, pop)
 
     # create new children # ----------------------------------------------------------------
-#     @timeit to "new children" begin
+    #@timeit to "new children" begin
         while length(chil) + length(pop) < 0.6 * ops.general.pop_per_isle
             push!(chil,
             Individual(grow_equation(ops.grammar.init_tree_depth, ops))
             )
         end
-#     end # @timeit
+    #end # @timeit
 
     # genetic operations # -------------------------------------------------------------------------
-#     @timeit to "genetic ops" begin
+    #@timeit to "genetic ops" begin
         if length(pop) > 0.4 * ops.general.pop_per_isle
             perform_parent_selection!(chil, pop, ops)
             apply_genetic_operations!(chil, ops, bank_of_terms)
@@ -262,14 +270,14 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
                 push!(chil, fastcopy(rand(pop)))
             end
         end
-#     end # @timeit
+    #end # @timeit
 
     # fitting and evaluation # ---------------------------------------------------------------------
-#     @timeit to "Individual" begin
+    #@timeit to "Individual" begin
         for ii in eachindex(chil)
-            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter)
+            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter, one_tree)
         end
-#     end # @timeit
+    #end # @timeit
 
     filter!(indiv -> indiv.valid, chil)
 
@@ -282,12 +290,12 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
 
     # selection # ----------------------------------------------------------------------------------
     if length(pop) > ops.general.pop_per_isle
-#         @timeit to "selection" begin
+        #@timeit to "selection" begin
             perform_population_selection!(pop, ops)
-#         end # @timeit
+        #end # @timeit
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, trial=trial+1)
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, one_tree, trial=trial+1)
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end
@@ -418,7 +426,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
         ymax = 10^(ceil(log10(maximum(ms_processed_e)))+1)
     end
 
-#     @timeit to "scatterplot" begin
+    #@timeit to "scatterplot" begin
         plt = scatterplot(compl, ms_processed_e,
             yscale           = :log10,
             title            = "hall of fame",
@@ -430,10 +438,10 @@ function plot_hall_of_fame(hall_of_fame, ops)
             ylim             = (ymin, ymax),
             compact          = true,
         )
-#     end # @timeit
+    #end # @timeit
 
     if ops.general.print_hall_of_fame
-#         @timeit to "simplify equations to show" begin
+        #@timeit to "simplify equations to show" begin
             sort!(hall_of_fame, by=i->i.measures[:ms_processed_e], rev=true)
 
             inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
@@ -447,7 +455,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
                     " " => "", r"(\d)\.0\b" => s"\1"
                 ))
             end
-#         end # @timeit
+        #end # @timeit
     end
     display(plt)
 end

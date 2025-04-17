@@ -8,7 +8,7 @@ dominates(x, y) = all(i -> x[i] <= y[i], eachindex(x)) && any(i -> x[i] < y[i], 
     For each entry, the pareto front number is determined.
 """
 function non_dominated_sort(individs::Vector{Vector{Float64}})
-#     @timeit to "non_dominated_sort" begin
+    #@timeit to "non_dominated_sort" begin
         fronts   = Vector{Int64}[]
         indices = collect(eachindex(individs))
         individs = deepcopy(individs)
@@ -25,7 +25,7 @@ function non_dominated_sort(individs::Vector{Vector{Float64}})
         for (front, inds) in enumerate(fronts)
             domination_score[inds] .= front
         end
-#     end # @timeit
+    #end # @timeit
 
     return domination_score
 end
@@ -37,7 +37,7 @@ first_pareto_front(individs::Vector{Vector{Float64}}) = findall(y -> all(x -> !d
 """ Calculate the crowding distances.
 """
 function crowding_distance(individs)
-#     @timeit to "crowding_distance" begin
+    #@timeit to "crowding_distance" begin
         n_pnts, n_dims = length(individs), length(individs[1])
         dists = zeros(n_pnts)
         s_inds = zeros(Int64, n_pnts)
@@ -51,7 +51,7 @@ function crowding_distance(individs)
                 dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) / (max_val - min_val)
             end
         end
-#     end # @timeit
+    #end # @timeit
     return dists
 end
 
@@ -63,7 +63,7 @@ parent_selection(pop) = min(rand(pop), rand(pop))
     this function are modified and should not be used afterwards.
 """
 function tournament_selection(fitness, inds; tournament_size=5, n_select=10, modify=true)
-#     @timeit to "tournament_selection" begin
+    #@timeit to "tournament_selection" begin
         n_select >= length(inds) && return inds
 
         if !modify
@@ -79,7 +79,7 @@ function tournament_selection(fitness, inds; tournament_size=5, n_select=10, mod
         end
 
         sort!(selected)
-#     end # @timeit
+    #end # @timeit
     return selected
 end
 
@@ -100,7 +100,7 @@ get_relative_fitness(indiv_obj_vals) = -sum.(indiv_obj_vals)
 """ Perform the parent selection.
 """
 function perform_parent_selection!(chil, pop, ops)
-#     @timeit to "parent selection" begin
+    #@timeit to "parent selection" begin
         if ops.general.parent_selection
             for _ in 1:ops.general.n_children
                 push!(chil, fastcopy(parent_selection(pop)))
@@ -111,7 +111,7 @@ function perform_parent_selection!(chil, pop, ops)
                 push!(chil, fastcopy(pop[mod1(i, length(pop))]))
             end
         end
-#     end # @timeit
+    #end # @timeit
 end
 
 """ Perform the population selection.

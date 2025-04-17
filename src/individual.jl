@@ -11,19 +11,19 @@ mutable struct Individual
     Individual(node::Node) = new(node)
 end
 
-function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
+function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, one_tree)
     indiv.age = 0.0
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
-#     @timeit to "prepare node" begin
+    #@timeit to "prepare node" begin
         trim_to_max_nodes_per_term!(indiv.node, ops)
         apply_simple_simplifications!(indiv.node, ops)
         div_to_mul_param!(indiv.node, ops)
         reorder_add_n_mul!(indiv.node, ops)
-#     end # @timeit
+    #end # @timeit
 
     # remove invalids # ----------------------------------------------------------------------------
-#     @timeit to "remove invalids" begin
+    #@timeit to "remove invalids" begin
         if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment))
             indiv.valid = false
             return 0
@@ -38,18 +38,30 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
             indiv.valid = false
             return 0
         end
-#     end # @timeit
+    #end # @timeit
+
+    # check if seen # ------------------------------------------------------------------------------
+    #@timeit to "check_log" begin
+        if ops.general.seen_rejection_probability > 0
+            eq = node_to_string_prefix(indiv.node, ops)
+            unseen = check_and_add!(one_tree, eq)
+            if !unseen && rand() < 0.9
+                indiv.valid = false
+                return 0
+            end
+        end
+    #end # @timeit
 
     # fitting # ------------------------------------------------------------------------------------
-#     @timeit to "fitting" begin
+    #@timeit to "fitting" begin
         prediction, valid, eval_counter = fit_n_eval!(indiv.node, data, ops, fit_iter)
-#     end # @timeit
+    #end # @timeit
 
     indiv.valid = valid
     indiv.valid || return eval_counter
 
     # calculate measures # -------------------------------------------------------------------------
-#     @timeit to "calc measures" begin
+    #@timeit to "calc measures" begin
         indiv.measures = NamedTuple(
             m => clamp(
                 f(prediction, data[end], indiv.node, ops),
@@ -58,11 +70,12 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
             )
             for (m, f) in ops.measures
         )
-#     end # @timeit
+    #end # @timeit
 
     if any(!isfinite(v) for v in values(indiv.measures))
         indiv.valid = false
     end
+
     return eval_counter
 end
 
