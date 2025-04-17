@@ -359,7 +359,7 @@ function fitting_params(;
     lasso_factor < 1.0       || @warn "lasso_factor seems to large"
     0 < early_stop_iter < 5  && @warn "early stopping may be too strict -> higher values may produce better results"
 
-    @assert NM_iter >= 0            "NM_iter must be >= 0                                       "
+    @assert NM_iter >= 0                "NM_iter must be >= 0                                           "
     @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter                "
     @assert 0 <= rel_f_tol_5_iter < 1.0 "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
     @assert lasso_factor >= 0           "lasso factor must be >= 0                                      "
