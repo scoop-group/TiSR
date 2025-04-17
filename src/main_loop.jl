@@ -295,7 +295,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
         #end # @timeit
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, fit_iter, cur_max_compl, one_tree, trial=trial+1)
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, one_tree, trial=trial+1)
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end
