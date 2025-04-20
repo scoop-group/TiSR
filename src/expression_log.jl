@@ -23,7 +23,8 @@ end
 
 function garbage_collect!(trie::Trie)
     for child in keys(trie.children)
-        trie.children[child].times_visited -= Int8(1) # trie.children[child].times_visited ÷= Int8(2)
+        # trie.children[child].times_visited -= Int8(1)
+        trie.children[child].times_visited ÷= Int8(2)
         if trie.children[child].times_visited <= 0
             delete!(trie.children, child)
         else
@@ -49,8 +50,8 @@ function node_to_string_prefix(node::Node, ops)
     end
 end
 
-# count_terminals(trie::Trie) = sum(
-#     isempty(s.children) ? 1 : count_terminals(s) for s in values(trie.children)
-#         ; init = 0
-# )
+count_terminals(trie::Trie) = sum(
+    isempty(s.children) ? 1 : count_terminals(s) for s in values(trie.children)
+        ; init = 0
+)
 
