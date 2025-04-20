@@ -255,16 +255,16 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
 
     # create new children # ----------------------------------------------------------------
     #@timeit to "new children" begin
-        while length(chil) + length(pop) < 0.6 * ops.general.pop_per_isle
+        while length(chil) + length(pop) < ops.general.pop_per_isle
             push!(chil,
-            Individual(grow_equation(ops.grammar.init_tree_depth, ops))
+                Individual(grow_equation(ops.grammar.init_tree_depth, ops))
             )
         end
     #end # @timeit
 
     # genetic operations # -------------------------------------------------------------------------
     #@timeit to "genetic ops" begin
-        if length(pop) > 0.4 * ops.general.pop_per_isle
+        if length(pop) > 0.8 * ops.general.pop_per_isle
             perform_parent_selection!(chil, pop, ops)
             apply_genetic_operations!(chil, ops, bank_of_terms)
 
