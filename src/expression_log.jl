@@ -14,7 +14,7 @@ function check_and_add!(trie, eq_str)
     if !(eq_str[1] in keys(trie.children))
         trie.children[eq_str[1]] = Trie()
     end
-    trie.children[eq_str[1]].times_visited = min((trie.children[eq_str[1]].times_visited + 1), 100)
+    trie.children[eq_str[1]].times_visited = min((trie.children[eq_str[1]].times_visited + 1), 127)
     if length(eq_str) > 1
         return check_and_add!(trie.children[eq_str[1]], eq_str[2:end])
     end
