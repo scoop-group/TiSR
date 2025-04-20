@@ -59,11 +59,11 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
     null_node = Node(0.0)                            # create the null node for some manual garbification
 
-    t_start       = time()
-    gen           = 0.0
-    stop_msg      = ""
-    eval_counters = fill(0, ops.general.num_islands)
-    one_tree      = State()
+    t_start        = time()
+    gen            = 0.0
+    stop_msg       = ""
+    eval_counters  = fill(0, ops.general.num_islands)
+    expression_log = [Trie() for _ in 1:ops.general.num_islands]
 
     #reset_timer!(to) # @timeit
 
@@ -88,7 +88,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         ops,
                         cur_max_compl,
                         ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                        one_tree,
+                        expression_log[isle],
                     )
                 end
             else
@@ -101,7 +101,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         ops,
                         cur_max_compl,
                         ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
-                        one_tree,
+                        expression_log[isle],
                     )
                 end
             end
@@ -148,14 +148,15 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                      for m in keys(ops.measures)]...
                ])
 
-               #@timeit to "garbage_collect log" begin
-                   garbage_collect!(one_tree; forget_rate = ops.general.seen_forget_rate)
-               #end # @timeit
+                #@timeit to "garbage_collect log" begin
+                   for isle in 1:ops.general.num_islands
+                       garbage_collect!(expression_log[isle])
+                   end
+                #end # @timeit
 
                 if ops.general.print_progress
                     display(get_for_prog)
                     println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
-                    println("entries in forgetting expression log -> ", count_terminals(one_tree))
                     if !isempty(prog_dict["time"])
                         println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
                     end
@@ -245,7 +246,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     )
 end
 
-function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, one_tree; trial=1)
+function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, expression_log; trial=1)
 
     eval_counter = 0
 
@@ -275,7 +276,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     # fitting and evaluation # ---------------------------------------------------------------------
     #@timeit to "Individual" begin
         for ii in eachindex(chil)
-            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter, one_tree)
+            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter, expression_log)
         end
     #end # @timeit
 
@@ -295,7 +296,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
         #end # @timeit
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, one_tree, trial=trial+1)
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, expression_log, trial=trial+1)
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end

@@ -11,7 +11,7 @@ mutable struct Individual
     Individual(node::Node) = new(node)
 end
 
-function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, one_tree)
+function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_log)
     indiv.age = 0.0
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
@@ -43,9 +43,9 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, one_tree)
     # check if seen # ------------------------------------------------------------------------------
     #@timeit to "check_log" begin
         if ops.general.seen_rejection_probability > 0
-            eq = node_to_string_prefix(indiv.node, ops)
-            unseen = check_and_add!(one_tree, eq)
-            if !unseen && rand() < 0.9
+            eq_pref = node_to_string_prefix(indiv.node, ops)
+            visits = check_and_add!(expression_log, eq_pref)
+            if visits > 0 && rand() < ops.general.seen_rejection_probability # if rand() > 0.5^visits
                 indiv.valid = false
                 return 0
             end

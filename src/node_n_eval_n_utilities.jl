@@ -133,6 +133,23 @@ function node_to_string_(node::Node, ops, sigdigits)
     end
 end
 
+function encode_single_char(node::Node, ops)
+    if node.ari == 2
+        op_num = node.ind + length(ops.unaops)
+        lef = encode_single_char(node.lef, ops)
+        rig = encode_single_char(node.rig, ops)
+        return "$(Char(96 + op_num))$lef$rig"
+    elseif node.ari == 1
+        op_num = node.ind
+        lef = encode_single_char(node.lef, ops)
+        return "$(Char(96 + op_num))$lef"
+    elseif node.ari == 0
+        return "V$(string(node.ind))"
+    elseif node.ari == -1
+        return string(round(sign(node.val)) * round(log1p(min(ops.general.replace_inf, abs(node.val))), sigdigits=2))
+    end
+end
+
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
 function Base.copy(node::Node)::Node
