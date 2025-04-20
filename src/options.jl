@@ -216,7 +216,7 @@ function general_params(;
     max_age::Int64                         = 2 * round(Int64, pop_size / num_islands),                          # -> maximal age after which individuals are removed from the popoulation
     n_refitting::Int64                     = 1,                                                                 # -> how many individuals from the hall_of_fame are copied and fitted again
     adaptive_compl_increment::Int64        = 100,                                                               # -> highest complexity in the hall of fame + `adaptive_compl_increment` is the highest allowed complexity for a new individual; -> Inf is off; 5 ... 10
-    seen_rejection_probability::Float64    = 0.8,                                                               # -> probability to reject an expression, if it is present in the forgetting expression log
+    seen_reject_prob::Float64              = 0.8,                                                               # -> probability to reject an expression, if it is present in the forgetting expression log
     replace_inf::Float64                   = 1e100,                                                             # -> the value infs measures should be replaced with. The inverse is also used as the guarding offset g -> 1/(0 + g)
     callback::Function                     = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
     multithreading::Bool                   = false,                                                             # -> whether to use multithreading for the fitting (most expensive). Not always faster -> depends on how expensive fitting is for the problem at hand. Also, for this to apply, Julia needs to be started with more threads, like `julia -t 4`.
@@ -235,7 +235,7 @@ function general_params(;
     @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands          "
     @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2   "
     @assert !isnan(replace_inf)                                   "replace_inf must not be NaN"
-    @assert 0.0 <= seen_rejection_probability <= 1.0              "seen_rejection_probability must be between 0 and 1"
+    @assert 0.0 <= seen_reject_prob <= 1.0                        "seen_rejection_probability must be between 0 and 1"
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -278,7 +278,7 @@ function general_params(;
         t_lim                           = t_lim,
         multithreading                  = multithreading,
         adaptive_compl_increment        = adaptive_compl_increment,
-        seen_rejection_probability      = seen_rejection_probability,
+        seen_reject_prob                = seen_reject_prob,
         callback                        = callback,
         replace_inf                     = replace_inf,
         print_progress                  = print_progress,

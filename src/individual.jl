@@ -41,11 +41,15 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_l
     #end # @timeit
 
     # check if seen # ------------------------------------------------------------------------------
-    #@timeit to "check_log" begin
-        if ops.general.seen_rejection_probability > 0
-            eq_pref = node_to_string_prefix(indiv.node, ops)
-            visits = check_and_add!(expression_log, eq_pref)
-            if visits > 0 && rand() < ops.general.seen_rejection_probability # if rand() > 0.5^visits
+    #@timeit to "check expression_log" begin
+        if ops.general.seen_reject_prob > 0
+            #@timeit to "convert for expression_log" begin
+                eq_pref = node_to_string_prefix(indiv.node, ops)
+            #end # @timeit
+            #@timeit to "check and expand expression_log" begin
+                visits = check_and_add!(expression_log, eq_pref)
+            #end # @timeit
+            if visits > 0 && rand() < ops.general.seen_reject_prob # if rand() > 0.5^visits
                 indiv.valid = false
                 return 0
             end
@@ -64,7 +68,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_l
     #@timeit to "calc measures" begin
         indiv.measures = NamedTuple(
             m => clamp(
-                f(prediction, data[end], indiv.node, ops),
+                f(prediction, data[end], indiv.node, ops)::Float64,
                 -ops.general.replace_inf,
                 ops.general.replace_inf
             )

@@ -148,7 +148,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                      for m in keys(ops.measures)]...
                ])
 
-                #@timeit to "garbage_collect log" begin
+                #@timeit to "garbage collect expression_log" begin
                    for isle in 1:ops.general.num_islands
                        garbage_collect!(expression_log[isle])
                    end
@@ -240,9 +240,10 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     # Post-pare for return
     population = reduce(vcat, population)
 
+    #display(to) # @timeit
+
     return (
-        hall_of_fame, population, prog_dict, stop_msg,
-        #to # @timeit
+        hall_of_fame, population, prog_dict, stop_msg
     )
 end
 
