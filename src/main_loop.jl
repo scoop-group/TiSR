@@ -150,7 +150,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
                 #@timeit to "garbage collect expression_log" begin
                    for isle in 1:ops.general.num_islands
-                       map!(v -> v ÷ Int8(2), values(expression_log[isle])
+                       map!(v -> v ÷ Int8(2), values(expression_log[isle]))
                        filter!(kv -> kv[2] > 1, expression_log[isle])
                    end
                 #end # @timeit
