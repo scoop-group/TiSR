@@ -18,7 +18,7 @@ export Options,
 using Statistics
 using Random
 using Dates
-import Base: isapprox, ==, isless, show, copy, deepcopy, iterate, length
+import Base: isapprox, ==, isless, show, copy, deepcopy, iterate, length, hash
 
 using ForwardDiff
 using OrderedCollections
@@ -53,6 +53,5 @@ include("main_loop.jl")
 include("save_results.jl")
 include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
 include("grammar.jl")
-include("expression_log.jl")
 
 end # module

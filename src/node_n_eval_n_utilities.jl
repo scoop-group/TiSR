@@ -44,6 +44,19 @@ function Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, node::Node{T2}) where {
     return convert_node(node, zero(T1))
 end
 
+function Base.hash(node::Node, h::UInt)
+    if node.ari == -1
+        val = sign(node.val) * round(log1p(abs(node.val)), sigdigits=2)
+        return hash(node.ari, hash(val, h))
+    elseif node.ari == 0
+        return hash(node.ari, hash(node.ind, h))
+    elseif node.ari == 1
+        return hash(node.ari, hash(node.ind, hash(node.lef, h)))
+    else
+        return hash(node.ari, hash(node.ind, hash(node.lef, hash(node.rig, h))))
+    end
+end
+
 # ==================================================================================================
 # eval equation
 # ==================================================================================================

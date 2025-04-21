@@ -63,7 +63,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     gen            = 0.0
     stop_msg       = ""
     eval_counters  = fill(0, ops.general.num_islands)
-    expression_log = [Trie() for _ in 1:ops.general.num_islands]
+    expression_log = [Dict{UInt64, Int8}() for _ in 1:ops.general.num_islands]
 
     #reset_timer!(to) # @timeit
 
@@ -150,7 +150,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
                 #@timeit to "garbage collect expression_log" begin
                    for isle in 1:ops.general.num_islands
-                       garbage_collect!(expression_log[isle])
+                       map!(v -> v ÷ Int8(2), values(expression_log[isle])
+                       filter!(kv -> kv[2] > 1, expression_log[isle])
                    end
                 #end # @timeit
 
