@@ -149,10 +149,23 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                ])
 
                 #@timeit to "garbage collect expression_log" begin
-                   for isle in 1:ops.general.num_islands
-                       map!(v -> v ÷ Int8(2), values(expression_log[isle]))
-                       filter!(kv -> kv[2] > 1, expression_log[isle])
-                   end
+                   # if (merge_logs = true)
+                       merged_log = mergewith(+, expression_log...)
+                       @show length(merged_log)
+
+                       # map!(v -> v - Int8(1), values(merged_log)) # ÷ Int8(2)
+                       map!(v -> v ÷ Int8(2), values(merged_log)) # ÷ Int8(2)
+                       filter!(kv -> kv[2] > 1, merged_log)
+
+                       @show length(merged_log)
+                       expression_log = [deepcopy(merged_log) for _ in 1:ops.general.num_islands]
+                   # else
+                       # for isle in 1:ops.general.num_islands
+                       #     map!(v -> v ÷ Int8(2), values(expression_log[isle]))
+                       #     filter!(kv -> kv[2] > 1, expression_log[isle])
+                       #     @show length(expression_log[isle])
+                       # end
+                   # end
                 #end # @timeit
 
                 if ops.general.print_progress
