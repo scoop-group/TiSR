@@ -46,8 +46,7 @@ end
 
 function Base.hash(node::Node, h::UInt)
     if node.ari == -1
-        # val = sign(node.val) * round(log1p(abs(node.val)), sigdigits=2)
-        val = sign(node.val) * round(log1p(abs(node.val)), sigdigits=1)
+        val = sign(node.val) * round(log1p(abs(node.val)), sigdigits=2)
         return hash(node.ari, hash(val, h))
     elseif node.ari == 0
         return hash(node.ari, hash(node.ind, h))
