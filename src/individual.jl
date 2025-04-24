@@ -44,10 +44,10 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_l
     #@timeit to "check expression_log" begin
         if ops.general.seen_reject_prob > 0
             #@timeit to "convert for expression_log" begin
-                hnode = hash(indiv.node)
+                node_hash = hash(indiv.node)
             #end # @timeit
             #@timeit to "check and expand expression_log" begin
-                expression_log[hnode] = visits = min(get!(expression_log, hnode, 0) + 1, 127)
+                expression_log[node_hash] = visits = min(get!(expression_log, node_hash, 0) + 1, 127)
             #end # @timeit
             if visits > 1 && rand() < ops.general.seen_reject_prob # if rand() > 0.5^visits
                 indiv.valid = false
