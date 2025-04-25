@@ -12,7 +12,7 @@ function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, me
     if rem_depth <= 1 || (method == :asym && rand() < 0.3^rem_depth)
 
         if rand() < (2 / (ops.data_descript.n_vars + 2))       # parameter twice as likely as any one variable
-            next_node = Node(rand())                           # parameter
+            next_node = Node(randn() * 10.0)                           # parameter
         else
             next_node = Node(rand(1:ops.data_descript.n_vars)) # variable
         end
