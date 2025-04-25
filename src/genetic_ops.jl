@@ -153,16 +153,12 @@ end
 """
 function point_mutation!(node, ops)
     node_elect = random_node(node, mode=0)
-
     if node_elect.ari == 2
         node_elect.ind = rand(1:length(ops.binops))
-
     elseif node_elect.ari == 1
         node_elect.ind = rand(1:length(ops.unaops))
-
     elseif node_elect.ari == 0
         node_elect.ind = rand(1:ops.data_descript.n_vars)
-
     elseif node_elect.ari == -1
         node_elect.val *= rand_mult()
     end
