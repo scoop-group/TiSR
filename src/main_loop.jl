@@ -463,7 +463,9 @@ function plot_hall_of_fame(hall_of_fame, ops)
             for i in eachindex(eq_strs)
                 label!(plt, :r, i, replace(
                     eq_strs[i],
-                    " " => "", r"(\d)\.0\b" => s"\1"
+                    " " => "",
+                    r"(\d)\.0\b" => s"\1",
+                    r"(\d)\.0(\D)" => s"\1\2",
                 ))
             end
         #end # @timeit
