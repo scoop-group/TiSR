@@ -271,7 +271,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     #@timeit to "new children" begin
         while length(chil) + length(pop) < ops.general.pop_per_isle
             push!(chil,
-                Individual(grow_equation(ops.grammar.init_tree_depth, ops))
+                Individual(grow_equation(ops.grammar.init_tree_depth, ops, param_prob = iszero(fit_iter) ? 0.0 : 2.0))
             )
         end
     #end # @timeit

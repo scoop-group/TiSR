@@ -5,13 +5,14 @@
 grow_equation(
     rem_depth::Int, ops::Options;
     unaweights = ones(length(ops.unaops)), binweights = ones(length(ops.binops)),
-    method = :asym
-)::Node = grow_equation_(rem_depth, ops, unaweights, binweights, method)
+    method = :asym,
+    param_prob = 2.0,
+)::Node = grow_equation_(rem_depth, ops, unaweights, binweights, method, param_prob)
 
-function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, method)::Node
+function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, method, param_prob)::Node
     if rem_depth <= 1 || (method == :asym && rand() < 0.3^rem_depth)
 
-        if rand() < (2 / (ops.data_descript.n_vars + 2))       # parameter twice as likely as any one variable
+        if rand() < (param_prob / (ops.data_descript.n_vars + param_prob))       # parameter twice as likely as any one variable
             next_node = Node(randn() * 10.0)                           # parameter
         else
             next_node = Node(rand(1:ops.data_descript.n_vars)) # variable
@@ -23,13 +24,13 @@ function grow_equation_(rem_depth::Int, ops::Options, unaweights, binweights, me
             op_ind = findfirst(x -> sum(unaweights[1:x]; init=0.0) >= rand_, 1:length(ops.unaops))
             next_node = Node(1, op_ind)
 
-            next_node.lef = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method)
+            next_node.lef = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method, param_prob)
         else
             op_ind = findfirst(x -> (sum(unaweights; init=0.0) + sum(binweights[1:x]; init=0.0)) >= rand_, 1:length(ops.binops))
             next_node = Node(2, op_ind)
 
-            next_node.lef = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method)
-            next_node.rig = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method)
+            next_node.lef = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method, param_prob)
+            next_node.rig = grow_equation_(rem_depth - 1, ops, unaweights, binweights, method, param_prob)
         end
     end
     return next_node
