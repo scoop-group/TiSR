@@ -121,6 +121,21 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 push!(population[rand(1:ops.general.num_islands)], indiv)
             end
 
+            #@timeit to "garbage collect expression_log" begin
+                if gen % ops.general.seen_merge_interval == 0
+                   merged_log = mergewith(+, expression_log...)
+                   expression_log = [deepcopy(merged_log) for _ in 1:ops.general.num_islands]
+                end
+                if gen % ops.general.seen_forget_interval == 0
+                    for exp_log in expression_log
+                       # map!(v -> v ÷ Int8(2), values(exp_log))
+                       map!(v -> v - Int8(1), values(exp_log))
+                       filter!(kv -> kv[2] > 0, exp_log)
+                    end
+                end
+            #end # @timeit
+
+
             #@timeit to "hall_of_fame_selection" begin
                 perform_hall_of_fame_selection!(hall_of_fame, population, ops)
             #end # @timeit
@@ -147,26 +162,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                     ["min " * string(m) => minimum([i.measures[m] for i in hall_of_fame])
                      for m in keys(ops.measures)]...
                ])
-
-                #@timeit to "garbage collect expression_log" begin
-                   # if (merge_logs = true)
-                       merged_log = mergewith(+, expression_log...)
-                       @show length(merged_log)
-
-                       # map!(v -> v - Int8(1), values(merged_log)) # ÷ Int8(2)
-                       map!(v -> v ÷ Int8(2), values(merged_log)) # ÷ Int8(2)
-                       filter!(kv -> kv[2] > 1, merged_log)
-
-                       @show length(merged_log)
-                       expression_log = [deepcopy(merged_log) for _ in 1:ops.general.num_islands]
-                   # else
-                       # for isle in 1:ops.general.num_islands
-                       #     map!(v -> v ÷ Int8(2), values(expression_log[isle]))
-                       #     filter!(kv -> kv[2] > 1, expression_log[isle])
-                       #     @show length(expression_log[isle])
-                       # end
-                   # end
-                #end # @timeit
 
                 if ops.general.print_progress
                     display(get_for_prog)
