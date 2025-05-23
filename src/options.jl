@@ -249,7 +249,7 @@ function general_params(;
     island_extinction_interval > 500 || @warn "island_extinction_interval seems small                          "
     max_age > 10                     || @warn "max_age seems small                                             "
 
-    10 <= seen_forget_interval <= 500 || @warn "seen_forget_interval should be between 10 and 100"
+    10 <= seen_forget_interval <= 500 || @warn "seen_forget_interval should be between 10 and 500"
     10 <= seen_merge_interval <= 500  || @warn "seen_merge_interval should be between 10 and 500"
 
     island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
