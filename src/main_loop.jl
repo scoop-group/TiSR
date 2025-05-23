@@ -123,14 +123,17 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
             #@timeit to "garbage collect expression_log" begin
                 if gen % ops.general.seen_merge_interval == 0
-                   merged_log = mergewith(+, expression_log...)
+                   merged_log = mergewith(safe_plus, expression_log...)
+                   #@show length(merged_log) # DEBUG expression_log
                    expression_log = [deepcopy(merged_log) for _ in 1:ops.general.num_islands]
                 end
                 if gen % ops.general.seen_forget_interval == 0
                     for exp_log in expression_log
-                       # map!(v -> v ÷ Int8(2), values(exp_log))
-                       map!(v -> v - Int8(1), values(exp_log))
-                       filter!(kv -> kv[2] > 0, exp_log)
+                       while true
+                           map!(v -> v ÷ Int8(2), values(exp_log))
+                           filter!(kv -> kv[2] > 0, exp_log)
+                           length(exp_log) < ops.general.seen_gc_length && break
+                       end
                     end
                 end
             #end # @timeit
@@ -473,3 +476,7 @@ function plot_hall_of_fame(hall_of_fame, ops)
     end
     display(plt)
 end
+
+""" Plus, which does not overflow integers, but replaces with typemax in that case.
+"""
+safe_plus(x, y) = typemax(x) - x > y ? x + y : typemax(x)

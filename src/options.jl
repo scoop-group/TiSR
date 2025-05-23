@@ -219,6 +219,7 @@ function general_params(;
     seen_reject_prob::Float64              = 0.9,                                                               # -> probability to reject an expression, if it is present in the forgetting expression log, i.e., has been seen recently or frequently
     seen_forget_interval::Int64            = 100,                                                               # -> generation interval in which the expression_log forgets
     seen_merge_interval::Int64             = 100,                                                               # -> generation interval in which the expression_logs of each island are merged
+    seen_gc_length::Int64                  = 100_000,                                                           # -> number of entries in the expression_log above which an additional forgetting is applied
     replace_inf::Float64                   = 1e100,                                                             # -> the value infs measures should be replaced with. The inverse is also used as the guarding offset g -> 1/(0 + g)
     callback::Function                     = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
     multithreading::Bool                   = false,                                                             # -> whether to use multithreading for the fitting (most expensive). Not always faster -> depends on how expensive fitting is for the problem at hand. Also, for this to apply, Julia needs to be started with more threads, like `julia -t 4`.
@@ -240,6 +241,7 @@ function general_params(;
     @assert 0.0 <= seen_reject_prob <= 1.0                        "seen_rejection_probability must be between 0 and 1"
     @assert seen_forget_interval > 0                              "seen_forget_interval must be larger 0"
     @assert seen_merge_interval > 0                               "seen_merge_interval must be larger 0"
+    @assert seen_gc_length > 0                                    "seen_gc_length must be larger 0"
 
     if print_hall_of_fame
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
@@ -251,6 +253,7 @@ function general_params(;
 
     10 <= seen_forget_interval <= 500 || @warn "seen_forget_interval should be between 10 and 500"
     10 <= seen_merge_interval <= 500  || @warn "seen_merge_interval should be between 10 and 500"
+    10_000 <= seen_gc_length <= 500_000 || @warn "seen_gc_length should be between 10_000 and 500_000"
 
     island_extinction_interval == migration_interval == typemax(Int64) && @warn "island_extinction_interval & migration_interval should not both be off"
 
@@ -288,6 +291,7 @@ function general_params(;
         seen_reject_prob                = seen_reject_prob,
         seen_forget_interval            = seen_forget_interval,
         seen_merge_interval             = seen_merge_interval,
+        seen_gc_length                  = seen_gc_length,
         callback                        = callback,
         replace_inf                     = replace_inf,
         print_progress                  = print_progress,
