@@ -135,6 +135,9 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 end
             #end # @timeit
 
+            if gen % ops.general.island_extinction_interval == 0
+                perform_island_extinction!(population, gen, ops)
+            end
 
             #@timeit to "hall_of_fame_selection" begin
                 perform_hall_of_fame_selection!(hall_of_fame, population, ops)
@@ -192,10 +195,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         plot_hall_of_fame(hall_of_fame, ops)
                     end
                 #end # @timeit
-            end
-
-            if gen % ops.general.island_extinction_interval == 0
-                perform_island_extinction!(population, gen, ops)
             end
         #end # @timeit
 
