@@ -54,4 +54,6 @@ include("save_results.jl")
 include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
 include("grammar.jl")
 
+#global reject_rate = [0, 0] # DEBUG expression_log
+
 end # module

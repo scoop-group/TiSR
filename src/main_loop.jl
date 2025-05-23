@@ -150,6 +150,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
         #@timeit to "every couple of gens" begin
             if isempty(prog_dict["time"]) || t_since - prog_dict["time"][end] > 5.0
+                #println("reject_rate -> ", reject_rate[1] / reject_rate[2]) # DEBUG expression_log
+                #reject_rate .= 0                                            # DEBUG expression_log
 
                 # GC.gc() # no idea why that is necessary
                 clean_trash_nodes!(population, null_node)
