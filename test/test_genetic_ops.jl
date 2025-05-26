@@ -87,27 +87,31 @@ end
             @test lefrig == true
         end
     end
-
 end
 
 @testset "point_mutation!" begin
     distances = map(1:1000) do _
         node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
+
+        str_before = TiSR.node_to_string(node, ops, sigdigits=1)
+
         num_nodes_before = TiSR.count_nodes(node)
-        str1 = TiSR.encode_single_char(node, ops)
+        str1 = TiSR.encode_single_char(node, ops, sigdigits=1)
 
         TiSR.point_mutation!(node, ops)
 
         num_nodes_after = TiSR.count_nodes(node)
-        str2 = TiSR.encode_single_char(node, ops)
+        str2 = TiSR.encode_single_char(node, ops, sigdigits=1)
 
         @test num_nodes_after == num_nodes_before
 
         dist = Levenshtein()(str1, str2)
-        @test dist in (0, 1)
+
+        @test dist in (0, 1, 2, 3)
+
         dist
     end
-    @test quantile(distances, 0.7) == 1
+    @test quantile(distances, 0.8) == 1
 end
 
 @testset "point_mutation2!" begin
@@ -132,7 +136,7 @@ end
 @testset "insert_mutation!" begin
 
     distances = map(1:1000) do _
-        node = TiSR.grow_equation(rand(4:7), ops, method=:asym)
+        node = TiSR.grow_equation(rand(4:7), ops, method=:full)
 
         num_nodes_before = TiSR.count_nodes(node)
         str1 = TiSR.encode_single_char(node, ops)
@@ -156,7 +160,8 @@ end
         # string distance?
         dist = Levenshtein()(str1, str2)
     end
-    @test all(d in (3, 5, 6) for d in distances)
+
+    @test all(d in (1, 3, 4, 5, 6) for d in distances)
 end
 
 @testset "hoist_mutation!" begin
@@ -290,7 +295,7 @@ end
         # string distance?
         dist = Levenshtein()(str1, str2)
     end
-    @test all(d == 5 for d in distances)
+    @test all(d == 4 for d in distances)
 end
 
 @testset "addterm_mutation!" begin
@@ -319,7 +324,7 @@ end
         # string distance?
         dist = Levenshtein()(str1, str2)
     end
-    @test all(d in (5, 6, 8, 9, 10, 11, 12) for d in distances)
+    @test all(d in (3, 4, 5, 6) for d in distances)
 end
 
 

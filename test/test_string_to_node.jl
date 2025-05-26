@@ -11,4 +11,3 @@ ops, data_vect = Options(data)
         @test node_str == rebuild_node_str
     end
 end
-

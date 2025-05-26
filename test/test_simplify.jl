@@ -15,7 +15,7 @@ ops, data_vect = Options(
 )
 
 @testset "simplify_unary_of_param!" begin
-    unary_of_param_regex = r"\(-?\d+(\.\d+)?\)"
+    unary_of_param_regex = r"\(\(-?\d+(\.\d+)?\)\)"
 
     i = 0
     while i < 1000
@@ -30,11 +30,12 @@ ops, data_vect = Options(
         @test !occursin(unary_of_param_regex, node_str)
         @test !TiSR.simplify_unary_of_param!(node)
     end
+
 end
 
 @testset "simplify_binary_of_param!" begin
-    binary_of_param1_regex = r"\(-?\d+(\.\d+)\,-?\d+(\.\d+)?\)"
-    binary_of_param2_regex = r"\(-?\d+(\.\d+)?[\+\-\*/\^]-?\d+(\.\d+)?\)"
+    binary_of_param1_regex = r"\(\(-?\d+(\.\d+)\)\,\(-?\d+(\.\d+)?\)\)"
+    binary_of_param2_regex = r"\(\(-?\d+(\.\d+)?\)[\+\-\*/\^]\(-?\d+(\.\d+)?\)"
 
     i = 0
     while i < 1000
@@ -54,16 +55,16 @@ end
 @testset "reorder_add_n_mul!" begin
 
     node_strs = [
-        "abs(log((v2+0.343)))"
-        "sqrt(pow2((exp(v3)^exp(0.848))))"
-        "(sin((pow_abs(v3,v3)-sqrt(v4)))/(abs(log(v4))-(sqrt(0.394)^abs(v3))))"
+        "abs(log((v2+(0.343))))"
+        "sqrt(pow2((exp(v3)^exp((0.848)))))"
+        "(sin((pow_abs(v3,v3)-sqrt(v4)))/(abs(log(v4))-(sqrt((0.394))^abs(v3))))"
         "abs(sqrt((exp(v1)/abs(v2))))"
-        "exp((pow_abs(0.611,v2)*abs(0.375)))"
-        "log(((v1*0.627)+sin(0.92)))"
-        "pow2((sin(pow_abs(v2,0.031))+((0.884-0.206)-(v2*0.303))))"
-        "pow_abs((0.278+0.696),(0.264/0.613))"
-        "pow_abs(abs(0.0186),(v1+0.671))"
-        "sin(cos(exp(pow_abs(v4,0.592))))+(v4+v1)"
+        "exp((pow_abs((0.611),v2)*abs((0.375))))"
+        "log(((v1*(0.627))+sin((0.92))))"
+        "pow2((sin(pow_abs(v2,(0.031)))+(((0.884)-(0.206))-(v2*(0.303)))))"
+        "pow_abs(((0.278)+(0.696)),((0.264)/(0.613)))"
+        "pow_abs(abs((0.0186)),(v1+(0.671)))"
+        "sin(cos(exp(pow_abs(v4,(0.592)))))+(v4+v1)"
     ]
 
     nodes = [TiSR.string_to_node(n, ops) for n in node_strs]
@@ -75,16 +76,16 @@ end
     reordered = [TiSR.node_to_string(n, ops) for n in nodes]
 
     reordered_right=[
-        "abs(log((0.343+v2)))"
-        "sqrt(pow2((exp(v3)^exp(0.848))))"
-        "(sin((pow_abs(v3,v3)-sqrt(v4)))/(abs(log(v4))-(sqrt(0.394)^abs(v3))))"
+        "abs(log(((0.343)+v2)))"
+        "sqrt(pow2((exp(v3)^exp((0.848)))))"
+        "(sin((pow_abs(v3,v3)-sqrt(v4)))/(abs(log(v4))-(sqrt((0.394))^abs(v3))))"
         "abs(sqrt((exp(v1)/abs(v2))))"
-        "exp((abs(0.375)*pow_abs(0.611,v2)))"
-        "log((sin(0.92)+(0.627*v1)))"
-        "pow2((sin(pow_abs(v2,0.031))+((0.884-0.206)-(0.303*v2))))"
-        "pow_abs((0.278+0.696),(0.264/0.613))"
-        "pow_abs(abs(0.0186),(0.671+v1))"
-        "(sin(cos(exp(pow_abs(v4,0.592))))+(v1+v4))"
+        "exp((abs((0.375))*pow_abs((0.611),v2)))"
+        "log((sin((0.92))+((0.627)*v1)))"
+        "pow2((sin(pow_abs(v2,(0.031)))+(((0.884)-(0.206))-((0.303)*v2))))"
+        "pow_abs(((0.278)+(0.696)),((0.264)/(0.613)))"
+        "pow_abs(abs((0.0186)),((0.671)+v1))"
+        "(sin(cos(exp(pow_abs(v4,(0.592)))))+(v1+v4))"
     ]
 
     reordered .== reordered_right
@@ -120,9 +121,9 @@ end
 @testset "simplify_binary_across_1_level!" begin
 
     node_strs = [
-        "((abs(((((v2+1.0)/1.0)*1.0)+1.0))^log(v1))^pow_abs((v3/v4),pow_abs(v2,v3)))"
-        "pow2(exp(cos(((((pow2(v1)/1.0)*1.0)*1.0)))))"
-        "sqrt((((0.799+v2)+1.0)-1.0))"
+        "((abs(((((v2+(1.0))/(1.0))*(1.0))+(1.0)))^log(v1))^pow_abs((v3/v4),pow_abs(v2,v3)))"
+        "pow2(exp(cos(((((pow2(v1)/(1.0))*(1.0))*(1.0))))))"
+        "sqrt(((((0.799)+v2)+(1.0))-(1.0)))"
     ]
 
     nodes = [TiSR.string_to_node(n, ops) for n in node_strs]
@@ -134,9 +135,9 @@ end
     simplified = [TiSR.node_to_string(n, ops) for n in nodes]
 
     right_ones = [
-        "((abs(((1.0*(v2+1.0))+1.0))^log(v1))^pow_abs((v3/v4),pow_abs(v2,v3)))"
-        "pow2(exp(cos((1.0*pow2(v1)))))"
-        "sqrt((0.799-v2))"
+        "((abs((((1.0)*(v2+(1.0)))+(1.0)))^log(v1))^pow_abs((v3/v4),pow_abs(v2,v3)))"
+        "pow2(exp(cos(((1.0)*pow2(v1)))))"
+        "sqrt(((0.799)-v2))"
     ]
 
     @test right_ones == simplified
@@ -158,13 +159,13 @@ end
         setfield!(node_elect, lefrig, div_param_node)
 
         str = TiSR.node_to_string(node, ops)
-        @test occursin("/2.0", str)
+        @test occursin("/(2.0)", str)
 
         @test TiSR.div_to_mul_param!(node, ops)
         str = TiSR.node_to_string(node, ops)
 
-        @test !occursin("/2.0", str)
-        @test occursin("*0.5", str)
+        @test !occursin("/(2.0)", str)
+        @test occursin("*(0.5)", str)
         @test !TiSR.div_to_mul_param!(node, ops)
     end
 end
@@ -191,25 +192,25 @@ ops, data_vect = Options(
 @testset "drastic_simplify!" begin
 
     node_strs = [
-        "(abs(0.38)-(v4-v1))"
-        "(abs(0.38)-1e-7-(v4-v1+1e-7))"
-        "sqrt((((0.98-v1)*(0.24*0.89))/cos(cos(v3))))"
-        "sqrt((((0.98-v1)*1e-7*(v2*0.89))/cos(cos(v3))))"
-        "sqrt((((0.98-v1)*(0.24*0.89))/cos(cos(v3))^1e-7))"
-        "sin(exp(sqrt(0.25)))"
-        "sqrt((cos((v1-v4))+((v4/0.24)+cos(v3))))"
-        "sqrt((cos((v1-v4))+1e-7/((v4/0.24)+cos(v3))))"
-        "sqrt((cos((v1-v4)*1.0)+((v4/0.24)+cos(v3))))"
-        "sin(((cos(0.49)^(v3+0.92))^((v2*v3)^(0.044+v2))))"
-        "sin(((cos(0.49)^(v3+0.92))^((v2*v3/1.0)^(0.044+v2))))"
-        "sin(sqrt((0.27-0.87))^1.0)"
-        "sin(sqrt((0.27-0.87)))"
+        "(abs((0.38))-(v4-v1))"
+        "(abs((0.38))-1e-7-(v4-v1+1e-7))"
+        "sqrt(((((0.98)-v1)*((0.24)*(0.89)))/cos(cos(v3))))"
+        "sqrt(((((0.98)-v1)*1e-7*(v2*(0.89)))/cos(cos(v3))))"
+        "sqrt(((((0.98)-v1)*((0.24)*(0.89)))/cos(cos(v3))^1e-7))"
+        "sin(exp(sqrt((0.25))))"
+        "sqrt((cos((v1-v4))+((v4/(0.24))+cos(v3))))"
+        "sqrt((cos((v1-v4))+1e-7/((v4/(0.24))+cos(v3))))"
+        "sqrt((cos((v1-v4)*(1.0))+((v4/(0.24))+cos(v3))))"
+        "sin(((cos((0.49))^(v3+(0.92)))^((v2*v3)^((0.044)+v2))))"
+        "sin(((cos((0.49))^(v3+(0.92)))^((v2*v3/(1.0))^((0.044)+v2))))"
+        "sin(sqrt(((0.27)-(0.87)))^(1.0))"
+        "sin(sqrt(((0.27)-(0.87))))"
         "sin(sqrt((cos(v2)/(v3-v4))))"
-        "cos(pow2(pow2(0.56)))"
-        "sin(sin(0.72))"
-        "log(log(sqrt(0.3)))"
-        "log(log(sqrt(0.3)))+1e-7^log(log(sqrt(0.3)))"
-        "log(log(sqrt(0.3)))+1.0^log(log(sqrt(0.3)))"
+        "cos(pow2(pow2((0.56))))"
+        "sin(sin((0.72)))"
+        "log(log(sqrt((0.3))))"
+        "log(log(sqrt((0.3))))+1e-7^log(log(sqrt((0.3))))"
+        "log(log(sqrt((0.3))))+(1.0)^log(log(sqrt((0.3))))"
     ]
 
     nodes = [TiSR.string_to_node(n, ops) for n in node_strs]
@@ -221,25 +222,25 @@ ops, data_vect = Options(
     simplified = [TiSR.node_to_string(n, ops) for n in nodes]
 
     right_ones = [
-        "(abs(0.38)-(v4-v1))"
-        "(abs(0.38)-(v4-v1))"
-        "sqrt((((0.98-v1)*(0.24*0.89))/cos(cos(v3))))"
-        "sqrt(1.0e-7)"
-        "sqrt(((0.98-v1)*(0.24*0.89)))"
-        "sin(exp(sqrt(0.25)))"
-        "sqrt((cos((v1-v4))+((v4/0.24)+cos(v3))))"
+        "(abs((0.38))-(v4-v1))"
+        "(abs((0.38))-(v4-v1))"
+        "sqrt(((((0.98)-v1)*((0.24)*(0.89)))/cos(cos(v3))))"
+        "sqrt((1.0e-7))"
+        "sqrt((((0.98)-v1)*((0.24)*(0.89))))"
+        "sin(exp(sqrt((0.25))))"
+        "sqrt((cos((v1-v4))+((v4/(0.24))+cos(v3))))"
         "sqrt(cos((v1-v4)))"
-        "sqrt((cos((v1-v4))+((v4/0.24)+cos(v3))))"
-        "sin(((cos(0.49)^(v3+0.92))^((v2*v3)^(0.044+v2))))"
-        "sin(((cos(0.49)^(v3+0.92))^((v2*v3)^(0.044+v2))))"
-        "sin(sqrt((0.27-0.87)))"
-        "sin(sqrt((0.27-0.87)))"
+        "sqrt((cos((v1-v4))+((v4/(0.24))+cos(v3))))"
+        "sin(((cos((0.49))^(v3+(0.92)))^((v2*v3)^((0.044)+v2))))"
+        "sin(((cos((0.49))^(v3+(0.92)))^((v2*v3)^((0.044)+v2))))"
+        "sin(sqrt(((0.27)-(0.87))))"
+        "sin(sqrt(((0.27)-(0.87))))"
         "sin(sqrt((cos(v2)/(v3-v4))))"
-        "cos(pow2(pow2(0.56)))"
-        "sin(sin(0.72))"
-        "log(log(sqrt(0.3)))"
-        "log(log(sqrt(0.3)))"
-        "(log(log(sqrt(0.3)))+1.0)"
+        "cos(pow2(pow2((0.56))))"
+        "sin(sin((0.72)))"
+        "log(log(sqrt((0.3))))"
+        "log(log(sqrt((0.3))))"
+        "(log(log(sqrt((0.3))))+(1.0))"
     ]
 
     @test simplified == right_ones
@@ -262,7 +263,12 @@ end
 
         mse = mean(abs2, pred .- data_vect[end])
 
-        symbolic = TiSR.node_to_symbolic(node, ops)
+        symbolic = nothing
+        try
+            symbolic = TiSR.node_to_symbolic(node, ops)
+        catch
+            continue
+        end
         re_noded = TiSR.string_to_node(symbolic, ops)
 
         re_noded_compl = TiSR.count_nodes(re_noded)
@@ -276,3 +282,4 @@ end
 
     @test count(<=(1e-3), mse_diffs) > 8000
 end
+

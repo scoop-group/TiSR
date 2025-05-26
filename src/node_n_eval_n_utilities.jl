@@ -142,24 +142,24 @@ function node_to_string_(node::Node, ops, sigdigits)
         return "v$(string(node.ind))"
 
     elseif node.ari == -1
-        return string(round(node.val, sigdigits=sigdigits))
+        return "($(round(node.val, sigdigits=sigdigits)))"
     end
 end
 
-function encode_single_char(node::Node, ops)
+function encode_single_char(node::Node, ops; sigdigits=1)
     if node.ari == 2
         op_num = node.ind + length(ops.unaops)
-        lef = encode_single_char(node.lef, ops)
-        rig = encode_single_char(node.rig, ops)
+        lef = encode_single_char(node.lef, ops, sigdigits=sigdigits)
+        rig = encode_single_char(node.rig, ops, sigdigits=sigdigits)
         return "$(Char(96 + op_num))$lef$rig"
     elseif node.ari == 1
         op_num = node.ind
-        lef = encode_single_char(node.lef, ops)
+        lef = encode_single_char(node.lef, ops, sigdigits=sigdigits)
         return "$(Char(96 + op_num))$lef"
     elseif node.ari == 0
-        return "V$(string(node.ind))"
+        return "V$(node.ind)"
     elseif node.ari == -1
-        return string(round(sign(node.val)) * round(log1p(min(ops.general.replace_inf, abs(node.val))), sigdigits=2))
+        return string(sign(node.val) * round(log1p(min(ops.general.replace_inf, abs(node.val))), sigdigits=sigdigits))
     end
 end
 
