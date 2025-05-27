@@ -126,69 +126,21 @@ end
 function get_measure_n_params(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
     length(list_of_param_nodes(node))
 end
+function get_measure_recursive_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    recursive_compl(node, ops)
+end
 
-# get_measure_recursive_compl(prediction, target, node, ops) = recursive_compl(node, ops)
-# """ Recursive complexity according to the dissertation of Kommenda 2018 except for the rule
-#     for ^, which was not addressed.
-# """
-# function recursive_compl(node::Node, ops)
-#     if node.ari == 2
-#         compl_lef = recursive_compl(node.lef, ops)
-#         compl_rig = recursive_compl(node.rig, ops)
-#
-#         if ops.binops[node.ind] in (+, -)
-#             compl = compl_lef + compl_rig + 1
-#         else
-#             compl = (compl_lef * compl_rig) + 1
-#         end
-#
-#     elseif node.ari == 1
-#         compl_lef = recursive_compl(node.lef, ops)
-#         compl = compl_lef^2 + 1
-#
-#     elseif node.ari == 0
-#         compl = 1.5
-#
-#     elseif node.ari == -1
-#         compl = 2.0
-#     end
-#
-#     return min(floatmax(), compl)
-# end
-#
-# # more nuanced recursive_compl
-# global const recursive_compl_dict = (
-#     :+           => (lef, rig) -> lef + rig,
-#     :-           => (lef, rig) -> lef + rig,
-#     :*           => (lef, rig) -> (lef + rig)           + 1.0,
-#     :/           => (lef, rig) -> (1.5 * lef + 2 * rig) + 1.0,
-#     :^           => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
-#     :pow_abs     => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
-#     # :pow_integer => (lef, rig) -> (1.5 * lef          ) + 1.0,
-#     # :pow_float   => (lef, rig) -> (1.5 * lef + 1.0    ) + 1.0,
-# )
-#
-# function recursive_compl(node::Node, ops)
-#     if node.ari == 2
-#         compl_lef = recursive_compl(node.lef, ops)
-#         compl_rig = recursive_compl(node.rig, ops)
-#         cur_op = Symbol(ops.binops[node.ind])
-#
-#         compl = recursive_compl_dict[cur_op](compl_lef, compl_rig)
-#
-#     elseif node.ari == 1
-#         compl_lef = recursive_compl(node.lef, ops)
-#         compl = 5.0 * compl_lef
-#
-#     elseif node.ari == 0
-#         compl = 1.0
-#
-#     elseif node.ari == -1
-#         compl = 1.0
-#     end
-#
-#     return min(floatmax(), compl)
-# end
+function get_measure_max_nodes_per_term(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    get_max_nodes_per_term(node, ops)
+end
+
+function get_measure_square_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    get_max_nodes_per_term(node, ops) * get_weighted_compl(node, ops)
+end
+
+function get_measure_cross_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    get_max_nodes_per_term(node, ops) + get_weighted_compl(node, ops)
+end
 
 """ calculate the weighted_coml of a node. The weights for the functions and terminals are provided
     by ops.grammar.weighted_compl_dict. Weights for variables and parameters can be set using "VAR"
@@ -220,4 +172,55 @@ function get_one_minus_abs_spearman(pred::AbstractArray{T}, orig::AbstractArray{
     one_minus_abs_spear = 1.0-abs(corspearman(pred, orig))
     return isfinite(one_minus_abs_spear) ? one_minus_abs_spear : 1.0
 end
+
+function recursive_compl(
+    node::Node,
+    ops;
+    recursive_compl_dict = Dict(
+        :+       => (lef, rig) -> lef + rig,
+        :-       => (lef, rig) -> lef + rig,
+        :*       => (lef, rig) -> (lef + rig)           + 1.0,
+        :/       => (lef, rig) -> (1.5 * lef + 2 * rig) + 1.0,
+        :^       => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
+        :pow_abs => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
+    ),
+    una_nest_pen = 3,
+)
+    if node.ari == 2
+        compl_lef = recursive_compl(
+            node.lef,
+            ops,
+            recursive_compl_dict = recursive_compl_dict,
+            una_nest_pen = una_nest_pen
+        )
+        compl_rig = recursive_compl(
+            node.rig,
+            ops,
+            recursive_compl_dict = recursive_compl_dict,
+            una_nest_pen = una_nest_pen
+        )
+        cur_op = Symbol(ops.binops[node.ind])
+
+        compl = recursive_compl_dict[cur_op](compl_lef, compl_rig)
+
+    elseif node.ari == 1
+        compl_lef = recursive_compl(
+            node.lef,
+            ops,
+            recursive_compl_dict = recursive_compl_dict,
+            una_nest_pen = una_nest_pen
+        )
+        compl = una_nest_pen * compl_lef
+
+    elseif node.ari == 0
+        compl = 1.0
+
+    elseif node.ari == -1
+        compl = 1.0
+    end
+
+    return min(floatmax(), compl)
+end
+
+
 
