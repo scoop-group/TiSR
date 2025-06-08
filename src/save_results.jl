@@ -37,10 +37,10 @@ end
 
 """ Save vector of individuals to a fwf-file.
 """
-function save_to_fwf(individuals, ops; sort_by=:ms_processed_e)
+function save_to_fwf(individuals, ops; sort_by=:ms_processed_e, name="TiSR")
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
     str = df_to_fwf_string(df)
-    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_TiSR"
+    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * name
     open(path * ".txt", "w") do f
         write(f, str)
     end
@@ -48,10 +48,10 @@ end
 
 """ Save vector of individuals to a csv-file.
 """
-function save_to_csv(individuals, ops; sort_by=:ms_processed_e)
+function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name="TiSR")
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
     str = df_to_csv_string(df)
-    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_TiSR"
+    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * name
     open(path * ".txt", "w") do f
         write(f, str)
     end
@@ -87,12 +87,12 @@ end
     sheet3/4 -> hall_of_fame / population
     The equations strings are saved raw and rounded to 3 significant digits.
 """
-function save_to_excel(hall_of_fame, population, prog_dict, ops; sort_by=:ms_processed_e)
+function save_to_excel(hall_of_fame, population, prog_dict, ops; sort_by=:ms_processed_e, name="TiSR")
     population   = convert_to_dict(population,   ops; sort_by=sort_by)
     hall_of_fame = convert_to_dict(hall_of_fame, ops; sort_by=sort_by)
 
     # write to excel # -----------------------------------------------------------------------------
-    excel_path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM"))
+    excel_path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * name
 
     XLSX.openxlsx(excel_path * ".xlsx", mode="w") do xf
         sheet = xf[1]
