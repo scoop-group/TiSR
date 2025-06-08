@@ -7,15 +7,22 @@ function set_params!(list_of_param, x)
     end
 end
 
-""" Return the fitting residual. Pre-residual_processing! funciton is applied in-place
+""" Returns the evalualted function for a given parameter vector.
 """
-function fitting_residual(x, node, list_of_param, data, inds, ops)
+function fitting_eval(x, node, list_of_param, data, inds, ops)
     set_params!(list_of_param, x)
 
     dat = [view(d, inds) for d in data]
     pred, _ = eval_equation(node, dat, ops)
     pred .= ops.fitting.pre_residual_processing(pred, inds, ops)
-    dat[end] .- pred
+    return pred
+end
+
+""" Return the fitting residual. Pre-residual_processing! funciton is applied in-place
+"""
+function fitting_residual(x, node, list_of_param, data, inds, ops)
+    pred = fitting_eval(x, node, list_of_param, data, inds, ops)
+    view(data[end], inds) .- pred
 end
 
 """ Calculate the residual and apply pre- and post-processing.
