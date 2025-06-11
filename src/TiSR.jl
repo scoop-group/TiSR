@@ -51,7 +51,7 @@ include("individual.jl")
 include("measures.jl")
 include("main_loop.jl")
 include("save_results.jl")
-include("ParameterEstimation/levenberg_marquardt/levenberg_marquardt.jl")
+include("ParameterEstimation/levenberg_marquardt.jl")
 include("grammar.jl")
 
 #global reject_rate = [0, 0] # DEBUG expression_log
