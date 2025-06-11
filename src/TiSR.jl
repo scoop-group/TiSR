@@ -40,6 +40,8 @@ using XLSX
 using UnicodePlots
 using Printf
 
+using DiffResults
+
 include("options.jl")
 include("node_n_eval_n_utilities.jl")
 include("genetic_ops.jl")
