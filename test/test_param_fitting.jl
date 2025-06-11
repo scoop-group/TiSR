@@ -1,8 +1,7 @@
 
 data = rand(100, 5)
-ops, data_vect = Options(data)
+ops, data_vect = Options(data, fit_weights=ones(size(data,1)))
 
-# TODO: test set_params!(list_of_param, x)
 # TODO: test fitting_residual(x, node, list_of_param, data, inds, ops)
 # TODO: test fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <: Number}
 # TODO: test fit_n_eval!node, data, ops, fit_iter)
@@ -22,36 +21,35 @@ ops, data_vect = Options(data)
     while i < 100
         node = TiSR.grow_equation(rand(3:7), ops)
         data_vect[end], valid = TiSR.eval_equation(node, data_vect, ops)
-
         valid || continue
 
         list_of_param = TiSR.list_of_param_nodes(node)
+        !isempty(list_of_param) || continue
 
-        length(list_of_param) > 0 || continue
+        for n in list_of_param
+            n.val = n.val * (1 + (randn() * 0.1))
+        end
 
-        orig_params = deepcopy(getfield.(list_of_param, :val))
-        x0 = rand(length(orig_params))
-        setfield!.(list_of_param, :val, x0)
-
-        mse_before = mean(abs2, TiSR.fitting_residual(x0, node, list_of_param, data_vect, eachindex(data_vect[1]), ops))
-
-        isfinite(mse_before) || continue
+        prediction, valid = TiSR.eval_equation(node, data_vect, ops)
+        valid || continue
+        mse_before = sum(abs2, prediction .- data_vect[end])
+        mse_before > 0 || continue
 
         TiSR.fitting_LM!(node, data_vect, ops, list_of_param, ops.fitting.max_iter)
-        prediction, valid = TiSR.eval_equation(node, data_vect, ops)
 
+        prediction, valid = TiSR.eval_equation(node, data_vect, ops)
         valid || continue
 
-        mse_after = mean(abs2, prediction .- data_vect[end])
+        mse_after = sum(abs2, (prediction .- data_vect[end]))
 
         impr = mse_after / mse_before
-
-        isfinite(impr) || continue
 
         push!(improvements, impr)
         i += 1
     end
-    @test count(<(1e-3), [imp for imp in improvements]) > 50
+
+    @test maximum(improvements) <= 1.0
+    @test count(<(1e-1), improvements) > 70
 end
 
 data = rand(100, 5)
