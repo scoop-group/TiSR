@@ -216,7 +216,7 @@ function recursive_compl(
         compl = 1.0
 
     elseif node.ari == -1
-        compl = 1.0
+        compl = 1.0 + abs(round(node.val) - node.val) # non-integer penalty
     end
 
     return min(floatmax(), compl)
