@@ -353,38 +353,62 @@ function selection_params(;
 end
 
 function fitting_params(;
-    max_iter::Int64                   = 10,                 # -> maximum iterations for parameter fitting. -> 10 ... 50 ==> biggest time consumer <==
-    NM_iter::Int64                    = 50,                 # -> maximum iterations for parameter fitting with Nelder-Mead. -> 20 ... 100 ==> biggest time consumer <==
-    NM_prob::Float64                  = 0.1,                # -> probabitlity that fitting is conducted with Nelder-Mead as opposed to Levenberg-Marquard -> 0.01 ... 0.2
-    early_stop_iter::Int64            = 0,                  # -> how many iterations to account for early stopping regularization. to use, the data needs to be partitioned into at least 2 parts. The early stopping evaluation is performed on the second partition. -> 0 is off; 4 ... 10
-    t_lim::Float64                    = Inf,                # -> time limit for parameter fitting of individual. -> Inf is off; 0.1 ... 0.5
-    rel_f_tol_5_iter::Float64         = 1e-2 * 0.01,        # -> relative tolerance for parameter fitting. considered converged if relative improvement over 5 iterations is smaller. -> 0 is off; 1e-2 * 1.0 ... 1e-2 * 0.01
-    lasso_factor::Float64             = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
-    pre_residual_processing::Function = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./= data[end][inds]"
-    residual_processing::Function     = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./ data[end][inds]"
+    max_iter::Int64                       = 10,                 # -> maximum iterations for parameter fitting. -> 10 ... 50 ==> biggest time consumer <==
+    NM_iter::Int64                        = 50,                 # -> maximum iterations for parameter fitting with Nelder-Mead. -> 20 ... 100 ==> biggest time consumer <==
+    NM_prob::Float64                      = 0.1,                # -> probabitlity that fitting is conducted with Nelder-Mead as opposed to Levenberg-Marquard -> 0.01 ... 0.2
+    early_stop_iter::Int64                = 0,                  # -> how many iterations to account for early stopping regularization. to use, the data needs to be partitioned into at least 2 parts. The early stopping evaluation is performed on the second partition. -> 0 is off; 4 ... 10
+    t_lim::Float64                        = Inf,                # -> time limit for parameter fitting of individual. -> Inf is off; 0.1 ... 0.5
+    rel_f_tol_5_iter::Float64             = 1e-2 * 0.01,        # -> relative tolerance for parameter fitting. considered converged if relative improvement over 5 iterations is smaller. -> 0 is off; 1e-2 * 1.0 ... 1e-2 * 0.01
+    lasso_factor::Float64                 = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
+    pre_residual_processing::Function     = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./= data[end][inds]"
+    residual_processing::Function         = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./ data[end][inds]"
+    all_constr_f_select::Vector{Function} = Function[],         # TODO
+    eq_constr::Vector{Function}           = Function[],         # TODO
+    ineq_constr::Vector{Function}         = Function[],         # TODO
+    max_mare_for_constr_fit::Float64      = 0.1,                # -> max mean relative error at which shape constraints should be minimized -> don't cast pearls before swine
+    additional_constr_fit_iter::Int64     = 5,                  # -> additional fitting iterations that are conducted with the constraint violation minimization
+    constr_tol::Float64                   = 1e-5,               # TODO
 )
+    @assert NM_iter >= 0                        "NM_iter must be >= 0                                           "
+    @assert max_iter >= early_stop_iter         "early_stop_iter should be smaller than max_iter                "
+    @assert 0 <= rel_f_tol_5_iter < 1.0         "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
+    @assert lasso_factor >= 0                   "lasso factor must be >= 0                                      "
+    @assert 0 <= NM_prob <= 1.0                 "NM_prob must be between 0 and 1                                "
+    @assert constr_tol >= 0                     "constr_tol must be >= 0"
+
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
     0 <= NM_iter <= 100      || @warn "0 <= NM_iter <= 100"
     lasso_factor < 1.0       || @warn "lasso_factor seems to large"
     0 < early_stop_iter < 5  && @warn "early stopping may be too strict -> higher values may produce better results"
 
-    @assert NM_iter >= 0                "NM_iter must be >= 0                                           "
-    @assert max_iter >= early_stop_iter "early_stop_iter should be smaller than max_iter                "
-    @assert 0 <= rel_f_tol_5_iter < 1.0 "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
-    @assert lasso_factor >= 0           "lasso factor must be >= 0                                      "
-    @assert 0 <= NM_prob <= 1.0         "NM_prob must be between 0 and 1                                "
+    # for constraints
+    if !isempty(eq_constr) || !isempty(ineq_constr)
+        @assert early_stop_iter == 0           "early stopping and constrained fitting not implemented together. Please set early_stop_iter = 0 and reconsider data split"
+        @assert 0 <= max_mare_for_constr_fit   "max_mare_for_constr_fit must be larger than 0"
+        @assert additional_constr_fit_iter > 0 "additional_constr_fit_iter must be > 0. If the constraints should not be minimized during parameter estimation, leave the eq_constr and the ineq_constr empty and provide only all_constr_f_select"
+
+        length(eq_constr) + length(ineq_constr) <= length(all_constr_f_select) || @warn "it seems that not all eq_constr and ineq_constr also have a respective version in all_constr_f_select. This leads to their minimization during the parameter estimation but their violations are disregarded during the selection."
+        rel_f_tol_5_iter == 0                                                  || @warn "rel_f_tol_5_iter does not work with constrained least squares and will be ignored"
+        1 <= additional_constr_fit_iter <= 20                                  || @warn "additional_constr_fit_iter should be between 1 and 20"
+    end
 
     return (
-        max_iter                = max_iter,
-        NM_iter                 = NM_iter,
-        NM_prob                 = NM_prob,
-        early_stop_iter         = early_stop_iter,
-        rel_f_tol_5_iter        = rel_f_tol_5_iter,
-        t_lim                   = t_lim,
-        lasso_factor            = lasso_factor,
-        pre_residual_processing = pre_residual_processing,
-        residual_processing     = residual_processing,
+        max_iter                   = max_iter,
+        NM_iter                    = NM_iter,
+        NM_prob                    = NM_prob,
+        early_stop_iter            = early_stop_iter,
+        rel_f_tol_5_iter           = rel_f_tol_5_iter,
+        t_lim                      = t_lim,
+        lasso_factor               = lasso_factor,
+        pre_residual_processing    = pre_residual_processing,
+        residual_processing        = residual_processing,
+        all_constr_f_select        = all_constr_f_select,
+        eq_constr                  = eq_constr,
+        ineq_constr                = ineq_constr,
+        max_mare_for_constr_fit    = max_mare_for_constr_fit,
+        additional_constr_fit_iter = additional_constr_fit_iter,
+        constr_tol                 = constr_tol,
     )
 end
 

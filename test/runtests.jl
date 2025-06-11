@@ -26,6 +26,9 @@ include("test_grammar.jl")
 include("test_main_loop.jl")
 include("test_param_fitting.jl")
 
+include("test_constrained_least_squares.jl")
+include("test_shape_constraints.jl")
+
 # include("test_measures.jl")
 # include("ParameterEstimation")
 # include("test_options.jl")

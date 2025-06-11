@@ -222,5 +222,18 @@ function recursive_compl(
     return min(floatmax(), compl)
 end
 
+function get_measure_constr_vios(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    isempty(ops.fitting.all_constr_f_select) && return 0.0
 
+    function node_func(params::Vector{T1}, constr_data::Vector{Vector{T2}}) where {T1, T2} # evaluate a node at given parameters and given data
+        TT = promote_type(T1, T2)
+        node_ = convert(TT, node)
+        pred, _ = eval_equation(node_, constr_data, ops)
+        pred .= ops.fitting.pre_residual_processing(pred, eachindex(constr_data[1]), ops)
+        return pred
+    end
+
+    params = Float64[n.val for n in list_of_param_nodes(node)]
+    return sum(abs, sum(abs2, f(node_func, params)) for f in ops.fitting.all_constr_f_select; init = 0.0)
+end
 

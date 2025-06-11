@@ -13,7 +13,9 @@ export Options,
     selection_params,
     fitting_params,
     mutation_params,
-    grammar_params
+    grammar_params,
+    obtain_value_constr_func,
+    obtain_monotonicity_constr_func
 
 using Statistics
 using Random
@@ -55,6 +57,11 @@ include("main_loop.jl")
 include("save_results.jl")
 include("ParameterEstimation/levenberg_marquardt.jl")
 include("grammar.jl")
+
+# for shape constraints
+include("forwarddiff_vector_extension.jl")
+include("obtain_constraint_funcs.jl")
+include("ParameterEstimation/penalty_method.jl")
 
 #global reject_rate = [0, 0] # DEBUG expression_log
 

@@ -40,8 +40,7 @@ function fitting_objective(x::Vector{T}, node, data, ops)::Vector{T} where {T <:
 end
 
 """ Entrance/switch for parameter fitting. Depending on whether the equation has parameters
-    or not, the correspoinding functions are called, and the residual statistics calculated,
-    if the fitting was successful (valid).
+    or not, the correspoinding functions are called, and the parameters adapted in-place.
 """
 function fit_n_eval!(node, data, ops, fit_iter)
     eval_counter = 0
@@ -53,12 +52,29 @@ function fit_n_eval!(node, data, ops, fit_iter)
 
     if fit_iter > 0 && !isempty(list_of_param)
         if rand() < ops.fitting.NM_prob
-            eval_counter += fitting_Optim!(node, data, ops, list_of_param, ops.fitting.NM_iter, Optim.NelderMead())
+            eval_counter += fitting_Optim!(
+                node, data, ops, list_of_param, ops.fitting.NM_iter,
+                Optim.NelderMead()
+            )
+        elseif iszero(ops.fitting.lasso_factor)
+            eval_counter += fitting_LM!(node, data, ops, list_of_param, fit_iter)
         else
-            if iszero(ops.fitting.lasso_factor)
-                eval_counter += fitting_LM!(node, data, ops, list_of_param, fit_iter)
-            else
-                eval_counter += fitting_Optim!(node, data, ops, list_of_param, fit_iter, Optim.Newton(;linesearch=LineSearches.BackTracking()))
+            eval_counter += fitting_Optim!(
+                node, data, ops, list_of_param, fit_iter,
+                Optim.Newton(;linesearch=LineSearches.BackTracking())
+            )
+        end
+
+        if !isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr)
+            pred, valid = eval_equation(node, data, ops)
+            eval_counter += 1
+            valid || return pred, valid, eval_counter
+
+            pred .= ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
+            mare  = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
+
+            if mare < ops.fitting.max_mare_for_constr_fit
+                eval_counter += fitting_w_constr!(node, data, ops, list_of_param, ops.fitting.additional_constr_fit_iter)
             end
         end
     end
@@ -150,9 +166,64 @@ function fitting_Optim!(node, data, ops, list_of_param, fit_iter, algo)
     )
     x_best = res.trace[end].value < res.trace[1].value ? Optim.minimizer(res) : x0
 
-
     set_params!(list_of_param, x_best)
     return res.f_calls
+end
+
+""" Fitting with constraints using the penalty method.
+"""
+function fitting_w_constr!(node, data, ops, list_of_param, max_iter)
+
+    minim = x -> fitting_objective(x, node, data, ops)
+
+    function node_func(params::Vector{T1}, constr_data::Vector{Vector{T2}}) where {T1, T2} # evaluate a node at given parameters and given data
+        T = promote_type(T1, T2)
+        node_ = convert(T, node)
+        list_of_param_ = list_of_param_nodes(node_)
+        fitting_eval(params, node_, list_of_param_, constr_data, eachindex(constr_data[1]), ops)
+    end
+
+    function eq_constr(x::Vector{T})::Vector{T} where {T}
+        reduce(vcat, f(node_func, x) for f in ops.fitting.eq_constr; init=eltype(x)[])
+    end
+
+    function ineq_constr(x::Vector{T})::Vector{T} where {T}
+        reduce(vcat, f(node_func, x) for f in ops.fitting.ineq_constr; init=eltype(x)[])
+    end
+
+    x0 = [n.val for n in list_of_param]
+
+    x_best, trace, stop_msg, valid = penalty_method(
+        minim, eq_constr, ineq_constr, x0,
+        max_iter                   = max_iter,
+        b_track_iter               = 3,
+        constr_tol                 = ops.fitting.constr_tol,
+        obj_mare_tol               = ops.fitting.max_mare_for_constr_fit,
+        init_constr_penalty_factor = 1e-1,
+        incr_constr_penalty_factor = 1.5,
+    )
+
+    sort!(trace, lt=(t1, t2) -> lessthan_trace_w_constr(
+        t1,
+        t2,
+        ops.fitting.constr_tol,
+        ops.fitting.max_mare_for_constr_fit
+    ))
+    x_best .= trace[1].x
+
+    set_params!(list_of_param, x_best)
+
+    return 0 # TODO: how to reliably determine the eval numbers here; number of constr_data are hard to know?
+end
+
+function lessthan_trace_w_constr(t1, t2, constr_tol, max_mare)
+    if t1.obj_mare > max_mare || t2.obj_mare > max_mare
+        return t1.obj_mare < t2.obj_mare
+    elseif t1.constr_val > constr_tol || t2.constr_val > constr_tol
+        return t1.constr_val < t2.constr_val
+    else
+        return t1.obj_mare < t2.obj_mare
+    end
 end
 
 # # ==================================================================================================
