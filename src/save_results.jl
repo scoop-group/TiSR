@@ -136,58 +136,6 @@ function pprint_ops(cur::T, sheet; ii=1, jj=1) where T
     return ii
 end
 
-""" Pretty print nested object to a string.
-"""
-function pretty_print(obj; indent=0, indent_step=2, sigdigits=3)
-    prefix = " " ^ indent
-    output = ""
-    if obj isa Dict
-        max_key_length = isempty(obj) ? 0 : maximum(length(string(k)) for k in keys(obj))
-        output *= prefix * "Dict(\n"
-        for (k, v) in obj
-            key_str = rpad("$k", max_key_length)
-            output *= prefix * " " ^ indent_step * "$key_str => " * pretty_print(v; indent=indent + indent_step, indent_step=indent_step, sigdigits=sigdigits) * "\n"
-        end
-        output *= prefix * ")"
-    elseif obj isa NamedTuple
-        max_key_length = isempty(obj) ? 0 : maximum(length(string(k)) for k in keys(obj))
-        output *= prefix * "NamedTuple(\n"
-        for (k, v) in pairs(obj)
-            key_str = rpad("$k", max_key_length)
-            output *= prefix * " " ^ indent_step * "$key_str = " * pretty_print(v; indent=indent + indent_step, indent_step=indent_step, sigdigits=sigdigits) * "\n"
-        end
-        output *= prefix * ")"
-    elseif obj isa AbstractArray
-        output *= prefix * "[\n"
-        for item in obj
-            output *= pretty_print(item; indent=indent + indent_step, indent_step=indent_step, sigdigits=sigdigits)# * "\n"
-        end
-        output *= prefix * "]"
-    elseif obj isa Tuple
-        output *= prefix * "(\n"
-        for item in obj
-            output *= pretty_print(item; indent=indent + indent_step, indent_step=indent_step, sigdigits=sigdigits)# * "\n"
-        end
-        output *= prefix * ")"
-    elseif obj isa TiSR.Node
-        output *= string(obj)
-    elseif obj isa Number
-        output *= string(round(obj, sigdigits=sigdigits))
-    elseif isconcretetype(typeof(obj)) && !isempty(fieldnames(typeof(obj))) && !isprimitivetype(obj)
-        output *= prefix * string(typeof(obj)) * "(\n"
-        for field in fieldnames(typeof(obj))
-            isdefined(obj, field) || continue
-            output *= prefix * " " ^ indent_step * "$field = " * pretty_print(getfield(obj, field); indent=indent + indent_step, indent_step=indent_step, sigdigits=sigdigits) * "\n"
-        end
-        output *= prefix * ")"
-    elseif obj isa Function
-
-    else
-        output *= prefix * string(obj)
-    end
-    return output
-end
-
 """ Round numbers in an equation string and return a string. It is used for the equation simplified
     by SymbolicUtils.
 """
