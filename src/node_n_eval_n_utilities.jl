@@ -113,7 +113,7 @@ end
 """
 function eval_equation_unleashed(node::Node, data, ops::Options)
     if node.ari == -1
-        return interval(node.val, node.val), true
+        return node.val, true
     elseif node.ari == 0
         return data[node.ind], true
     elseif node.ari == 1
