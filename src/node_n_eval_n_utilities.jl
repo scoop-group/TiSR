@@ -118,17 +118,11 @@ function eval_equation_unleashed(node::Node, data, ops::Options)
         return data[node.ind], true
     elseif node.ari == 1
         arr_l, finite = eval_equation_unleashed(node.lef, data, ops)
-        (!finite || !isbounded(arr_l)) && return arr_l, false
-
         arr_l = ops.unaops[node.ind].(arr_l)
         return arr_l, true
     else
         arr_l, finite = eval_equation_unleashed(node.lef, data, ops)
-        (!finite || !isbounded(arr_l)) && return arr_l, false
-
         arr_r, finite = eval_equation_unleashed(node.rig, data, ops)
-        (!finite || !isbounded(arr_r)) && return arr_r, false
-
         arr_l = ops.binops[node.ind].(arr_l, arr_r)
         return arr_l, true
     end
