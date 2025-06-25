@@ -15,7 +15,7 @@ To get started, install Julia 1.11 and run the following in a Julia REPL:
 
 ```julia
 import Pkg
-Pkg.add(url="https://github.com/scoop-group/TiSR#main")
+Pkg.add(url="https://github.com/scoop-group/TiSR#main_tmp")
 ```
 
 A more detailed example on how to use it is provided in [example_main.jl](example/example_main.jl).
