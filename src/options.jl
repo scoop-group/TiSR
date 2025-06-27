@@ -19,10 +19,10 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
     # dynam_expr::L
 
     function Options(
-        data::Matrix;                                                           # -> nxm matrix containing the n data points, m-1 variables and the output
-        fit_weights::Vector{Float64} = inv.(abs.(data[:, end])),                # -> weights for the data fitting -> residual .* weight
-        binops                       = (+,   -,   *,   /,   ^  ),               # -> binary function set to choose from
-        unaops                       = (exp, log, sin, cos, abs),               # -> unary function set to choose from
+        data::Matrix;                                               # -> nxm matrix containing the n data points, m-1 variables and the output
+        fit_weights::Vector{Float64} = inv.(abs.(data[:, end])),    # -> weights for the data fitting -> residual vector .* weights vector
+        binops                       = (+,   -,   *,   /,   ^  ),   # -> binary function set
+        unaops                       = (exp, log, sin, cos, abs),   # -> unary function set
         data_split                   = data_split_params(),
         general                      = general_params(),
         measures                     = measure_params(),
@@ -30,7 +30,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
         fitting                      = fitting_params(),
         mutation                     = mutation_params(),
         grammar                      = grammar_params(),
-        meta_data                    = Dict(),                  # -> can be used to provide data for use in, for example, user-defined functions like the callback, pre_residual_processing, or measures
+        meta_data                    = Dict(),                      # -> can be used to provide data for use in, for example, user-defined functions like the callback, pre_residual_processing, or measures
     )
 
         # make sure all required measres are calculated # ------------------------------------------
@@ -308,7 +308,7 @@ end
     positional arguments: residual, residual_relative, prediction, data, node, ops.
 """
 function measure_params(;
-    additional_measures::Dict{Symbol, Function} = Dict(                 # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate custom measures. The function must take 4 positional arguments `prediction::Vector{T}, target::Vector{T}, node, ops` and return a Float. All currently pre-implemented measures are listed below at (2).
+    additional_measures::Dict{Symbol, Function} = Dict(                # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate measures. The function must take 4 positional arguments `prediction::Vector{T}, target::Vector{T}, node, ops` and return a Float. All currently pre-implemented measures are listed below at (2).
         :one_minus_abs_spearman => get_measure_one_minus_abs_spearman,
         :mare                   => get_measure_mare,
         :max_are                => get_measure_max_are,
@@ -329,8 +329,8 @@ function measure_params(;
 end
 
 function selection_params(;
-    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :weighted_compl],                          # -> objectives for the hall_of_fame
-    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the Pareto-optimal selection part of selection
+    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :weighted_compl],                          # -> objectives for the hall_of_fame selection
+    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the population selection
     hall_of_fame_niching_sigdigits::Int64      = 5,                                                           # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
     population_niching_sigdigits::Int64        = 5,                                                           # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
     ratio_pareto_tournament_selection::Float64 = 0.5,                                                         # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
