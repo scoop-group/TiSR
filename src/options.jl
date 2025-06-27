@@ -171,7 +171,7 @@ function prepare_data(data, fit_weights, replace_inf)
     data_vect = [data[:, i] for i in 1:size(data, 2)]
 
     # prepare data # ---------------------------------------------------------------------------
-    @assert eltype(data) <: AbstractFloat "data must be float type "
+    @assert eltype(data) <: AbstractFloat "data must be float type"
     @assert size(data, 2) > 1             "data has only one column"
     @assert size(data, 2) <= 128 + 1      "TiSR cannot handle more than 128 variables out of the box"
     !any(length(unique(d)) == 1 for d in data_vect) || @warn "data containts columns, which are constant"
@@ -227,16 +227,16 @@ function general_params(;
     plot_hall_of_fame::Bool                = true,                                                              # -> whether to plot the hall of fame
     print_hall_of_fame::Bool               = true,                                                              # -> whether to print some of the individuals in the hall of fame. For this, `plot_hall_of_fame` must also be true
 )
-    @assert num_islands > 0                                       "num_islands should be at least 1                                    "
-    @assert migration_interval > 0                                "migration_interval should be at least 1                             "
-    @assert adaptive_compl_increment > 0                          "adaptive_compl_increment must be larger 0                           "
-    @assert island_extinction_interval > 0                        "island_extinction_interval must be > 0                              "
-    @assert max_age > 1                                           "max_age must be > 1                                                 "
-    @assert hall_of_fame_migration_interval > 0                   "hall_of_fame_migration_interval must be larger 0                    "
-    @assert 0.0 <= migrate_after_extinction_prob <= 1.0           "migrate_after_extinction_prob must be between 0 and 1               "
-    @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0                      "
-    @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands          "
-    @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2   "
+    @assert num_islands > 0                                       "num_islands should be at least 1"
+    @assert migration_interval > 0                                "migration_interval should be at least 1"
+    @assert adaptive_compl_increment > 0                          "adaptive_compl_increment must be larger 0"
+    @assert island_extinction_interval > 0                        "island_extinction_interval must be > 0"
+    @assert max_age > 1                                           "max_age must be > 1"
+    @assert hall_of_fame_migration_interval > 0                   "hall_of_fame_migration_interval must be larger 0"
+    @assert 0.0 <= migrate_after_extinction_prob <= 1.0           "migrate_after_extinction_prob must be between 0 and 1"
+    @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0"
+    @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands"
+    @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2"
     @assert !isnan(replace_inf)                                   "replace_inf must not be NaN"
     @assert 0.0 <= seen_reject_prob <= 1.0                        "seen_rejection_probability must be between 0 and 1"
     @assert seen_forget_interval > 0                              "seen_forget_interval must be larger 0"
@@ -247,9 +247,9 @@ function general_params(;
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
     end
 
-    adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5                         "
-    island_extinction_interval > 500 || @warn "island_extinction_interval seems small                          "
-    max_age > 10                     || @warn "max_age seems small                                             "
+    adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5"
+    island_extinction_interval > 500 || @warn "island_extinction_interval seems small"
+    max_age > 10                     || @warn "max_age seems small"
 
     10 <= seen_forget_interval <= 500 || @warn "seen_forget_interval should be between 10 and 500"
     10 <= seen_merge_interval <= 500  || @warn "seen_merge_interval should be between 10 and 500"
@@ -314,9 +314,9 @@ function measure_params(;
     )
 )
     :ms_processed_e in keys(additional_measures) && @warn "ms_processed_e is overwritten in measures"
-    :compl          in keys(additional_measures) && @warn "compl is overwritten in measures         "
-    :mse            in keys(additional_measures) && @warn "mse is overwritten in measures           "
-    :mae            in keys(additional_measures) && @warn "mae is overwritten in measures           "
+    :compl          in keys(additional_measures) && @warn "compl is overwritten in measures"
+    :mse            in keys(additional_measures) && @warn "mse is overwritten in measures"
+    :mae            in keys(additional_measures) && @warn "mae is overwritten in measures"
 
     additional_measures[:ms_processed_e] = get_measure_ms_processed_e
     additional_measures[:compl]          = get_measure_compl
@@ -365,13 +365,13 @@ function fitting_params(;
     ineq_constr::Vector{Function}         = Function[],         # TODO
     max_mare_for_constr_fit::Float64      = 0.1,                # -> max mean relative error at which shape constraints should be minimized -> don't cast pearls before swine
     additional_constr_fit_iter::Int64     = 5,                  # -> additional fitting iterations that are conducted with the constraint violation minimization
-    constr_tol::Float64                   = 1e-5,               # TODO
+    constr_tol::Float64                   = 1e-5,               # -> constraint tolerance during constrained parameter estimation for the squared sum of all constraints in eq_constr and ineq_constr
 )
-    @assert NM_iter >= 0                        "NM_iter must be >= 0                                           "
-    @assert max_iter >= early_stop_iter         "early_stop_iter should be smaller than max_iter                "
+    @assert NM_iter >= 0                        "NM_iter must be >= 0"
+    @assert max_iter >= early_stop_iter         "early_stop_iter should be smaller than max_iter"
     @assert 0 <= rel_f_tol_5_iter < 1.0         "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
-    @assert lasso_factor >= 0                   "lasso factor must be >= 0                                      "
-    @assert 0 <= NM_prob <= 1.0                 "NM_prob must be between 0 and 1                                "
+    @assert lasso_factor >= 0                   "lasso factor must be >= 0"
+    @assert 0 <= NM_prob <= 1.0                 "NM_prob must be between 0 and 1"
     @assert constr_tol >= 0                     "constr_tol must be >= 0"
 
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
@@ -431,10 +431,10 @@ function grammar_params(;
         "exp"   => 3.0, "log"  => 3.0,
     ),
 )
-    @assert max_compl > 3             "max_compl must be larger than 3          "
+    @assert max_compl > 3             "max_compl must be larger than 3"
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
-    @assert init_tree_depth > 2       "init_tree_depth should be 3 or higher    "
-    @assert max_nodes_per_term > 1    "max_nodes_per_term must be larger than 1 "
+    @assert init_tree_depth > 2       "init_tree_depth should be 3 or higher"
+    @assert max_nodes_per_term > 1    "max_nodes_per_term must be larger than 1"
 
     if !isempty(illegal_dict)
         @assert illegal_dict isa Dict                  "illegal_dict is not formatted correctly"
@@ -496,7 +496,7 @@ function mutation_params(;                     #|-> probabilites for the various
     @assert p_multiple_mutations < 1         "p_multiple_mutations must be < 1"
     0 <= p_multiple_mutations < 0.9 || @warn "p_multiple_mutations should be between 0 and 0.9"
 
-    @assert 0.0 <= max_muts_ratio            "max_muts_ratio must be >= 0                 "
+    @assert 0.0 <= max_muts_ratio            "max_muts_ratio must be >= 0"
     0.0 <= max_muts_ratio <= 1.0    || @warn "max_muts_ratio should be between 0.0 and 2.0"
 
     mut_probs = (
