@@ -360,9 +360,9 @@ function fitting_params(;
     lasso_factor::Float64                 = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
     pre_residual_processing::Function     = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./= data[end][inds]"
     residual_processing::Function         = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./ data[end][inds]"
-    all_constr_f_select::Vector{Function} = Function[],         # TODO
-    eq_constr::Vector{Function}           = Function[],         # TODO
-    ineq_constr::Vector{Function}         = Function[],         # TODO
+    all_constr_f_select::Vector{Function} = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of constraint violations. These violations are used to calculate the TiSR.get_measure_constr_vios, which can be used for the selection
+    eq_constr::Vector{Function}           = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of equality constraint violations. These are minimized during parameter estimation.
+    ineq_constr::Vector{Function}         = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of inequality constraint violations (<=0). These are minimized during parameter estimation.
     max_mare_for_constr_fit::Float64      = 0.1,                # -> max mean relative error at which shape constraints should be minimized -> don't cast pearls before swine
     additional_constr_fit_iter::Int64     = 5,                  # -> additional fitting iterations that are conducted with the constraint violation minimization
     constr_tol::Float64                   = 1e-5,               # -> constraint tolerance during constrained parameter estimation for the squared sum of all constraints in eq_constr and ineq_constr
