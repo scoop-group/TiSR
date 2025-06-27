@@ -186,7 +186,7 @@ data = rand(100, 5)
 ops, data_vect = Options(
     data,
     binops   = (+,   -,   *,   /,   ^,),
-    unaops   = (exp, log, sin, cos, abs, pow2, sqrt),
+    unaops   = (exp, log, sin, cos, abs, pow2, sqrt, inv),
 )
 
 @testset "drastic_simplify!" begin
