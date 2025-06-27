@@ -308,7 +308,7 @@ end
     positional arguments: residual, residual_relative, prediction, data, node, ops.
 """
 function measure_params(;
-    additional_measures::Dict{Symbol, Function} = Dict(                 # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate custom measures. TiSR offers some additional ones, which all start with `TiSR.get_measure_...`
+    additional_measures::Dict{Symbol, Function} = Dict(                 # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate custom measures. The function must take 4 positional arguments `prediction::Vector{T}, target::Vector{T}, node, ops` and return a Float. All currently pre-implemented measures are listed below at (2).
         :one_minus_abs_spearman => get_measure_one_minus_abs_spearman,
         :mare                   => get_measure_mare,
         :max_are                => get_measure_max_are,
