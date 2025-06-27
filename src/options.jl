@@ -300,12 +300,10 @@ function general_params(;
     )
 end
 
-""" Specify the fit quality or complexity measures that should be calculated for
-    all individuals. Those will be tracked, printed, logged, and can be used as
-    selection_objetives or hall_of_fame_objectives. The measures "ms_processed_e",
-    "compl", "mse", and "mae" are always included. The following functions are
-    provided out of the box: ... TODO User-specified should should take 6
-    positional arguments: residual, residual_relative, prediction, data, node, ops.
+""" Specify the measures that should be calculated for all individuals. Those
+    will be tracked, printed, logged, and can be used as selection_objetives or
+    hall_of_fame_objectives. The measures "ms_processed_e", "compl", "mse", and
+    "mae" are always included.
 """
 function measure_params(;
     additional_measures::Dict{Symbol, Function} = Dict(                # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate measures. The function must take 4 positional arguments `prediction::Vector{T}, target::Vector{T}, node, ops` and return a Float. All currently pre-implemented measures are listed below at (2).
