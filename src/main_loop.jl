@@ -282,7 +282,10 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     # genetic operations # -------------------------------------------------------------------------
     #@timeit to "genetic ops" begin
         if 0.8 * ops.general.pop_per_isle < length(pop) < 1.2 * ops.general.pop_per_isle
-            perform_parent_selection!(chil, pop, ops)
+            for _ in 1:ops.general.n_children
+                push!(chil, fastcopy(parent_selection(pop)))
+            end
+
             apply_genetic_operations!(chil, ops, bank_of_terms)
 
             for _ in 1:ops.general.n_refitting

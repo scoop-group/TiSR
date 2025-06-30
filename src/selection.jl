@@ -97,23 +97,6 @@ end
 """
 get_relative_fitness(indiv_obj_vals) = -sum.(indiv_obj_vals)
 
-""" Perform the parent selection.
-"""
-function perform_parent_selection!(chil, pop, ops)
-    #@timeit to "parent selection" begin
-        if ops.general.parent_selection
-            for _ in 1:ops.general.n_children
-                push!(chil, fastcopy(parent_selection(pop)))
-            end
-        else
-            shuffle!(pop)
-            for i in 1:ops.general.n_children
-                push!(chil, fastcopy(pop[mod1(i, length(pop))]))
-            end
-        end
-    #end # @timeit
-end
-
 """ Perform the population selection.
 """
 function perform_population_selection!(pop, ops, isle)

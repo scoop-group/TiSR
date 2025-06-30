@@ -3,7 +3,6 @@
 # TODO: test normalize_objectives(indiv_obj_vals) -> median, offset
 # TODO: test get_relative_fitness(indiv_obj_vals)
 
-# TODO: test perform_parent_selection!(chil, pop, ops)
 # TODO: test perform_population_selection!(pop, ops) -> niching, age, last front sampling, pareto, tournament, rank, crowding
 # TODO: test perform_hall_of_fame_selection!(hall_of_fame, population, ops) -> niching, deepcopy, pareto
 
