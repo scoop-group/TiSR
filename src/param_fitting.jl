@@ -211,7 +211,7 @@ function fitting_w_constr!(node, data, ops, list_of_param, max_iter)
 
     set_params!(list_of_param, x_best)
 
-    return 0 # TODO: how to reliably determine the eval numbers here; number of constr_data are hard to know?
+    return
 end
 
 function lessthan_trace_w_constr(t1, t2, constr_tol, max_mare)
