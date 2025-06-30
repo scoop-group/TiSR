@@ -48,7 +48,7 @@ function crowding_distance(individs)
             dists[s_inds[1]] = dists[s_inds[end]] = Inf
             length(s_inds) == 2 && continue # would lead to NaN
             for j in 2:n_pnts-1
-                dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) / (max_val - min_val)
+                dists[s_inds[j]] += (individs[s_inds[j+1]][i] - individs[s_inds[j-1]][i]) / (max_val - min_val) # TODO: maybe use * instead of +
             end
         end
     #end # @timeit

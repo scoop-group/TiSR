@@ -172,11 +172,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
                 if ops.general.print_progress
                     display(get_for_prog)
-                    println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
-                    # if !isempty(prog_dict["time"])
-                    #     println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
-                    # end
-                    # eval_counters .= 0
+                    println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early\n")
                 end
 
                 # check for replace_inf behavior
