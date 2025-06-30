@@ -52,3 +52,26 @@ ops, data_vect = Options(data, fit_weights=ones(size(data,1)))
     @test count(<(1e-1), improvements) > 70
 end
 
+@testset "residual processing" begin
+    # test against overwriting the data using pre_residual_processing
+    function pre_residual_processing(tisr_pred, ind, ops)                                               # VM: this calcuation is done for every candidate equation, before the residual is calculated
+        return @. (
+            tisr_pred * 0.0
+        )
+    end
+
+    data = rand(100, 5) .- 1.0
+    ops, data_vect = Options(
+        data,
+        unaops = (sqrt,),
+        fit_weights=ones(size(data,1)),
+        fitting = fitting_params(
+            pre_residual_processing = pre_residual_processing,
+        ),
+    )
+
+    node = TiSR.string_to_node("sqrt(v1)", ops)
+    pred, valid = TiSR.fit_n_eval!(node, data_vect, ops)
+
+    @test all(!any(iszero.(data_vect[i])) for i in 1:size(data, 2))
+end
