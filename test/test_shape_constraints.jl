@@ -277,7 +277,7 @@ end
 
         ii += 1
 
-        pred, valid, coutner = TiSR.fit_n_eval!(node, data_vect, ops)
+        pred, valid = TiSR.fit_n_eval!(node, data_vect, ops)
 
         mare2 = sum(abs2, (pred .- data_vect[end]) ./ data_vect[end])
 
