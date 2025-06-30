@@ -72,7 +72,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     while true
         gen += 1.0
 
-        cur_max_compl = maximum(indiv.measures[:compl] for indiv in hall_of_fame; init=ops.grammar.min_compl)
+        cur_max_compl = maximum(indiv.measures[:compl] for indiv in hall_of_fame; init=1.0)
 
         foreach(indiv -> indiv.age += 1, hall_of_fame)
 
@@ -218,7 +218,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
 
     # final display of current KPIs # --------------------------------------------------------------
     t_since = time() - t_start
-    cur_max_compl = maximum(indiv.measures[:compl] for indiv in hall_of_fame; init=ops.grammar.min_compl)
+    cur_max_compl = maximum(indiv.measures[:compl] for indiv in hall_of_fame; init=1.0)
 
     get_for_prog = OrderedDict([
         "time"          => t_since,

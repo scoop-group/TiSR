@@ -70,7 +70,6 @@ ops, data = Options(
         t_lim::Float64                         = 60. * 5.,                                                          # -> time limit for the algorithm
         pop_size::Int64                        = 1000,                                                              # -> number of individuals selected for next generation / population size
         num_islands::Int64                     = 20,                                                                # -> number of parallel islands
-        children_ratio::Float64                = 1.0,                                                               # -> the ratio of children that should be generated in each generation 0 ... 2
         migration_interval::Int64              = 200,                                                               # -> generation interval, in which an individual is moved to other islands. (ring topology)
         island_extinction_interval::Int64      = 1000,                                                              # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
         island_extinction_rotation::Bool       = false,                                                             # -> whether the island extinctions should rotate as opposed to random islands
@@ -116,7 +115,6 @@ ops, data = Options(
     ),
     grammar = grammar_params(;
         max_compl::Int64                           = 30,                        # -> max allowed complexity
-        min_compl::Int64                           = 3,                         # -> min allowed complexity. -> 2 ... 3
         init_tree_depth::Int64                     = 5,                         # -> maximal initial tree depth. -> 3 ... 6
         max_nodes_per_term::Int64                  = typemax(Int64),            # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold
         bank_of_terms::Vector{String}              = String[],                  # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
