@@ -56,13 +56,8 @@ function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
                 node, data, ops, list_of_param, ops.fitting.NM_iter,
                 Optim.NelderMead()
             )
-        elseif iszero(ops.fitting.lasso_factor)
-            fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
         else
-            fitting_Optim!(
-                node, data, ops, list_of_param, ops.fitting.max_iter,
-                Optim.Newton(;linesearch=LineSearches.BackTracking())
-            )
+            fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
         end
 
         if do_constr && (!isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr))
@@ -141,7 +136,7 @@ end
 """
 function fitting_Optim!(node, data, ops, list_of_param, fit_iter, algo)
 
-    minim = x -> mean(abs2, fitting_objective(x, node, data, ops)) + ops.fitting.lasso_factor * sum(abs, x)
+    minim = x -> mean(abs2, fitting_objective(x, node, data, ops))
 
     x0 = [n.val for n in list_of_param]
 

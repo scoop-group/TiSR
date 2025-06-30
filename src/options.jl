@@ -351,7 +351,6 @@ function fitting_params(;
     early_stop_iter::Int64                = 0,                  # -> how many iterations to account for early stopping regularization. to use, the data needs to be partitioned into at least 2 parts. The early stopping evaluation is performed on the second partition. -> 0 is off; 4 ... 10
     t_lim::Float64                        = Inf,                # -> time limit for parameter fitting of individual. -> Inf is off; 0.1 ... 0.5
     rel_f_tol_5_iter::Float64             = 1e-2 * 0.01,        # -> relative tolerance for parameter fitting. considered converged if relative improvement over 5 iterations is smaller. -> 0 is off; 1e-2 * 1.0 ... 1e-2 * 0.01
-    lasso_factor::Float64                 = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
     pre_residual_processing::Function     = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./= data[end][inds]"
     residual_processing::Function         = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./ data[end][inds]"
     all_constr_f_select::Vector{Function} = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of constraint violations. These violations are used to calculate the TiSR.get_measure_constr_vios, which can be used for the selection
@@ -364,14 +363,12 @@ function fitting_params(;
     @assert NM_iter >= 0                        "NM_iter must be >= 0"
     @assert max_iter >= early_stop_iter         "early_stop_iter should be smaller than max_iter"
     @assert 0 <= rel_f_tol_5_iter < 1.0         "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
-    @assert lasso_factor >= 0                   "lasso factor must be >= 0"
     @assert 0 <= NM_prob <= 1.0                 "NM_prob must be between 0 and 1"
     @assert constr_tol >= 0                     "constr_tol must be >= 0"
 
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
     max_iter >= 5            || @warn "max_iter may be too low"
     0 <= NM_iter <= 100      || @warn "0 <= NM_iter <= 100"
-    lasso_factor < 1.0       || @warn "lasso_factor seems to large"
     0 < early_stop_iter < 5  && @warn "early stopping may be too strict -> higher values may produce better results"
 
     # for constraints
@@ -392,7 +389,6 @@ function fitting_params(;
         early_stop_iter            = early_stop_iter,
         rel_f_tol_5_iter           = rel_f_tol_5_iter,
         t_lim                      = t_lim,
-        lasso_factor               = lasso_factor,
         pre_residual_processing    = pre_residual_processing,
         residual_processing        = residual_processing,
         all_constr_f_select        = all_constr_f_select,
