@@ -33,7 +33,7 @@ ops, data_vect = Options(data, fit_weights=ones(size(data,1)))
         prediction, valid = TiSR.eval_equation(node, data_vect, ops)
         valid || continue
         mse_before = sum(abs2, prediction .- data_vect[end])
-        mse_before > 0 || continue
+        0 < mse_before < Inf || continue
 
         TiSR.fitting_LM!(node, data_vect, ops, list_of_param, ops.fitting.max_iter)
 
