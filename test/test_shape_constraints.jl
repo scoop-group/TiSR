@@ -316,7 +316,7 @@ end
     #     vio1 == 0 && continue
     #     ii += 1
     #
-    #     pred, valid, coutner = TiSR.fit_n_eval!(node, data_vect, ops)
+    #     pred, valid = TiSR.fit_n_eval!(node, data_vect, ops)
     #     vio2 = TiSR.get_measure_constr_vios(rand(5), rand(5), node, ops)
     #     push!(results, vio2 / vio1)
     # end
@@ -375,7 +375,7 @@ end
         vio1 == 0 && continue
         ii += 1
 
-        pred, valid, coutner = TiSR.fit_n_eval!(node, data_vect, ops)
+        pred, valid = TiSR.fit_n_eval!(node, data_vect, ops)
 
         vio2 = TiSR.get_measure_constr_vios(rand(5), rand(5), node, ops)
         vio2 / vio1
