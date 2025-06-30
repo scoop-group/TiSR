@@ -87,8 +87,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         data,
                         ops,
                         cur_max_compl,
-                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                         expression_log[isle],
+                        isle,
                     )
                 end
             else
@@ -100,8 +100,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                         data,
                         ops,
                         cur_max_compl,
-                        ops.general.fitting_island_function(isle) ? ops.fitting.max_iter : 0,
                         expression_log[isle],
+                        isle
                     )
                 end
             end
@@ -260,7 +260,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     )
 end
 
-function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, expression_log; trial=1)
+function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, expression_log, isle; trial=1)
 
     eval_counter = 0
 
@@ -270,7 +270,11 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     #@timeit to "new children" begin
         while length(chil) + length(pop) < ops.general.pop_per_isle
             push!(chil,
-                Individual(grow_equation(ops.grammar.init_tree_depth, ops, param_prob = iszero(fit_iter) ? 0.0 : 2.0))
+                Individual(grow_equation(
+                    ops.grammar.init_tree_depth,
+                    ops,
+                    param_prob = ops.general.fitting_island_function(isle) ? 2.0 : 0.0
+                ))
             )
         end
     #end # @timeit
@@ -290,7 +294,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     # fitting and evaluation # ---------------------------------------------------------------------
     #@timeit to "Individual" begin
         for ii in eachindex(chil)
-            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, fit_iter, expression_log)
+            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, expression_log, isle)
         end
     #end # @timeit
 
@@ -306,11 +310,11 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     # selection # ----------------------------------------------------------------------------------
     if length(pop) > ops.general.pop_per_isle
         #@timeit to "selection" begin
-            perform_population_selection!(pop, ops)
+            perform_population_selection!(pop, ops, isle)
         #end # @timeit
     elseif isempty(pop) && trial < 100
         println("all individuals filtered, redoing generation")
-        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, fit_iter, expression_log, trial=trial+1)
+        one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, expression_log, isle, trial=trial+1)
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end

@@ -212,6 +212,7 @@ function general_params(;
     migrate_after_extinction_prob::Float64 = 1.0,                                                               # -> probability that an individual migrates to another islands, if its island goes extinct. -> 0 ... 1
     migrate_after_extinction_dist::Int64   = 4,                                                                 # -> maximum relative distance an individual from an extinct island can propagate to a new island in case it survives. -> 0.2 ... 0.5
     fitting_island_function::Function      = isle -> floor(isle / 2) % 2 == 0,                                  # -> function to determine on which islands fitting is conducted. Must take an integer and return a bool
+    constraint_island_function::Function   = isle -> isle % 2 == 0,                                             # -> function to determine on which islands the constrains are ignored, if any constraints are provided. Must take an integer and return a bool
     hall_of_fame_migration_interval::Int64 = 500,                                                               # -> interval in which a random individual from the hall of fame is returned to a random island
     max_age::Int64                         = 2 * round(Int64, pop_size / num_islands),                          # -> maximal age after which individuals are removed from the popoulation
     n_refitting::Int64                     = 1,                                                                 # -> how many individuals from the hall_of_fame are copied and fitted again
@@ -283,6 +284,7 @@ function general_params(;
         migrate_after_extinction_num    = migrate_after_extinction_num,
         migrate_after_extinction_dist   = migrate_after_extinction_dist,
         fitting_island_function         = fitting_island_function,
+        constraint_island_function      = constraint_island_function,
         max_age                         = max_age,
         n_refitting                     = n_refitting,
         t_lim                           = t_lim,

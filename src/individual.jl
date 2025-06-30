@@ -11,7 +11,7 @@ mutable struct Individual
     Individual(node::Node) = new(node)
 end
 
-function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_log)
+function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
     indiv.age = 0.0
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
@@ -60,7 +60,13 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_l
 
     # fitting # ------------------------------------------------------------------------------------
     #@timeit to "fitting" begin
-        prediction, valid, eval_counter = fit_n_eval!(indiv.node, data, ops, fit_iter)
+        prediction, valid, eval_counter = fit_n_eval!(
+            indiv.node,
+            data,
+            ops,
+            do_fit    = ops.general.fitting_island_function(isle),
+            do_constr = ops.general.constraint_island_function(isle),
+        )
     #end # @timeit
 
     indiv.valid = valid

@@ -116,10 +116,14 @@ end
 
 """ Perform the population selection.
 """
-function perform_population_selection!(pop, ops)
+function perform_population_selection!(pop, ops, isle)
     sort!(pop, by=i->i.age)
 
-    selection_inds = Int64[]
+    if ops.general.constraint_island_function(isle)
+        selection_objectives = ops.selection.selection_objectives
+    else
+        selection_objectives = filter(!=(:constr_vio), ops.selection.selection_objectives)
+    end
 
     # extract objectives # -------------------------------------------------------------
     indiv_obj_vals = [
@@ -150,6 +154,8 @@ function perform_population_selection!(pop, ops)
     end
 
     # Pareto selection # -------------------------------------------------------------------
+    selection_inds = Int64[]
+
     if ops.selection.n_pareto_select_per_isle > 0
         n_front = 1
         while n_front <= maximum(ranks)

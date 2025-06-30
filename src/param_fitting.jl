@@ -42,7 +42,8 @@ end
 """ Entrance/switch for parameter fitting. Depending on whether the equation has parameters
     or not, the correspoinding functions are called, and the parameters adapted in-place.
 """
-function fit_n_eval!(node, data, ops, fit_iter)
+function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
+
     eval_counter = 0
     list_of_param = list_of_param_nodes(node)
 
@@ -50,22 +51,22 @@ function fit_n_eval!(node, data, ops, fit_iter)
         return data[end], false, 0
     end
 
-    if fit_iter > 0 && !isempty(list_of_param)
+    if do_fit && !isempty(list_of_param)
         if rand() < ops.fitting.NM_prob
             eval_counter += fitting_Optim!(
                 node, data, ops, list_of_param, ops.fitting.NM_iter,
                 Optim.NelderMead()
             )
         elseif iszero(ops.fitting.lasso_factor)
-            eval_counter += fitting_LM!(node, data, ops, list_of_param, fit_iter)
+            eval_counter += fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
         else
             eval_counter += fitting_Optim!(
-                node, data, ops, list_of_param, fit_iter,
+                node, data, ops, list_of_param, ops.fitting.max_iter,
                 Optim.Newton(;linesearch=LineSearches.BackTracking())
             )
         end
 
-        if !isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr)
+        if do_constr && (!isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr))
             pred, valid = eval_equation(node, data, ops)
             eval_counter += 1
             valid || return pred, valid, eval_counter
