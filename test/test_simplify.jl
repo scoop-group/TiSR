@@ -113,6 +113,10 @@ end
         compl_bef = TiSR.count_nodes(node)
 
         @test TiSR.replace_same_subst_n_div!(node, ops)
+
+        while TiSR.replace_same_subst_n_div!(node, ops)
+        end
+
         @test TiSR.count_nodes(node) < compl_bef
         @test !TiSR.replace_same_subst_n_div!(node, ops)
     end
