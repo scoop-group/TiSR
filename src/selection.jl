@@ -57,7 +57,7 @@ end
 
 """ Perfrom binary tournament selection for parent selection.
 """
-parent_selection(pop) = min(rand(pop), rand(pop))
+parent_selection(pop; tournament_size=2) = minimum(rand(pop) for _ in 1:tournament_size)
 
 """ Tournament selection. The proprocessing of the fitness may be adapted. The inds passed into
     this function are modified and should not be used afterwards.
