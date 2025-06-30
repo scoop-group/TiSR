@@ -216,7 +216,7 @@ function recursive_compl(
         compl = 1.0
 
     elseif node.ari == -1
-        compl = 1.0 + abs(round(node.val) - node.val) # non-integer penalty
+        compl = 1.0 # + abs(round(node.val) - node.val) # non-integer penalty
     end
 
     return min(floatmax(), compl)
@@ -229,7 +229,7 @@ function get_measure_constr_vios(prediction::Vector{T}, target::Vector{T}, node,
         TT = promote_type(T1, T2)
         node_ = convert(TT, node)
         pred, _ = eval_equation(node_, constr_data, ops)
-        pred .= ops.fitting.pre_residual_processing(pred, eachindex(constr_data[1]), ops)
+        pred = ops.fitting.pre_residual_processing(pred, eachindex(constr_data[1]), ops)
         return pred
     end
 

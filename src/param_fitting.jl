@@ -14,7 +14,7 @@ function fitting_eval(x, node, list_of_param, data, inds, ops)
 
     dat = [view(d, inds) for d in data]
     pred, _ = eval_equation(node, dat, ops)
-    pred .= ops.fitting.pre_residual_processing(pred, inds, ops)
+    pred = ops.fitting.pre_residual_processing(pred, inds, ops)
     return pred
 end
 
@@ -70,7 +70,7 @@ function fit_n_eval!(node, data, ops, fit_iter)
             eval_counter += 1
             valid || return pred, valid, eval_counter
 
-            pred .= ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
+            pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
             mare  = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
 
             if mare < ops.fitting.max_mare_for_constr_fit
@@ -81,7 +81,7 @@ function fit_n_eval!(node, data, ops, fit_iter)
 
     # final evaluation
     pred, valid = eval_equation(node, data, ops)
-    pred .= ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
+    pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
     eval_counter += 1
     return pred, valid, eval_counter
 end

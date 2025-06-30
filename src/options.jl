@@ -19,10 +19,10 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
     # dynam_expr::L
 
     function Options(
-        data::Matrix;                                                           # -> nxm matrix containing the n data points, m-1 variables and the output
-        fit_weights::Vector{Float64} = inv.(abs.(data[:, end])),                # -> weights for the data fitting -> residual .* weight
-        binops                       = (+,   -,   *,   /,   ^  ),               # -> binary function set to choose from
-        unaops                       = (exp, log, sin, cos, abs),               # -> unary function set to choose from
+        data::Matrix;                                               # -> nxm matrix containing the n data points, m-1 variables and the output
+        fit_weights::Vector{Float64} = inv.(abs.(data[:, end])),    # -> weights for the data fitting -> residual vector .* weights vector
+        binops                       = (+,   -,   *,   /,   ^  ),   # -> binary function set
+        unaops                       = (exp, log, sin, cos, abs),   # -> unary function set
         data_split                   = data_split_params(),
         general                      = general_params(),
         measures                     = measure_params(),
@@ -30,7 +30,7 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
         fitting                      = fitting_params(),
         mutation                     = mutation_params(),
         grammar                      = grammar_params(),
-        meta_data                    = Dict(),                  # -> can be used to provide data for use in, for example, user-defined functions like the callback, pre_residual_processing, or measures
+        meta_data                    = Dict(),                      # -> can be used to provide data for use in, for example, user-defined functions like the callback, pre_residual_processing, or measures
     )
 
         # make sure all required measres are calculated # ------------------------------------------
@@ -171,7 +171,7 @@ function prepare_data(data, fit_weights, replace_inf)
     data_vect = [data[:, i] for i in 1:size(data, 2)]
 
     # prepare data # ---------------------------------------------------------------------------
-    @assert eltype(data) <: AbstractFloat "data must be float type "
+    @assert eltype(data) <: AbstractFloat "data must be float type"
     @assert size(data, 2) > 1             "data has only one column"
     @assert size(data, 2) <= 128 + 1      "TiSR cannot handle more than 128 variables out of the box"
     !any(length(unique(d)) == 1 for d in data_vect) || @warn "data containts columns, which are constant"
@@ -227,16 +227,16 @@ function general_params(;
     plot_hall_of_fame::Bool                = true,                                                              # -> whether to plot the hall of fame
     print_hall_of_fame::Bool               = true,                                                              # -> whether to print some of the individuals in the hall of fame. For this, `plot_hall_of_fame` must also be true
 )
-    @assert num_islands > 0                                       "num_islands should be at least 1                                    "
-    @assert migration_interval > 0                                "migration_interval should be at least 1                             "
-    @assert adaptive_compl_increment > 0                          "adaptive_compl_increment must be larger 0                           "
-    @assert island_extinction_interval > 0                        "island_extinction_interval must be > 0                              "
-    @assert max_age > 1                                           "max_age must be > 1                                                 "
-    @assert hall_of_fame_migration_interval > 0                   "hall_of_fame_migration_interval must be larger 0                    "
-    @assert 0.0 <= migrate_after_extinction_prob <= 1.0           "migrate_after_extinction_prob must be between 0 and 1               "
-    @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0                      "
-    @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands          "
-    @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2   "
+    @assert num_islands > 0                                       "num_islands should be at least 1"
+    @assert migration_interval > 0                                "migration_interval should be at least 1"
+    @assert adaptive_compl_increment > 0                          "adaptive_compl_increment must be larger 0"
+    @assert island_extinction_interval > 0                        "island_extinction_interval must be > 0"
+    @assert max_age > 1                                           "max_age must be > 1"
+    @assert hall_of_fame_migration_interval > 0                   "hall_of_fame_migration_interval must be larger 0"
+    @assert 0.0 <= migrate_after_extinction_prob <= 1.0           "migrate_after_extinction_prob must be between 0 and 1"
+    @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0"
+    @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands"
+    @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2"
     @assert !isnan(replace_inf)                                   "replace_inf must not be NaN"
     @assert 0.0 <= seen_reject_prob <= 1.0                        "seen_rejection_probability must be between 0 and 1"
     @assert seen_forget_interval > 0                              "seen_forget_interval must be larger 0"
@@ -247,9 +247,9 @@ function general_params(;
         @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
     end
 
-    adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5                         "
-    island_extinction_interval > 500 || @warn "island_extinction_interval seems small                          "
-    max_age > 10                     || @warn "max_age seems small                                             "
+    adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5"
+    island_extinction_interval > 500 || @warn "island_extinction_interval seems small"
+    max_age > 10                     || @warn "max_age seems small"
 
     10 <= seen_forget_interval <= 500 || @warn "seen_forget_interval should be between 10 and 500"
     10 <= seen_merge_interval <= 500  || @warn "seen_merge_interval should be between 10 and 500"
@@ -300,15 +300,13 @@ function general_params(;
     )
 end
 
-""" Specify the fit quality or complexity measures that should be calculated for
-    all individuals. Those will be tracked, printed, logged, and can be used as
-    selection_objetives or hall_of_fame_objectives. The measures "ms_processed_e",
-    "compl", "mse", and "mae" are always included. The following functions are
-    provided out of the box: ... TODO User-specified should should take 6
-    positional arguments: residual, residual_relative, prediction, data, node, ops.
+""" Specify the measures that should be calculated for all individuals. Those
+    will be tracked, printed, logged, and can be used as selection_objetives or
+    hall_of_fame_objectives. The measures "ms_processed_e", "compl", "mse", and
+    "mae" are always included.
 """
 function measure_params(;
-    additional_measures::Dict{Symbol, Function} = Dict(                 # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate custom measures. TiSR offers some additional ones, which all start with `TiSR.get_measure_...`
+    additional_measures::Dict{Symbol, Function} = Dict(                # -> specify a Dict{Symbol, Function} containing name and function pairs that calculate measures. The function must take 4 positional arguments `prediction::Vector{T}, target::Vector{T}, node, ops` and return a Float. All currently pre-implemented measures are listed below at (2).
         :one_minus_abs_spearman => get_measure_one_minus_abs_spearman,
         :mare                   => get_measure_mare,
         :max_are                => get_measure_max_are,
@@ -316,9 +314,9 @@ function measure_params(;
     )
 )
     :ms_processed_e in keys(additional_measures) && @warn "ms_processed_e is overwritten in measures"
-    :compl          in keys(additional_measures) && @warn "compl is overwritten in measures         "
-    :mse            in keys(additional_measures) && @warn "mse is overwritten in measures           "
-    :mae            in keys(additional_measures) && @warn "mae is overwritten in measures           "
+    :compl          in keys(additional_measures) && @warn "compl is overwritten in measures"
+    :mse            in keys(additional_measures) && @warn "mse is overwritten in measures"
+    :mae            in keys(additional_measures) && @warn "mae is overwritten in measures"
 
     additional_measures[:ms_processed_e] = get_measure_ms_processed_e
     additional_measures[:compl]          = get_measure_compl
@@ -329,8 +327,8 @@ function measure_params(;
 end
 
 function selection_params(;
-    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :weighted_compl],                          # -> objectives for the hall_of_fame
-    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the Pareto-optimal selection part of selection
+    hall_of_fame_objectives::Vector{Symbol}    = [:ms_processed_e, :weighted_compl],                          # -> objectives for the hall_of_fame selection
+    selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the population selection
     hall_of_fame_niching_sigdigits::Int64      = 5,                                                           # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
     population_niching_sigdigits::Int64        = 5,                                                           # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
     ratio_pareto_tournament_selection::Float64 = 0.5,                                                         # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
@@ -362,18 +360,18 @@ function fitting_params(;
     lasso_factor::Float64                 = 0.0,                # -> factor for the lasso regularization. pushing parameter values to 0. -> 0 is off; 1e-8 ... 1e-4
     pre_residual_processing::Function     = (x, ind, ops) -> x, # -> processing of the equation output before the residual is calculated. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./= data[end][inds]"
     residual_processing::Function         = (x, ind, ops) -> x, # -> processing of the residuals. NOT an inplace function. The inds refer for the indices of the current residuals, which may be used to slice some data in the function like "(x, inds, ops) -> x ./ data[end][inds]"
-    all_constr_f_select::Vector{Function} = Function[],         # TODO
-    eq_constr::Vector{Function}           = Function[],         # TODO
-    ineq_constr::Vector{Function}         = Function[],         # TODO
+    all_constr_f_select::Vector{Function} = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of constraint violations. These violations are used to calculate the TiSR.get_measure_constr_vios, which can be used for the selection
+    eq_constr::Vector{Function}           = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of equality constraint violations. These are minimized during parameter estimation.
+    ineq_constr::Vector{Function}         = Function[],         # -> vector of functions each taking two positional parameters (node_func, parameter) and return a vector of inequality constraint violations (<=0). These are minimized during parameter estimation.
     max_mare_for_constr_fit::Float64      = 0.1,                # -> max mean relative error at which shape constraints should be minimized -> don't cast pearls before swine
     additional_constr_fit_iter::Int64     = 5,                  # -> additional fitting iterations that are conducted with the constraint violation minimization
-    constr_tol::Float64                   = 1e-5,               # TODO
+    constr_tol::Float64                   = 1e-5,               # -> constraint tolerance during constrained parameter estimation for the squared sum of all constraints in eq_constr and ineq_constr
 )
-    @assert NM_iter >= 0                        "NM_iter must be >= 0                                           "
-    @assert max_iter >= early_stop_iter         "early_stop_iter should be smaller than max_iter                "
+    @assert NM_iter >= 0                        "NM_iter must be >= 0"
+    @assert max_iter >= early_stop_iter         "early_stop_iter should be smaller than max_iter"
     @assert 0 <= rel_f_tol_5_iter < 1.0         "rel_f_tol_5_iter must smaller than 1.0 and larger or equal to 0"
-    @assert lasso_factor >= 0                   "lasso factor must be >= 0                                      "
-    @assert 0 <= NM_prob <= 1.0                 "NM_prob must be between 0 and 1                                "
+    @assert lasso_factor >= 0                   "lasso factor must be >= 0"
+    @assert 0 <= NM_prob <= 1.0                 "NM_prob must be between 0 and 1"
     @assert constr_tol >= 0                     "constr_tol must be >= 0"
 
     t_lim > 1e-1             || @warn "fitting t_lim may be too low"
@@ -421,7 +419,7 @@ function grammar_params(;
     max_nodes_per_term::Int64                  = typemax(Int64),            # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold
     bank_of_terms::Vector{String}              = String[],                  # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
     illegal_dict::Dict                         = Dict(),                    # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
-    custom_check_legal::Function               = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
+    custom_check_legal_before_fit::Function    = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
     weighted_compl_dict::Dict{String, Float64} = Dict(                      # -> weights for weighted_compl calculation. For any that are not included, 3.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
         "PARAM" => 1.2, "VAR"  => 1.0,
         "+"     => 1.2, "-"    => 1.4,
@@ -433,10 +431,10 @@ function grammar_params(;
         "exp"   => 3.0, "log"  => 3.0,
     ),
 )
-    @assert max_compl > 3             "max_compl must be larger than 3          "
+    @assert max_compl > 3             "max_compl must be larger than 3"
     @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
-    @assert init_tree_depth > 2       "init_tree_depth should be 3 or higher    "
-    @assert max_nodes_per_term > 1    "max_nodes_per_term must be larger than 1 "
+    @assert init_tree_depth > 2       "init_tree_depth should be 3 or higher"
+    @assert max_nodes_per_term > 1    "max_nodes_per_term must be larger than 1"
 
     if !isempty(illegal_dict)
         @assert illegal_dict isa Dict                  "illegal_dict is not formatted correctly"
@@ -458,14 +456,14 @@ function grammar_params(;
     init_tree_depth > 6 && @warn "a high init_tree_depth may lead to high calculation times"
 
     return (
-        illegal_dict        = illegal_dict,
-        weighted_compl_dict = weighted_compl_dict,
-        init_tree_depth     = init_tree_depth,
-        max_compl           = max_compl,
-        min_compl           = min_compl,
-        max_nodes_per_term  = max_nodes_per_term,
-        bank_of_terms       = bank_of_terms,
-        custom_check_legal  = custom_check_legal,
+        illegal_dict                  = illegal_dict,
+        weighted_compl_dict           = weighted_compl_dict,
+        init_tree_depth               = init_tree_depth,
+        max_compl                     = max_compl,
+        min_compl                     = min_compl,
+        max_nodes_per_term            = max_nodes_per_term,
+        bank_of_terms                 = bank_of_terms,
+        custom_check_legal_before_fit = custom_check_legal_before_fit,
     )
 end
 
@@ -498,7 +496,7 @@ function mutation_params(;                     #|-> probabilites for the various
     @assert p_multiple_mutations < 1         "p_multiple_mutations must be < 1"
     0 <= p_multiple_mutations < 0.9 || @warn "p_multiple_mutations should be between 0 and 0.9"
 
-    @assert 0.0 <= max_muts_ratio            "max_muts_ratio must be >= 0                 "
+    @assert 0.0 <= max_muts_ratio            "max_muts_ratio must be >= 0"
     0.0 <= max_muts_ratio <= 1.0    || @warn "max_muts_ratio should be between 0.0 and 2.0"
 
     mut_probs = (

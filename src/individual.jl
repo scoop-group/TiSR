@@ -34,7 +34,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, fit_iter, expression_l
             return 0
         end
 
-        if !ops.grammar.custom_check_legal(indiv.node, data, ops)
+        if !ops.grammar.custom_check_legal_before_fit(indiv.node, data, ops)
             indiv.valid = false
             return 0
         end

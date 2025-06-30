@@ -123,7 +123,7 @@ ops, data = Options(
         max_nodes_per_term::Int64                  = typemax(Int64),            # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold
         bank_of_terms::Vector{String}              = String[],                  # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
         illegal_dict::Dict                         = Dict(),                    # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
-        custom_check_legal::Function               = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
+        custom_check_legal_before_fit::Function    = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
         weighted_compl_dict::Dict{String, Float64} = Dict(                      # -> weights for weighted_compl calculation. For any that are not included, 3.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
             "PARAM" => 1.2, "VAR"  => 1.0,
             "+"     => 1.2, "-"    => 1.4,
@@ -160,6 +160,40 @@ ops, data = Options(
 #     "exp" => (lef = ("exp", "log"), rig = ()),
 #     "cos" => (lef = ("sin", "cos"), rig = ())
 # )
+# (2) currently implemented measures
+# # fit quality measures
+#
+# get_measure_ms_processed_e: mean squared error weighted by the `fit_weights` and the processed by `residual_processing`. This measure is used for fitting.
+# get_measure_ms_processed_e_test: mean squared error of test data weighted by the `fit_weights` and the processed by `residual_processing`
+#
+# get_measure_max_ae: maximum absolute error
+# get_measure_mae: mean absolute error
+# get_measure_mse: mean squared error
+# get_measure_one_minus_r2: one minus the R-squared value (1 - R²) [wikipedia](https://en.wikipedia.org/wiki/Coefficient_of_determination)
+# get_measure_one_minus_abs_spearman: one minus the absolute Spearman correlation coefficient [wikipedia](https://en.wikipedia.org/wiki/Spearman's_rank_correlation_coefficient)
+# get_measure_mare: mean absolute relative error
+# get_measure_q75_are: 75th percentile of absolute relative errors
+# get_measure_max_are: maximum absolute relative error
+#
+# get_measure_max_ae_test: maximum absolute error on a test dataset
+# get_measure_mae_test: mean absolute error on a test dataset
+# get_measure_mse_test: mean squared error on a test dataset
+# get_measure_one_minus_r2_test: one minus the R-squared value (1 - R²) on test data [wikipedia](https://en.wikipedia.org/wiki/Coefficient_of_determination)
+# get_measure_one_minus_abs_spearman_test: one minus the absolute Spearman correlation coefficient on test data [wikipedia](https://en.wikipedia.org/wiki/Spearman's_rank_correlation_coefficient)
+# get_measure_mare_test: mean absolute relative error on a test dataset
+# get_measure_q75_are_test: 75th percentile of absolute relative errors on a test dataset
+# get_measure_max_are_test: the maximum absolute relative error on a test dataset
+#
+# # complexity measures
+#
+# get_measure_n_params: number of parameters in the model
+# get_measure_compl: length of an expression, i.e., number of operators and operands
+# get_measure_weighted_compl: number of operators and operands multiplied by their respective weights as defined in `weighted_compl_dict`
+# get_measure_recursive_compl: recursively calculate the complexity and penalize nesting. Currently, parameters are not accessible
+# get_measure_max_nodes_per_term: the maximum number of nodes in a top-level term, e.g., `1 + 3 * v1` -> 3 nodes in the biggest top-level term
+# get_measure_square_compl: number of nodes in the biggest top-level term multiplied by the length of the expression, i.e., number of operators and operands
+# get_measure_cross_compl: number of nodes in the biggest top-level term added by the length of the expression, i.e., number of operators and operands
+# get_measure_constr_vios: constraints violations, as evaluated by `all_constr_f_select`
 ```
 
 # Cite this work

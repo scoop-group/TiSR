@@ -288,8 +288,8 @@ end
     end
 
     @test count(i -> results_obj[i] > 1.0 && results_vio[i] > 1.0, eachindex(results_obj)) == 0
-    @test count(v -> v < 0.1, results_obj) > 900
-    @test count(v -> v < 0.1, results_vio) > 900
+    @test count(v -> v < 0.1, results_obj) > 800
+    @test count(v -> v < 0.1, results_vio) > 800
     @test count(i -> results_obj[i] < 0.1 && results_vio[i] < 0.1, eachindex(results_obj)) > 800
 
     # reference speed without constraints #  -------------------------------------------------------

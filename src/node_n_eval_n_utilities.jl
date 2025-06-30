@@ -109,6 +109,25 @@ function eval_equation(node::Node{T}, data::AbstractArray, ops::Options)::Tuple{
     end
 end
 
+""" same eval_equation above but without all the checks and types.
+"""
+function eval_equation_unleashed(node::Node, data, ops::Options)
+    if node.ari == -1
+        return node.val, true
+    elseif node.ari == 0
+        return data[node.ind], true
+    elseif node.ari == 1
+        arr_l, finite = eval_equation_unleashed(node.lef, data, ops)
+        arr_l = ops.unaops[node.ind].(arr_l)
+        return arr_l, true
+    else
+        arr_l, finite = eval_equation_unleashed(node.lef, data, ops)
+        arr_r, finite = eval_equation_unleashed(node.rig, data, ops)
+        arr_l = ops.binops[node.ind].(arr_l, arr_r)
+        return arr_l, true
+    end
+end
+
 # ==================================================================================================
 # equation utilities
 # ==================================================================================================
