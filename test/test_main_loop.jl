@@ -22,9 +22,8 @@
         data,
         general=general_params(
             n_gens=10,
-            print_progress     = false,
-            plot_hall_of_fame  = false,
-            print_hall_of_fame = false,
+            print_progress    = false,
+            show_hall_of_fame = false,
         )
     );
 
@@ -41,9 +40,8 @@
         data,
         general=general_params(
             t_lim=10.0,
-            print_progress     = false,
-            plot_hall_of_fame  = false,
-            print_hall_of_fame = false,
+            print_progress    = false,
+            show_hall_of_fame = false,
         )
     );
 
@@ -61,9 +59,8 @@
         general=general_params(
             t_lim=Inf,
             callback = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> any(i.measures[:compl] <= 7 && i.measures[:mare] < 1e-5 for i in hall_of_fame),
-            print_progress     = false,
-            plot_hall_of_fame  = false,
-            print_hall_of_fame = false,
+            print_progress    = false,
+            show_hall_of_fame = false,
         )
     );
 

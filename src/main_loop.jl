@@ -196,8 +196,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 end
 
                 #@timeit to "plot and show equations" begin
-                    if ops.general.plot_hall_of_fame
-                        plot_hall_of_fame(hall_of_fame, ops)
+                    if ops.general.show_hall_of_fame
+                        show_hall_of_fame(hall_of_fame, ops)
                     end
                 #end # @timeit
             end
@@ -244,8 +244,8 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
         push!(prog_dict[k], get_for_prog[k])
     end
 
-    if ops.general.plot_hall_of_fame
-        plot_hall_of_fame(hall_of_fame, ops)
+    if ops.general.show_hall_of_fame
+        show_hall_of_fame(hall_of_fame, ops)
     end
 
     close_reader!(stdin_reader)
@@ -431,24 +431,24 @@ end
 """ Plots the current hall_of_fame fame and prints a selection of the equations
     after simplifying them.
 """
-function plot_hall_of_fame(hall_of_fame, ops)
-    compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
-    ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
-
-    if any(!(1e-100 < m < 1e100) for m in ms_processed_e)
-        println("ms_processed_e clamped to in-between 1e-100 and 1e100 for hall_of_fame plot")
-        clamp!(ms_processed_e, 1e-100, 1e100)
-    end
-
-    if length(unique(ms_processed_e)) > 1
-        ymin = 10^(floor(log10(minimum(ms_processed_e))))
-        ymax = 10^(ceil(log10(maximum(ms_processed_e))))
-    else
-        ymin = 10^(floor(log10(minimum(ms_processed_e)))-1)
-        ymax = 10^(ceil(log10(maximum(ms_processed_e)))+1)
-    end
-
+function show_hall_of_fame(hall_of_fame, ops)
     #@timeit to "scatterplot" begin
+        compl          = [indiv.measures[:compl]          for indiv in hall_of_fame]
+        ms_processed_e = [indiv.measures[:ms_processed_e] for indiv in hall_of_fame]
+
+        if any(!(1e-100 < m < 1e100) for m in ms_processed_e)
+            println("ms_processed_e clamped to in-between 1e-100 and 1e100 for hall_of_fame plot")
+            clamp!(ms_processed_e, 1e-100, 1e100)
+        end
+
+        if length(unique(ms_processed_e)) > 1
+            ymin = 10^(floor(log10(minimum(ms_processed_e))))
+            ymax = 10^(ceil(log10(maximum(ms_processed_e))))
+        else
+            ymin = 10^(floor(log10(minimum(ms_processed_e)))-1)
+            ymax = 10^(ceil(log10(maximum(ms_processed_e)))+1)
+        end
+
         plt = scatterplot(compl, ms_processed_e,
             yscale           = :log10,
             title            = "hall of fame",
@@ -462,25 +462,23 @@ function plot_hall_of_fame(hall_of_fame, ops)
         )
     #end # @timeit
 
-    if ops.general.print_hall_of_fame
-        #@timeit to "simplify equations to show" begin
-            sort!(hall_of_fame, by=i->i.measures[:ms_processed_e], rev=true)
+    #@timeit to "simplify equations to show" begin
+        sort!(hall_of_fame, by=i->i.measures[:ms_processed_e], rev=true)
 
-            inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
-            unique!(inds_to_show)
+        inds_to_show = round.(Int64, collect(range(1, length(hall_of_fame), length=15)))
+        unique!(inds_to_show)
 
-            eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
+        eq_strs = [simplify_to_string(hall_of_fame[i].node, ops, sigdigits=2) for i in inds_to_show]
 
-            for i in eachindex(eq_strs)
-                label!(plt, :r, i, replace(
-                    eq_strs[i],
-                    " " => "",
-                    r"(\d)\.0\b" => s"\1",
-                    r"(\d)\.0(\D)" => s"\1\2",
-                ))
-            end
-        #end # @timeit
-    end
+        for i in eachindex(eq_strs)
+            label!(plt, :r, i, replace(
+                eq_strs[i],
+                " " => "",
+                r"(\d)\.0\b" => s"\1",
+                r"(\d)\.0(\D)" => s"\1\2",
+            ))
+        end
+    #end # @timeit
     display(plt)
 end
 

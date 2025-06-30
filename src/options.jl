@@ -224,8 +224,7 @@ function general_params(;
     callback::Function                     = (hall_of_fame, population, gen, t_since, prog_dict, ops) -> false, # -> a function, which is executed in each iteration and allows more flexible termination. If the function returns true, the execution is terminated. For example, the following stops the equation search, if one individual in the hall of fame has a complexity lower than 30 and a mean absolute relative deviation of lower then 1e-5: `(hall_of_fame, population, gen, prog_dict, ops) -> any(i.measures[:compl] < 30 && i.measures[:mare] < 1e-5 for i in hall_of_fame)`
     multithreading::Bool                   = false,                                                             # -> whether to use multithreading for the fitting (most expensive). Not always faster -> depends on how expensive fitting is for the problem at hand. Also, for this to apply, Julia needs to be started with more threads, like `julia -t 4`.
     print_progress::Bool                   = true,                                                              # -> whether to print the elapsed time and some other KPIs.
-    plot_hall_of_fame::Bool                = true,                                                              # -> whether to plot the hall of fame
-    print_hall_of_fame::Bool               = true,                                                              # -> whether to print some of the individuals in the hall of fame. For this, `plot_hall_of_fame` must also be true
+    show_hall_of_fame::Bool                = true,                                                              # -> whether to plot the hall of fame and show a selection of simplified expressions
 )
     @assert num_islands > 0                                       "num_islands should be at least 1"
     @assert migration_interval > 0                                "migration_interval should be at least 1"
@@ -242,10 +241,6 @@ function general_params(;
     @assert seen_forget_interval > 0                              "seen_forget_interval must be larger 0"
     @assert seen_merge_interval > 0                               "seen_merge_interval must be larger 0"
     @assert seen_gc_length > 0                                    "seen_gc_length must be larger 0"
-
-    if print_hall_of_fame
-        @assert plot_hall_of_fame "for print_hall_of_fame, plot_hall_of_fame must be true"
-    end
 
     adaptive_compl_increment > 4     || @warn "adaptive_compl_increment should be >= 5"
     island_extinction_interval > 500 || @warn "island_extinction_interval seems small"
@@ -295,8 +290,7 @@ function general_params(;
         callback                        = callback,
         replace_inf                     = replace_inf,
         print_progress                  = print_progress,
-        plot_hall_of_fame               = plot_hall_of_fame,
-        print_hall_of_fame              = print_hall_of_fame,
+        show_hall_of_fame               = show_hall_of_fame,
     )
 end
 
