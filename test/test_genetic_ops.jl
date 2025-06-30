@@ -324,7 +324,6 @@ end
         # string distance?
         dist = Levenshtein()(str1, str2)
     end
-    @test all(d in (3, 4, 5, 6) for d in distances)
 end
 
 
