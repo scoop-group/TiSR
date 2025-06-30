@@ -60,7 +60,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
 
     # fitting # ------------------------------------------------------------------------------------
     #@timeit to "fitting" begin
-        prediction, valid, eval_counter = fit_n_eval!(
+        prediction, valid  = fit_n_eval!(
             indiv.node,
             data,
             ops,
@@ -70,7 +70,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
     #end # @timeit
 
     indiv.valid = valid
-    indiv.valid || return eval_counter
+    indiv.valid || return
 
     # calculate measures # -------------------------------------------------------------------------
     #@timeit to "calc measures" begin
@@ -88,7 +88,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
         indiv.valid = false
     end
 
-    return eval_counter
+    return
 end
 
 """ Prints or displays an Individual.

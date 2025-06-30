@@ -62,7 +62,6 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
     t_start        = time()
     gen            = 0.0
     stop_msg       = ""
-    eval_counters  = fill(0, ops.general.num_islands)
     expression_log = [Dict{UInt64, Int8}() for _ in 1:ops.general.num_islands]
 
     #reset_timer!(to) # @timeit
@@ -80,7 +79,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
         #@timeit to "one generation" begin
             if ops.general.multithreading
                 Threads.@threads :greedy for isle in 1:ops.general.num_islands
-                    eval_counters[isle] += one_isle_one_generation!(
+                    one_isle_one_generation!(
                         population[isle],
                         children[isle],
                         bank_of_terms,
@@ -93,7 +92,7 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 end
             else
                 for isle in 1:ops.general.num_islands
-                    eval_counters[isle] += one_isle_one_generation!(
+                    one_isle_one_generation!(
                         population[isle],
                         children[isle],
                         bank_of_terms,
@@ -174,10 +173,10 @@ function generational_loop(data::Vector{Vector{Float64}}, ops,
                 if ops.general.print_progress
                     display(get_for_prog)
                     println("\n$(round(Int64, t_since ÷ 60)) min $(round(Int64, t_since % 60)) sec | type q and enter to finish early")
-                    if !isempty(prog_dict["time"])
-                        println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
-                    end
-                    eval_counters .= 0
+                    # if !isempty(prog_dict["time"])
+                    #     println("\n" * @sprintf("%.3e evals per second", sum(eval_counters) / (t_since - prog_dict["time"][end])))
+                    # end
+                    # eval_counters .= 0
                 end
 
                 # check for replace_inf behavior
@@ -262,8 +261,6 @@ end
 
 function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, expression_log, isle; trial=1)
 
-    eval_counter = 0
-
     foreach(indiv -> indiv.age += 1, pop)
 
     # create new children # ----------------------------------------------------------------
@@ -297,7 +294,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     # fitting and evaluation # ---------------------------------------------------------------------
     #@timeit to "Individual" begin
         for ii in eachindex(chil)
-            eval_counter += fit_individual!(chil[ii], data, ops, cur_max_compl, expression_log, isle)
+            fit_individual!(chil[ii], data, ops, cur_max_compl, expression_log, isle)
         end
     #end # @timeit
 
@@ -321,7 +318,7 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     elseif isempty(pop)
         throw("Failed redoing the generation 100 times. All individuals are filtered out. Possible filters: illegal_dict, custom_check_legal, nonfinite evaluation, some of the defined measues is nonfinite.")
     end
-    return eval_counter
+    return
 end
 
 # ==================================================================================================

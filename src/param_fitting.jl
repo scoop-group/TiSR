@@ -44,7 +44,6 @@ end
 """
 function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
 
-    eval_counter = 0
     list_of_param = list_of_param_nodes(node)
 
     if length(list_of_param) > length(ops.data_descript.split_inds[1])
@@ -53,14 +52,14 @@ function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
 
     if do_fit && !isempty(list_of_param)
         if rand() < ops.fitting.NM_prob
-            eval_counter += fitting_Optim!(
+            fitting_Optim!(
                 node, data, ops, list_of_param, ops.fitting.NM_iter,
                 Optim.NelderMead()
             )
         elseif iszero(ops.fitting.lasso_factor)
-            eval_counter += fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
+            fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
         else
-            eval_counter += fitting_Optim!(
+            fitting_Optim!(
                 node, data, ops, list_of_param, ops.fitting.max_iter,
                 Optim.Newton(;linesearch=LineSearches.BackTracking())
             )
@@ -68,14 +67,13 @@ function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
 
         if do_constr && (!isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr))
             pred, valid = eval_equation(node, data, ops)
-            eval_counter += 1
-            valid || return pred, valid, eval_counter
+            valid || return pred, valid
 
             pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
             mare  = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
 
             if mare < ops.fitting.max_mare_for_constr_fit
-                eval_counter += fitting_w_constr!(node, data, ops, list_of_param, ops.fitting.additional_constr_fit_iter)
+                fitting_w_constr!(node, data, ops, list_of_param, ops.fitting.additional_constr_fit_iter)
             end
         end
     end
@@ -83,8 +81,7 @@ function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
     # final evaluation
     pred, valid = eval_equation(node, data, ops)
     pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
-    eval_counter += 1
-    return pred, valid, eval_counter
+    return pred, valid
 end
 
 """ Create the cost function for the fitting and for the early stopping evaluation, fit the
