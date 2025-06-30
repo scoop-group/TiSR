@@ -401,7 +401,6 @@ end
 function grammar_params(;
     max_compl::Int64                           = 30,                        # -> max allowed complexity
     init_tree_depth::Int64                     = 5,                         # -> maximal initial tree depth. -> 3 ... 6
-    max_nodes_per_term::Int64                  = typemax(Int64),            # -> maximal number of nodes per top-level term. All terms above are trimmed until they satisfy this threshold
     bank_of_terms::Vector{String}              = String[],                  # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
     illegal_dict::Dict                         = Dict(),                    # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
     custom_check_legal_before_fit::Function    = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
@@ -418,7 +417,6 @@ function grammar_params(;
 )
     @assert max_compl > 3          "max_compl must be larger than 3"
     @assert init_tree_depth > 2    "init_tree_depth should be 3 or higher"
-    @assert max_nodes_per_term > 1 "max_nodes_per_term must be larger than 1"
 
     if !isempty(illegal_dict)
         @assert illegal_dict isa Dict                  "illegal_dict is not formatted correctly"
@@ -444,7 +442,6 @@ function grammar_params(;
         weighted_compl_dict           = weighted_compl_dict,
         init_tree_depth               = init_tree_depth,
         max_compl                     = max_compl,
-        max_nodes_per_term            = max_nodes_per_term,
         bank_of_terms                 = bank_of_terms,
         custom_check_legal_before_fit = custom_check_legal_before_fit,
     )

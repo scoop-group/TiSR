@@ -16,7 +16,6 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
     #@timeit to "prepare node" begin
-        trim_to_max_nodes_per_term!(indiv.node, ops)
         apply_simple_simplifications!(indiv.node, ops)
         div_to_mul_param!(indiv.node, ops)
         reorder_add_n_mul!(indiv.node, ops)

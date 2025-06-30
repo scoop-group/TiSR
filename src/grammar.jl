@@ -79,16 +79,3 @@ function get_max_nodes_per_term(node, ops)
     end
 end
 
-""" Trim the node according to max terms per node.
-"""
-function trim_to_max_nodes_per_term!(node, ops)
-    if node.ari == 2 && ops.binops[node.ind] in (+, -)
-        trim_to_max_nodes_per_term!(node.lef, ops)
-        trim_to_max_nodes_per_term!(node.rig, ops)
-    else
-        while count_nodes(node) > ops.grammar.max_nodes_per_term
-            hoist_mutation!(node, ops)
-        end
-    end
-end
-

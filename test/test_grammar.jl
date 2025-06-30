@@ -177,24 +177,3 @@ end
     @test TiSR.get_max_nodes_per_term.(nodes, Ref(ops)) == [6, 7, 5, 7, 7, 4, 4, 3, 6 ,5]
 end
 
-# make some preparations # ------------------------------------------------------------------------
-@testset "trim_to_max_nodes_per_term!" begin
-    """ sufficient tests, but depends on get_max_nodes_per_term (which it is not sufficient)
-    """
-
-    data = rand(100, 10)
-    ops, data_vect = Options(
-        data,
-        grammar=TiSR.grammar_params(;max_nodes_per_term=5)
-    )
-
-    for _ in 1:1000
-        node = TiSR.grow_equation(rand(4:7), ops, method=:full)
-        max_nodes_before = TiSR.get_max_nodes_per_term(node, ops)
-        TiSR.trim_to_max_nodes_per_term!(node, ops)
-        max_nodes_after = TiSR.get_max_nodes_per_term(node, ops)
-        @test max_nodes_after <= 5
-    end
-end
-
-
