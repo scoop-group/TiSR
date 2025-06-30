@@ -66,7 +66,7 @@ ops, data_vect = Options(
     )
 )
 
-@testset "fittig_NW!" begin
+@testset "fitting with lasso" begin
 
     # first check if no lasso does no minimize the redunded ones
     trash_param  = Float64[]
