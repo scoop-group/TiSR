@@ -65,7 +65,7 @@ function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
             valid || return pred, valid
 
             pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
-            mare  = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
+            mare = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
 
             if mare < ops.fitting.max_mare_for_constr_fit
                 fitting_w_constr!(node, data, ops, list_of_param, ops.fitting.additional_constr_fit_iter)
