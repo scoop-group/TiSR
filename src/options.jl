@@ -204,7 +204,6 @@ function general_params(;
     t_lim::Float64                         = 60. * 5.,                                                          # -> time limit for the algorithm
     pop_size::Int64                        = 1000,                                                              # -> number of individuals selected for next generation / population size
     num_islands::Int64                     = 20,                                                                # -> number of parallel islands
-    children_ratio::Float64                = 1.0,                                                               # -> the ratio of children that should be generated in each generation 0 ... 2
     migration_interval::Int64              = 200,                                                               # -> generation interval, in which an individual is moved to other islands. (ring topology)
     island_extinction_interval::Int64      = 1000,                                                              # -> interval in which all individuals from one islands are distributed across all other islands and the extiction islands starts from scratch. -> typemax(Int64) is off; 1000 ... 10000
     island_extinction_rotation::Bool       = false,                                                             # -> whether the island extinctions should rotate as opposed to random islands
@@ -233,7 +232,6 @@ function general_params(;
     @assert max_age > 1                                           "max_age must be > 1"
     @assert hall_of_fame_migration_interval > 0                   "hall_of_fame_migration_interval must be larger 0"
     @assert 0.0 <= migrate_after_extinction_prob <= 1.0           "migrate_after_extinction_prob must be between 0 and 1"
-    @assert 0.0 <= children_ratio <= 2.0                          "children_ratio should be inbetween 0.0 and 2.0"
     @assert 0 <= n_refitting <= pop_size / num_islands            "n_refitting should be between 0 and pop_size / num_islands"
     @assert 0 <= migrate_after_extinction_dist <= num_islands / 2 "migrate_after_extinction_dist must be between 0 and num_islands/2"
     @assert !isnan(replace_inf)                                   "replace_inf must not be NaN"
@@ -258,7 +256,6 @@ function general_params(;
 
     # resulting parameters
     pop_per_isle = ceil(Int64, pop_size / num_islands)
-    n_children = max(2, round(Int64, children_ratio * pop_per_isle))
     migrate_after_extinction_num = round(Int64, pop_per_isle * migrate_after_extinction_prob)
     if migrate_after_extinction_num > 0
         @assert migrate_after_extinction_dist > 0 "if migrate_after_extinction_prob is > 0, migrate_after_extinction_dist must be > 0"
@@ -267,7 +264,6 @@ function general_params(;
     return (
         n_gens                          = n_gens,
         pop_size                        = pop_size,
-        n_children                      = n_children,
         pop_per_isle                    = pop_per_isle,
         num_islands                     = num_islands,
         migration_interval              = migration_interval,
