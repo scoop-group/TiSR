@@ -399,12 +399,13 @@ end
 """ Returns the equation grammar related parameters.
 """
 function grammar_params(;
-    max_compl::Int64                           = 30,                        # -> max allowed complexity
-    init_tree_depth::Int64                     = 5,                         # -> maximal initial tree depth. -> 3 ... 6
-    bank_of_terms::Vector{String}              = String[],                  # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
-    illegal_dict::Dict                         = Dict(),                    # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
-    custom_check_legal_before_fit::Function    = (node, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
-    weighted_compl_dict::Dict{String, Float64} = Dict(                      # -> weights for weighted_compl calculation. For any that are not included, 3.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
+    max_compl::Int64                           = 30,                              # -> max allowed complexity
+    init_tree_depth::Int64                     = 5,                               # -> maximal initial tree depth. -> 3 ... 6
+    bank_of_terms::Vector{String}              = String[],                        # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
+    illegal_dict::Dict                         = Dict(),                          # -> check for illegal nestings in existing nodes. For it, ops.illegal_dict needs to be specified like below. Variables can be specified using "VAR" and parameters with "PARAM". An example is shown below at (1).
+    custom_check_legal_before_fit::Function    = (node, data, ops) -> true,       # -> specify a custom function, which checks the legality of nodes. Must return true or false
+    custom_check_legal_after_fit::Function     = (node, pred, data, ops) -> true, # -> specify a custom function, which checks the legality of nodes. Must return true or false
+    weighted_compl_dict::Dict{String, Float64} = Dict(                            # -> weights for weighted_compl calculation. For any that are not included, 3.0 is assumed. The weights for variables and parameters "VAR" and "PARAM" may be used. An example is shown below at (2).
         "PARAM" => 1.2, "VAR"  => 1.0,
         "+"     => 1.2, "-"    => 1.4,
         "*"     => 1.0, "/"    => 1.6,
@@ -444,6 +445,7 @@ function grammar_params(;
         max_compl                     = max_compl,
         bank_of_terms                 = bank_of_terms,
         custom_check_legal_before_fit = custom_check_legal_before_fit,
+        custom_check_legal_after_fit  = custom_check_legal_after_fit,
     )
 end
 

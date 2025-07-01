@@ -25,17 +25,17 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
     #@timeit to "remove invalids" begin
         if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
             indiv.valid = false
-            return 0
+            return
         end
 
         if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
             indiv.valid = false
-            return 0
+            return
         end
 
         if !ops.grammar.custom_check_legal_before_fit(indiv.node, data, ops)
             indiv.valid = false
-            return 0
+            return
         end
     #end # @timeit
 
@@ -52,7 +52,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
             if visits > 1 && rand() < ops.general.seen_reject_prob # if rand() > 0.5^visits
                 #reject_rate[1] += 1 # DEBUG expression_log
                 indiv.valid = false
-                return 0
+                return
             end
         end
     #end # @timeit
@@ -70,6 +70,12 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
 
     indiv.valid = valid
     indiv.valid || return
+
+    # after fitting legal checks # -----------------------------------------------------------------
+    if !ops.grammar.custom_check_legal_after_fit(indiv.node, prediction, data, ops)
+        indiv.valid = false
+        return
+    end
 
     # calculate measures # -------------------------------------------------------------------------
     #@timeit to "calc measures" begin
