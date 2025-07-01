@@ -66,16 +66,3 @@ function adjust_ops_weights!(unaweights, binweights, ill_nexts, ops)
     end
 end
 
-""" Return the maximal number of nodes across all top-level terms.
-"""
-function get_max_nodes_per_term(node, ops)
-    if node.ari == 2 && ops.binops[node.ind] in (+, -)
-        return max(
-            get_max_nodes_per_term(node.lef, ops),
-            get_max_nodes_per_term(node.rig, ops)
-        )
-    else
-        return count_nodes(node)
-    end
-end
-

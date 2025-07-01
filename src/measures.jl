@@ -173,6 +173,19 @@ function get_one_minus_abs_spearman(pred::AbstractArray{T}, orig::AbstractArray{
     return isfinite(one_minus_abs_spear) ? one_minus_abs_spear : 1.0
 end
 
+""" Return the maximal number of nodes across all top-level terms.
+"""
+function get_max_nodes_per_term(node, ops)
+    if node.ari == 2 && ops.binops[node.ind] in (+, -)
+        return max(
+            get_max_nodes_per_term(node.lef, ops),
+            get_max_nodes_per_term(node.rig, ops)
+        )
+    else
+        return count_nodes(node)
+    end
+end
+
 function recursive_compl(
     node::Node,
     ops;
