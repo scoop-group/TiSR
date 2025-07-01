@@ -109,6 +109,7 @@ function Base.isless(i1::Individual, i2::Individual)
     if i1.rank != i2.rank
         return i1.rank < i2.rank
     else
-        return i1.crowding > i2.crowding
+        # return i1.crowding > i2.crowding
+        return !(i1.crowding < i2.crowding)
     end
 end
