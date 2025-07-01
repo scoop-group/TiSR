@@ -97,15 +97,9 @@ Base.show(io::IO, indiv::Individual) = println(io, "Indiv($(node_to_string(indiv
 """ The NSGA-II definition of isless.
 """
 function Base.isless(i1::Individual, i2::Individual)
-    if i1.rank < i2.rank
-        return true
-    elseif i1.rank > i2.rank
-        return false
+    if i1.rank != i2.rank
+        return i1.rank < i2.rank
     else
-        if i1.crowding < i2.crowding
-            return false
-        else
-            return true
-        end
+        return !(i1.crowding < i2.crowding)
     end
 end
