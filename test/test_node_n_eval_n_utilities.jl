@@ -131,7 +131,6 @@ end
     end
     @test all(.!isapprox.(copied, eqs_dict.vals))
 
-    # TODO: test whether type stays the same
      copied = map(copied) do node
          TiSR.convert_node(node, 1f0)
      end

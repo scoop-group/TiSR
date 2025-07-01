@@ -1,8 +1,4 @@
 
-# TODO: test drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
-# TODO: test drastic_simplify_!(node, ops; threshold=1e-1)
-# TODO: test get_drastic_simplify_nodes(node, ops; threshold=1e-1)
-# TODO: test is_drastic_simplifyable(node, ops; threshold=1e-1)
 
 pow2(x) = x^2
 pow_abs(x, y) = abs(x)^y
@@ -249,6 +245,35 @@ ops, data_vect = Options(
 
     @test simplified == right_ones
 end
+
+# @testset "more drastic_simplify" begin
+#
+#     for _ in 1:1000
+#         node = TiSR.grow_equation(rand(3:5), ops, method=:full)
+#         TiSR.apply_simple_simplifications!(node, ops)
+#
+#         TiSR.count_nodes(node) > 3 || continue
+#
+#         list_of_param = TiSR.list_of_param_nodes(node)
+#         for n in list_of_param
+#             n.val = rand((1.0, 0.0))
+#         end
+#
+#         is_simplifyable = TiSR.is_drastic_simplifyable(node, ops; threshold=1e-1)
+#         simplifyable_nodes = TiSR.get_drastic_simplify_nodes(node, ops; threshold=1e-1)
+#
+#         node_before = copy(node)
+#         TiSR.drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
+#
+#         if is_simplifyable
+#             @test !isempty(simplifyable_nodes)
+#             @test node_before != node
+#         else
+#             @test isempty(simplifyable_nodes)
+#             @test node_before == node
+#         end
+#     end
+# end
 
 @testset "node_to_symbolic" begin
 

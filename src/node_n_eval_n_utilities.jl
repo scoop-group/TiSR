@@ -264,7 +264,7 @@ end
 
 """ Compares two nodes and returns true if they are same.
 """
-Base.:(==)(node1::Node, node2::Node) = Base.isapprox(node1, node2, rtol=0.0)
+Base.:(==)(node1::Node, node2::Node) = typeof(node1) == typeof(node2) && Base.isapprox(node1, node2, rtol=0.0)
 
 """ Return an array containing the parameter nodes of a tree.
 """
