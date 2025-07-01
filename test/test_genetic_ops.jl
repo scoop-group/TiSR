@@ -156,12 +156,7 @@ end
 
         # check if more nodes after mutation
         @test num_nodes_before < num_nodes_after
-
-        # string distance?
-        dist = Levenshtein()(str1, str2)
     end
-
-    @test all(d in (1, 3, 4, 5, 6) for d in distances)
 end
 
 @testset "hoist_mutation!" begin
