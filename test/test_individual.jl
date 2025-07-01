@@ -2,7 +2,6 @@
 # TODO: integration test cur_max_compl
 # TODO: integration test fit_iter
 # TODO: integration test fit_individual!(indiv, data, ops, cur_max_compl, fit_iter)
-# TODO: test fastcopy(indiv::Individual) = Individual(deepcopy(indiv.node))
 
 data = rand(100, 10)
 ops, data_vect = Options(data)

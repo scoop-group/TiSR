@@ -94,10 +94,6 @@ end
 """
 Base.show(io::IO, indiv::Individual) = println(io, "Indiv($(node_to_string(indiv.node, __operators; sigdigits=3)))")
 
-""" Creates a new individual with same node as the provided one.
-"""
-fastcopy(indiv::Individual) = Individual(deepcopy(indiv.node))
-
 """ The NSGA-II definition of isless.
 """
 function Base.isless(i1::Individual, i2::Individual)

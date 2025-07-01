@@ -276,13 +276,13 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
     #@timeit to "genetic ops" begin
         if 0.8 * ops.general.pop_per_isle < length(pop) < 1.2 * ops.general.pop_per_isle
             for _ in 1:ops.general.pop_per_isle
-                push!(chil, fastcopy(parent_selection(pop)))
+                push!(chil, Individual(deepcopy(parent_selection(pop).node)))
             end
 
             apply_genetic_operations!(chil, ops, bank_of_terms)
 
             for _ in 1:ops.general.n_refitting
-                push!(chil, fastcopy(rand(pop)))
+                push!(chil, Individual(deepcopy(rand(pop).node)))
             end
         end
     #end # @timeit
