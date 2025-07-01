@@ -190,12 +190,12 @@ function recursive_compl(
     node::Node,
     ops;
     recursive_compl_dict = Dict(
-        :+       => (lef, rig) -> lef + rig,
-        :-       => (lef, rig) -> lef + rig,
-        :*       => (lef, rig) -> (lef + rig)           + 1.0,
-        :/       => (lef, rig) -> (1.5 * lef + 2 * rig) + 1.0,
-        :^       => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
-        :pow_abs => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
+        :+   => (lef, rig) -> lef + rig,
+        :-   => (lef, rig) -> lef + rig,
+        :*   => (lef, rig) -> (lef + rig)           + 1.0,
+        :/   => (lef, rig) -> (1.5 * lef + 2 * rig) + 1.0,
+        :^   => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
+        :pow => (lef, rig) -> (1.5 * lef + 3 * rig) + 1.0,
     ),
     una_nest_pen = 3,
 )
@@ -214,7 +214,8 @@ function recursive_compl(
         )
         cur_op = Symbol(ops.binops[node.ind])
 
-        compl = recursive_compl_dict[cur_op](compl_lef, compl_rig)
+        cur_fun = get(recursive_compl_dict, cur_op, (lef, rig) -> 3 * lef + 3 * rig + 1.0)
+        compl = cur_fun(compl_lef, compl_rig)
 
     elseif node.ari == 1
         compl_lef = recursive_compl(
