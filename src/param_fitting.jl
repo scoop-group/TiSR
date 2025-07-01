@@ -51,31 +51,37 @@ function fit_n_eval!(node, data, ops; do_fit = true, do_constr = true)
     end
 
     if do_fit && !isempty(list_of_param)
-        if rand() < ops.fitting.NM_prob
-            fitting_Optim!(
-                node, data, ops, list_of_param, ops.fitting.NM_iter,
-                Optim.NelderMead()
-            )
-        else
-            fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
-        end
-
-        if do_constr && (!isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr))
-            pred, valid = eval_equation(node, data, ops)
-            valid || return pred, valid
-
-            pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
-            mare = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
-
-            if mare < ops.fitting.max_mare_for_constr_fit
-                fitting_w_constr!(node, data, ops, list_of_param, ops.fitting.additional_constr_fit_iter)
+        #@timeit to "fitting only" begin
+            if rand() < ops.fitting.NM_prob
+                fitting_Optim!(
+                    node, data, ops, list_of_param, ops.fitting.NM_iter,
+                    Optim.NelderMead()
+                )
+            else
+                fitting_LM!(node, data, ops, list_of_param, ops.fitting.max_iter)
             end
-        end
+        #end # @timeit
+
+        #@timeit to "constrained fit" begin
+            if do_constr && (!isempty(ops.fitting.eq_constr) || !isempty(ops.fitting.ineq_constr))
+                pred, valid = eval_equation(node, data, ops)
+                valid || return pred, valid
+
+                pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
+                mare = mean(abs, (pred .- data[end]) ./ (data[end] .+ inv(ops.general.replace_inf)))
+
+                if mare < ops.fitting.max_mare_for_constr_fit
+                    fitting_w_constr!(node, data, ops, list_of_param, ops.fitting.additional_constr_fit_iter)
+                end
+            end
+        #end # @timeit
     end
 
-    # final evaluation
-    pred, valid = eval_equation(node, data, ops)
-    pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
+    #@timeit to "final evaluation" begin
+        pred, valid = eval_equation(node, data, ops)
+        pred = ops.fitting.pre_residual_processing(pred, eachindex(pred), ops)
+    #end # @timeit
+
     return pred, valid
 end
 
