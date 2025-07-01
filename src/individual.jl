@@ -24,7 +24,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
 
     # remove invalids # ----------------------------------------------------------------------------
     #@timeit to "remove invalids" begin
-        if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
+        if !(ops.grammar.min_compl <= count_nodes(indiv.node) <= min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment))
             indiv.valid = 1
             return
         end

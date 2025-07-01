@@ -399,6 +399,7 @@ end
 """ Returns the equation grammar related parameters.
 """
 function grammar_params(;
+    min_compl::Int64                           = 3,                               # -> min allowed complexity -> min_compl of 1 may lead to overpopulation of compl=1 individuals
     max_compl::Int64                           = 30,                              # -> max allowed complexity
     init_tree_depth::Int64                     = 5,                               # -> maximal initial tree depth. -> 3 ... 6
     bank_of_terms::Vector{String}              = String[],                        # -> specify terms that can be added via the add term mutation, whose relativ probability is set via the p_add_from_bank_of_terms parameter
@@ -416,8 +417,9 @@ function grammar_params(;
         "exp"   => 3.0, "log"  => 3.0,
     ),
 )
-    @assert max_compl > 3          "max_compl must be larger than 3"
-    @assert init_tree_depth > 2    "init_tree_depth should be 3 or higher"
+    @assert max_compl > 3             "max_compl must be larger than 3"
+    @assert 0 < min_compl < max_compl "min_compl must be between 1 and max_compl"
+    @assert init_tree_depth > 2       "init_tree_depth should be 3 or higher"
 
     if !isempty(illegal_dict)
         @assert illegal_dict isa Dict                  "illegal_dict is not formatted correctly"
@@ -436,12 +438,14 @@ function grammar_params(;
     @assert weighted_compl_dict isa Dict{String, Float64} "weighted_compl_dict is not formatted correctly"
 
     max_compl > 100     && @warn "a high max_compl may lead to high calculation times"
+    min_compl == 1      && @warn "min_compl of 1 may lead to overpopulation of compl=1 individuals"
     init_tree_depth > 6 && @warn "a high init_tree_depth may lead to high calculation times"
 
     return (
         illegal_dict                  = illegal_dict,
         weighted_compl_dict           = weighted_compl_dict,
         init_tree_depth               = init_tree_depth,
+        min_compl                     = min_compl,
         max_compl                     = max_compl,
         bank_of_terms                 = bank_of_terms,
         custom_check_legal_before_fit = custom_check_legal_before_fit,
