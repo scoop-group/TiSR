@@ -310,14 +310,14 @@ function one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_c
             perform_population_selection!(pop, ops, isle)
         #end # @timeit
     elseif isempty(pop) && trial < 100
-        println("all individuals filtered due to the following:")
+        println("all individuals filtered due to:")
         exit_code_strings = ["max_compl", "illegal_dict", "custom_check_legal_before_fit", "seen", "evaluation", "custom_check_legal_after_fit", "non-finite measure"]
         display(Dict(exit_code_strings[i] => count(==(i), invalids) for i in unique(invalids)))
         println("redoing generation $trial / 100")
 
         one_isle_one_generation!(pop, chil, bank_of_terms, data, ops, cur_max_compl, expression_log, isle, trial=trial+1)
     elseif isempty(pop)
-        println("all individuals filtered due to the following:")
+        println("all individuals filtered due to:")
         exit_code_strings = ["max_compl", "illegal_dict", "custom_check_legal_before_fit", "seen", "evaluation", "custom_check_legal_after_fit", "non-finite measure"]
         display(Dict(exit_code_strings[i] => count(==(i), invalids) for i in unique(invalids)))
 
