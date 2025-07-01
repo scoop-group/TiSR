@@ -145,6 +145,26 @@ function apply_simple_simplifications!(node, ops)
 end
 
 # ==================================================================================================
+# SymbolicUtils simplify -> used as a genetic operation
+# ==================================================================================================
+""" Converts a node to a SymbolicUtils expression. Partially inspired by SymbolicRegression.jl
+"""
+function node_to_symbolic(node::Node, ops::Options)
+    if node.ari == -1
+        return node.val
+    elseif node.ari == 0
+        return SymbolicUtils.Sym{Real}(Symbol("v$(node.ind)"))
+    elseif node.ari == 1
+        lef = node_to_symbolic(node.lef, ops)
+        return ops.unaops[node.ind](lef)
+    elseif node.ari == 2
+        lef = node_to_symbolic(node.lef, ops)
+        rig = node_to_symbolic(node.rig, ops)
+        return ops.binops[node.ind](lef, rig)
+    end
+end
+
+# ==================================================================================================
 # simplify drasticly -> not neccessarily the same & used as a genetic operation
 # ==================================================================================================
 """ This simplification changes the node. It is used as a genetic operation and not a
@@ -249,23 +269,4 @@ function drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go
     end
 end
 
-# ==================================================================================================
-# SymbolicUtils simplify -> used as a genetic operation
-# ==================================================================================================
-""" Converts a node to a SymbolicUtils expression. Partially inspired by SymbolicRegression.jl
-"""
-function node_to_symbolic(node::Node, ops::Options)
-    if node.ari == -1
-        return node.val
-    elseif node.ari == 0
-        return SymbolicUtils.Sym{Real}(Symbol("v$(node.ind)"))
-    elseif node.ari == 1
-        lef = node_to_symbolic(node.lef, ops)
-        return ops.unaops[node.ind](lef)
-    elseif node.ari == 2
-        lef = node_to_symbolic(node.lef, ops)
-        rig = node_to_symbolic(node.rig, ops)
-        return ops.binops[node.ind](lef, rig)
-    end
-end
 
