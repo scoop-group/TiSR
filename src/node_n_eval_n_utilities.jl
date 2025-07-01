@@ -184,15 +184,15 @@ end
 
 """ Copy a node without using deepcopy -> 9/10 taken from SymbolicRegression.jl
 """
-function Base.copy(node::Node)::Node
+function Base.copy(node::Node{T})::Node{T} where {T <: Number}
     if node.ari == -1
-        return Node(copy(node.val))
+        return Node(copy(node.val), val_type=T(1.0))
     elseif node.ari == 0
-        return Node(copy(node.ind))
+        return Node(copy(node.ind), val_type=T(1.0))
     elseif node.ari == 1
-        return Node(copy(node.ind), Base.copy(node.lef))
+        return Node(copy(node.ind), Base.copy(node.lef), val_type=T(1.0))
     elseif node.ari == 2
-        return Node(copy(node.ind), Base.copy(node.lef), Base.copy(node.rig))
+        return Node(copy(node.ind), Base.copy(node.lef), Base.copy(node.rig), val_type=T(1.0))
     end
 end
 

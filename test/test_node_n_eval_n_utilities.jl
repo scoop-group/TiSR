@@ -132,16 +132,15 @@ end
     @test all(.!isapprox.(copied, eqs_dict.vals))
 
     # TODO: test whether type stays the same
-    # copied = map(copied) do node
-    #     TiSR.convert_node(node, 1f0)
-    # end
-    # copied isa Vector{Node{Float32}}
-    #
-    # deepcopy.(copied)
-    #
-    # deepcopy.(eqs_dict.vals)
-    #
-    # @test all(.!isapprox.(copied, eqs_dict.vals))
+     copied = map(copied) do node
+         TiSR.convert_node(node, 1f0)
+     end
+     copied isa Vector{Node{Float32}}
+
+     @test typeof(copied) == typeof(copy.(copied))
+     @test all(copied .== copy.(copied))
+
+     @test all(.!isapprox.(copied, eqs_dict.vals))
 end
 
 @testset "copy_node_wo_copy!" begin
