@@ -1,8 +1,8 @@
 
 mutable struct Individual
     node::Node
-    valid::Bool
-    rank::Int64
+    valid::Int8
+    rank::Int16
     crowding::Float64
     age::Float64
     measures::NamedTuple
@@ -12,7 +12,8 @@ mutable struct Individual
 end
 
 function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
-    indiv.age = 0.0
+    indiv.age   = 0.0
+    indiv.valid = 0
 
     # prepare node -> simplify, trim, reorder # ----------------------------------------------------
     #@timeit to "prepare node" begin
@@ -24,17 +25,17 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
     # remove invalids # ----------------------------------------------------------------------------
     #@timeit to "remove invalids" begin
         if count_nodes(indiv.node) > min(ops.grammar.max_compl, cur_max_compl + ops.general.adaptive_compl_increment)
-            indiv.valid = false
+            indiv.valid = 1
             return
         end
 
         if !isempty(ops.grammar.illegal_dict) && !is_legal_nesting(indiv.node, ops)
-            indiv.valid = false
+            indiv.valid = 2
             return
         end
 
         if !ops.grammar.custom_check_legal_before_fit(indiv.node, data, ops)
-            indiv.valid = false
+            indiv.valid = 3
             return
         end
     #end # @timeit
@@ -51,7 +52,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
             #end # @timeit
             if visits > 1 && rand() < ops.general.seen_reject_prob # if rand() > 0.5^visits
                 #reject_rate[1] += 1 # DEBUG expression_log
-                indiv.valid = false
+                indiv.valid = 4
                 return
             end
         end
@@ -68,12 +69,14 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
         )
     #end # @timeit
 
-    indiv.valid = valid
-    indiv.valid || return
+    if !valid
+        indiv.valid = 5
+        return
+    end
 
     # after fitting legal checks # -----------------------------------------------------------------
     if !ops.grammar.custom_check_legal_after_fit(indiv.node, prediction, data, ops)
-        indiv.valid = false
+        indiv.valid = 6
         return
     end
 
@@ -90,7 +93,7 @@ function fit_individual!(indiv, data, ops, cur_max_compl, expression_log, isle)
     #end # @timeit
 
     if any(!isfinite(v) for v in values(indiv.measures))
-        indiv.valid = false
+        indiv.valid = 7
     end
 
     return
