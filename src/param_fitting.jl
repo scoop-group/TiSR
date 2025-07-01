@@ -192,6 +192,10 @@ function fitting_w_constr!(node, data, ops, list_of_param, max_iter)
 
     x0 = [n.val for n in list_of_param]
 
+    if sum(abs2, eq_constr(x0)) + sum(abs2, max.(0.0, ineq_constr(x0))) < ops.fitting.constr_tol
+        return
+    end
+
     x_best, trace, stop_msg, valid = penalty_method(
         minim, eq_constr, ineq_constr, x0,
         max_iter                   = max_iter,
