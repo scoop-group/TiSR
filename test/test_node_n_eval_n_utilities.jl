@@ -89,7 +89,7 @@ end
 
     max_diffs = map(1:500) do _
         node, pred = gen_valid_node(ops, data, rand(1:6))
-        str = TiSR.node_to_string(node, ops, sigdigits=3) # TODO: continue here
+        str = TiSR.node_to_string(node, ops, sigdigits=3)
 
         julia_pred = eval(Meta.parse("@. " * str))
 

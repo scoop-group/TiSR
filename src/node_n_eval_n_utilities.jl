@@ -138,7 +138,7 @@ Base.show(io::IO, node::Node) = print(io, node_to_string(node, __operators; sigd
 
 """ Convert a node to a string. This is also used to display nodes.
 """
-node_to_string(node::Node, ops; sigdigits=15) = node_to_string_(node, ops, sigdigits)
+node_to_string(node::Node, ops; sigdigits=20) = node_to_string_(node, ops, sigdigits)
 
 function node_to_string_(node::Node, ops, sigdigits)
     if node.ari == 2
