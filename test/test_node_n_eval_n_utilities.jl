@@ -4,6 +4,19 @@ ops, data_vect = Options(data)
 
 include("hardcoded_equations.jl") # tests also the Node constructors
 
+function round_node!(node::Node; sigdigits = 3)
+    if node.ari >= 1
+        round_node!(node.lef, sigdigits = sigdigits)
+        if node.ari == 2
+            round_node!(node.rig, sigdigits = sigdigits)
+        end
+    end
+
+    if node.ari == -1
+        node.val = round(node.val, sigdigits=sigdigits)
+    end
+end
+
 @testset "convert_node" begin
     node = nothing
     while true
@@ -62,8 +75,10 @@ end
     global v8 = data[8]
     global v9 = data[9]
 
+
     function gen_valid_node(ops, data, compl)
         node = TiSR.grow_equation(5, ops)
+        round_node!(node, sigdigits=3)
         pred, valid = TiSR.eval_equation(node, data, ops)
         if valid
             return node, pred
@@ -74,7 +89,7 @@ end
 
     max_diffs = map(1:500) do _
         node, pred = gen_valid_node(ops, data, rand(1:6))
-        str = TiSR.node_to_string(node, ops) # TODO: continue here
+        str = TiSR.node_to_string(node, ops, sigdigits=3) # TODO: continue here
 
         julia_pred = eval(Meta.parse("@. " * str))
 
@@ -84,13 +99,10 @@ end
             return maximum(a_diff)
         end
         r_diff = abs.(a_diff ./ julia_pred)
-
         return maximum(min.(a_diff, r_diff))
     end
 
     @test count(>(1e-10), max_diffs) < 10
-
-    # TODO: test ForwardDiff with eval_equation
 end
 
 @testset "node_to_string" begin
