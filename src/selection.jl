@@ -136,6 +136,8 @@ function perform_population_selection!(pop, ops, isle)
         pop[i].crowding = crowding[i]
     end
 
+    length(pop) > ops.general.pop_per_isle || return
+
     # Pareto selection # -------------------------------------------------------------------
     selection_inds = Int64[]
 
