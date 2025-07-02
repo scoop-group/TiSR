@@ -172,101 +172,105 @@ end
     Like x + 1e-5 -> x, x * 1e-5 -> 1e-5
     In the latter example, the 1e-5 will again be detected and removed on the level above.
 """
-function is_drastic_simplifyable(node, ops; threshold=1e-1)
-    bool = false
-    if node.ari >= 1
-        bool = is_drastic_simplifyable(node.lef, ops, threshold=threshold)
-        if node.ari == 2 && !bool
-            bool = is_drastic_simplifyable(node.rig, ops, threshold=threshold)
+function drastic_simplify_!(node, ops; threshold = 1e-1, mode = :check)
+
+    node.ari == 2 || return false
+    (node.lef.ari == -1 || node.rig.ari == -1) || return false
+
+    node_1       = getfield(node, node.lef.ari != -1 ? :lef : :rig)
+    node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
+
+    op = ops.binops[node.ind]
+    if abs(node_1_param.val) < threshold           # if parameter 0.0
+        if op in (+, -)                            # x + 0.0 -> x
+            if mode == :do
+                copy_node_wo_copy!(node, node_1)
+            end
+            return true
+        elseif (op == *)                           # x * 0.0 -> 0.0
+            if mode == :do
+                copy_node_wo_copy!(node, node_1_param)
+            end
+            return true
+        elseif (op == ^) && node.rig.ari == -1     # x^0.0 -> 1.0
+            if mode == :do
+                node.rig.val = 1.0
+                copy_node_wo_copy!(node, node.rig)
+            end
+            return true
+        elseif (op == ^) && node.lef.ari == -1     # 0.0^x -> 0
+            if mode == :do
+                node.lef.val = 0.0
+                copy_node_wo_copy!(node, node.lef)
+            end
+            return true
+        elseif (op == /) && node.lef.ari == -1     # 0.0 / x -> 0.0
+            if mode == :do
+                copy_node_wo_copy!(node, node.lef)
+            end
+            return true
+        end
+    elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
+        if (op == *)                               # 1.0 * x -> x
+            if mode == :do
+                copy_node_wo_copy!(node, node_1)
+            end
+            return true
+        elseif (op == /) && node.rig.ari == -1     # x / 1.0 -> x
+            if mode == :do
+                copy_node_wo_copy!(node, node_1)
+            end
+            return true
+        elseif (op == ^) && node.rig.ari == -1     # x^1.0 -> x
+            if mode == :do
+                copy_node_wo_copy!(node, node.lef)
+            end
+            return true
+        elseif (op == ^) && node.lef.ari == -1     # 1.0^x -> 1.0
+            if mode == :do
+                copy_node_wo_copy!(node, node.lef)
+            end
+            return true
         end
     end
-    if !bool && node.ari == 2 && (node.lef.ari == -1 || node.rig.ari == -1) # if param either is a parameter
-        op = ops.binops[node.ind]
-        node_1       = getfield(node, node.lef.ari != -1 ? :lef : :rig)
-        node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
-        if abs(node_1_param.val) < threshold           # if parameter 0.0
-            if op in (+, -, *, ^, /)
-                return true
-            end
-        elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
-            if op in (*, ^) || ((op == /) && node.rig.ari == -1)
-                return true
-            end
-        end
-    end
-    return bool
+    return false
 end
 
-function get_drastic_simplify_nodes(node, ops; threshold=1e-1)
-    nodes = Node[]
-    if node.ari >= 1
-        append!(nodes, get_drastic_simplify_nodes(node.lef, ops, threshold=threshold))
-        if node.ari == 2
-            append!(nodes, get_drastic_simplify_nodes(node.rig, ops, threshold=threshold))
+function is_drastic_simplifyable(node, ops; threshold = 1e-1)
+    is = drastic_simplify_!(node, ops, threshold = threshold, mode = :check)
+    if !is && node.ari >= 1
+        is = is_drastic_simplifyable(node.lef, ops; threshold = threshold)
+        if !is && node.ari == 2
+            is = is_drastic_simplifyable(node.rig, ops; threshold = threshold)
         end
     end
-    if node.ari == 2 && (node.lef.ari == -1 || node.rig.ari == -1) # if param is 0.0
-        op = ops.binops[node.ind]
-        node_1       = getfield(node, node.lef.ari != -1 ? :lef : :rig)
-        node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
-        if abs(node_1_param.val) < threshold           # if parameter 0.0
-            if op in (+, -, *, ^, /)
-                return push!(nodes, node)
-            end
-        elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
-            if op in (*, ^) || ((op == /) && node.rig.ari == -1)
-                return push!(nodes, node)
-            end
+    return is
+end
+
+function get_drastic_simplify_nodes(node, ops; threshold = 1e-1)
+    nodes = Node[]
+    if node.ari >= 1
+        append!(nodes, get_drastic_simplify_nodes(node.lef, ops, threshold = threshold))
+        if node.ari == 2
+            append!(nodes, get_drastic_simplify_nodes(node.rig, ops, threshold = threshold))
         end
+    end
+
+    if drastic_simplify_!(node, ops, threshold = threshold, mode = :check)
+        push!(nodes, node)
     end
     return nodes
 end
 
-function drastic_simplify_!(node, ops; threshold=1e-1)
-    op = ops.binops[node.ind]
-    if (node.lef.ari == -1 || node.rig.ari == -1) # if param is 0.0
-        node_1       = getfield(node, node.lef.ari != -1 ? :lef : :rig)
-        node_1_param = getfield(node, node.lef.ari != -1 ? :rig : :lef)
+function drastic_simplify!(node, ops; threshold = 1e-1, full = false) # TODO: can go in infinite loop
+    is_drastic_simplifyable(node, ops, threshold = threshold) || return
 
-        if abs(node_1_param.val) < threshold           # if parameter 0.0
-            if op in (+, -)                        # x + 0.0 -> x
-                copy_node_wo_copy!(node, node_1)
-            elseif (op == *)                       # x * 0.0 -> 0.0
-                copy_node_wo_copy!(node, node_1_param)
-            elseif (op == ^) && node.rig.ari == -1 # x^0.0 -> 1.0
-                node.rig.val = 1.0
-                copy_node_wo_copy!(node, node.rig)
-            elseif (op == ^) && node.lef.ari == -1 # 0.0^x -> 0
-                node.lef.val = 0.0
-                copy_node_wo_copy!(node, node.lef)
-            elseif (op == /) && node.lef.ari == -1 # 0.0 / x -> 0.0
-                copy_node_wo_copy!(node, node.lef)
-            end
-        elseif abs(1.0 - node_1_param.val) < threshold # if parameter 1.0
-            if (op == *)                           # 1.0 * x -> x
-                copy_node_wo_copy!(node, node_1)
-            elseif (op == /) && node.rig.ari == -1 # x / 1.0 -> x
-                copy_node_wo_copy!(node, node_1)
-            elseif (op == ^) && node.rig.ari == -1 # x^1.0 -> x
-                copy_node_wo_copy!(node, node.lef)
-            elseif (op == ^) && node.lef.ari == -1 # 1.0^x -> 1.0
-                copy_node_wo_copy!(node, node.lef)
-            end
-        end
+    drastic_nodes = get_drastic_simplify_nodes(node, ops; threshold = threshold)
+    drastic_node = rand(drastic_nodes)
+    drastic_simplify_!(drastic_node, ops; threshold = threshold, mode = :do)
+
+    if full
+        drastic_simplify!(node, ops; threshold = threshold, full = full)
     end
 end
-
-function drastic_simplify!(node, ops; threshold=1e-1, full=false) # TODO: can go in infinite loop
-    while true
-        drastic_nodes = get_drastic_simplify_nodes(node, ops; threshold=threshold)
-        shuffle!(drastic_nodes)
-        for n in drastic_nodes
-            drastic_simplify_!(n, ops; threshold=threshold)
-            full || break
-        end
-        full || break
-        is_drastic_simplifyable(node, ops; threshold=threshold) || break
-    end
-end
-
 
