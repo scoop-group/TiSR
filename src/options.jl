@@ -464,7 +464,7 @@ function mutation_params(;                     #|-> probabilites for the various
     p_insert::Float64                 = 2.0,   #|
     p_hoist::Float64                  = 2.0,   #|
     p_subtree::Float64                = 0.5,   #|
-    p_drastic_simplify::Float64       = 1.0,   #|-> remove parameter nodes with small values and simplify accordingly
+    p_drastic_simplify::Float64       = 2.0,   #|-> remove parameter nodes with small values and simplify accordingly
     p_insert_times_param::Float64     = 0.1,   #|
     p_add_term::Float64               = 0.1,   #|
     p_add_from_bank_of_terms::Float64 = 0.0,   #|-> probability to add a term from the provided bank_of_terms
