@@ -313,3 +313,69 @@ end
 function get_measure_virgolin_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
     virgolin_compl(node, ops)
 end
+
+# ==================================================================================================
+# similar term
+# ==================================================================================================
+
+""" Compares two nodes and returns true if they are approx. same.
+"""
+function isapprox_structure(node1::Node, node2::Node)
+    node1.ari == node2.ari || return false
+    if node1.ari >= 1
+        node1.ind == node2.ind || return false
+        isapprox_structure(node1.lef, node2.lef) || return false
+        if node1.ari == 2
+            node1.ind == node2.ind || return false
+            isapprox_structure(node1.rig, node2.rig) || return false
+        end
+    end
+    return true
+end
+
+function discount_similar_terms(node, ops)
+    if node.ari == 1
+        return discount_similar_terms(node.lef, ops) + 1.0
+
+    elseif node.ari == 2
+        cur = (ops.binops[node.ind] in (+, -))
+
+        lef = discount_similar_terms(node.lef, ops)
+        rig = discount_similar_terms(node.rig, ops)
+
+        if cur && node.lef.ari > 0 && node.rig.ari > 0 && isapprox_structure(node.lef, node.rig)
+            return lef + 0.1 * rig + 1.0
+        else
+            return lef + rig + 1.0
+        end
+    else
+        return 1.0
+    end
+end
+
+function discount_similar_terms(node, ops)
+    if node.ari == 1
+        return discount_similar_terms(node.lef, ops) + 1.0, nothing
+
+    elseif node.ari == 2
+        cur = (ops.binops[node.ind] in (+, -))
+
+        lef, prev_lef = discount_similar_terms(node.lef, ops)
+        rig, prev_rig = discount_similar_terms(node.rig, ops)
+
+        if cur && !isnothing(prev_lef) && node.rig.ari > 0 && isapprox_structure(prev_lef, node.rig)
+            return lef + 0.1 * rig + 1.0, prev_lef
+
+        elseif cur && !isnothing(prev_rig) && node.lef.ari > 0 && isapprox_structure(prev_rig, node.lef)
+            return rig + 0.1 * lef + 1.0, prev_rig
+
+        elseif cur && node.lef.ari > 0 && node.rig.ari > 0 && isapprox_structure(node.lef, node.rig)
+            return lef + 0.1 * rig + 1.0, node.lef
+        else
+            return lef + rig + 1.0, nothing
+        end
+    else
+        return 1.0, nothing
+    end
+end
+
