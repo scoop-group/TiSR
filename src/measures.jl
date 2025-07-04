@@ -251,3 +251,65 @@ function get_measure_constr_vios(prediction::Vector{T}, target::Vector{T}, node,
     return sum(abs, sum(abs2, f(node_func, params)) for f in ops.fitting.all_constr_f_select; init = 0.0)
 end
 
+# ==================================================================================================
+# virgolin_compl
+# ==================================================================================================
+function count_ops(node)
+    if node.ari == 1
+        return count_ops(node.lef) + 1.0
+    elseif node.ari == 2
+        return count_ops(node.lef) + count_ops(node.rig) + 1.0
+    else
+        return 0.0
+    end
+end
+
+function count_non_arith_ops(node, ops)
+    if node.ari == 1
+        return count_non_arith_ops(node.lef, ops) + 1.0
+    elseif node.ari == 2
+        return (
+            count_non_arith_ops(node.lef, ops) +
+            count_non_arith_ops(node.rig, ops) +
+            (ops.binops[node.ind] in (+, -, *, /) ? 0.0 : 1.0)
+        )
+    else
+        return 0.0
+    end
+end
+
+function count_cons_non_arith_ops(node, ops)
+    if node.ari == 1
+        n_lef, prev_lef = count_cons_non_arith_ops(node.lef, ops)
+        n_lef += prev_lef ? 1.0 : 0.0
+        return n_lef, true
+
+    elseif node.ari == 2
+        cur = !(ops.binops[node.ind] in (+, -, *, /))
+
+        n_lef, prev_lef = count_cons_non_arith_ops(node.lef, ops)
+        n_rig, prev_rig = count_cons_non_arith_ops(node.rig, ops)
+
+        n_lef += prev_lef & cur ? 1.0 : 0.0
+        n_rig += prev_rig & cur ? 1.0 : 0.0
+
+        return n_lef + n_rig, cur
+    else
+        return 0.0, false
+    end
+end
+
+""" complexity measure for SR from Virgolin et al. 2020
+"""
+function virgolin_compl(node, ops)
+    return (
+        0.2 * count_nodes(node) +
+        0.5 * count_ops(node) +
+        3.4 * count_non_arith_ops(node, ops) +
+        4.5 * count_cons_non_arith_ops(node, ops)[1]
+    )
+end
+
+function get_measure_virgolin_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    virgolin_compl(node, ops)
+end
