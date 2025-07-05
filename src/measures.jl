@@ -57,6 +57,18 @@ function get_measure_ms_processed_e(prediction::Vector{T}, target::Vector{T}, no
                             .* ops.data_descript.fit_weights[inds])
 end
 
+function get_one_minus_r2(pred::Vector{T}, orig::Vector{T})::T where {T}
+    total_sum_of_squares = sum(abs2, orig .- mean(orig))
+    sum_of_squares_pred = sum(abs2, pred .- orig)
+    return 1.0-(1.0 - sum_of_squares_pred / total_sum_of_squares)
+end
+
+function get_one_minus_abs_spearman(pred::AbstractArray{T}, orig::AbstractArray{T})::T where {T}
+    one_minus_abs_spear = 1.0-abs(corspearman(pred, orig))
+    return isfinite(one_minus_abs_spear) ? one_minus_abs_spear : 1.0
+end
+
+
 """ Various pre-implemented measures -> test versions.
 """
 function get_measure_max_ae_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
@@ -120,14 +132,9 @@ end
 function get_measure_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
     count_nodes(node)
 end
-function get_measure_weighted_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
-    get_weighted_compl(node, ops)
-end
+
 function get_measure_n_params(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
     length(list_of_param_nodes(node))
-end
-function get_measure_recursive_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
-    recursive_compl(node, ops)
 end
 
 function get_measure_max_nodes_per_term(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
@@ -142,10 +149,28 @@ function get_measure_cross_compl(prediction::Vector{T}, target::Vector{T}, node,
     get_max_nodes_per_term(node, ops) + get_weighted_compl(node, ops)
 end
 
-""" calculate the weighted_coml of a node. The weights for the functions and terminals are provided
-    by ops.grammar.weighted_compl_dict. Weights for variables and parameters can be set using "VAR"
-    and "PARAM", respectively. For any funciton or terminal not specified, 3.0 is assumed.
-"""
+function get_max_nodes_per_term(node, ops)
+    if node.ari == 2 && ops.binops[node.ind] in (+, -)
+        return max(
+            get_max_nodes_per_term(node.lef, ops),
+            get_max_nodes_per_term(node.rig, ops)
+        )
+    else
+        return count_nodes(node)
+    end
+end
+
+function get_max_depth_per_term(node, ops)
+    if node.ari == 2 && ops.binops[node.ind] in (+, -)
+        return max(
+            get_max_depth_per_term(node.lef, ops),
+            get_max_depth_per_term(node.rig, ops)
+        )
+    else
+        return maxim_tree_depth(node)
+    end
+end
+
 function get_weighted_compl(node, ops)::Float64
     if node.ari == 2
         cur_fun = string(ops.binops[node.ind])
@@ -162,28 +187,8 @@ function get_weighted_compl(node, ops)::Float64
     end
 end
 
-function get_one_minus_r2(pred::Vector{T}, orig::Vector{T})::T where {T}
-    total_sum_of_squares = sum(abs2, orig .- mean(orig))
-    sum_of_squares_pred = sum(abs2, pred .- orig)
-    return 1.0-(1.0 - sum_of_squares_pred / total_sum_of_squares)
-end
-
-function get_one_minus_abs_spearman(pred::AbstractArray{T}, orig::AbstractArray{T})::T where {T}
-    one_minus_abs_spear = 1.0-abs(corspearman(pred, orig))
-    return isfinite(one_minus_abs_spear) ? one_minus_abs_spear : 1.0
-end
-
-""" Return the maximal number of nodes across all top-level terms.
-"""
-function get_max_nodes_per_term(node, ops)
-    if node.ari == 2 && ops.binops[node.ind] in (+, -)
-        return max(
-            get_max_nodes_per_term(node.lef, ops),
-            get_max_nodes_per_term(node.rig, ops)
-        )
-    else
-        return count_nodes(node)
-    end
+function get_measure_weighted_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    get_weighted_compl(node, ops)
 end
 
 function recursive_compl(
@@ -234,6 +239,10 @@ function recursive_compl(
     end
 
     return min(floatmax(), compl)
+end
+
+function get_measure_recursive_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    recursive_compl(node, ops)
 end
 
 function get_measure_constr_vios(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
@@ -318,7 +327,8 @@ end
 # similar term
 # ==================================================================================================
 
-""" Compares two nodes and returns true if they are approx. same.
+""" Compares two nodes and returns true if their structure is the same;
+    variables and parameter values are not compared.
 """
 function isapprox_structure(node1::Node, node2::Node)
     node1.ari == node2.ari || return false
@@ -333,49 +343,67 @@ function isapprox_structure(node1::Node, node2::Node)
     return true
 end
 
-function discount_similar_terms(node, ops)
-    if node.ari == 1
-        return discount_similar_terms(node.lef, ops) + 1.0
+function collect_terms(node, ops)
+    if node.ari == 2 && (ops.binops[node.ind] in (+, -))
+        return vcat(collect_terms(node.lef, ops), collect_terms(node.rig, ops))
+    else
+        return [node]
+    end
+end
 
-    elseif node.ari == 2
-        cur = (ops.binops[node.ind] in (+, -))
+function discount_similar_terms(node, ops; discount_factor = 0.1)
+    if node.ari == 2
+        if (ops.binops[node.ind] in (+, -))
+            terms = collect_terms(node, ops)
+            c = Float64(length(terms)) - 1.0
 
-        lef = discount_similar_terms(node.lef, ops)
-        rig = discount_similar_terms(node.rig, ops)
+            while !isempty(terms)
+                term = popfirst!(terms)
+                c_cur = discount_similar_terms(term, ops; discount_factor = discount_factor)
 
-        if cur && node.lef.ari > 0 && node.rig.ari > 0 && isapprox_structure(node.lef, node.rig)
-            return lef + 0.1 * rig + 1.0
+                inds = findall(t -> isapprox_structure(term, t), terms)
+                if !isnothing(inds)
+                    deleteat!(terms, inds)
+                    c += c_cur * (1 + length(inds) * discount_factor)
+                else
+                    c += c_cur
+                end
+            end
+            return c
         else
+            lef = discount_similar_terms(node.lef, ops; discount_factor = discount_factor)
+            rig = discount_similar_terms(node.rig, ops; discount_factor = discount_factor)
             return lef + rig + 1.0
         end
+    elseif node.ari == 1
+        return discount_similar_terms(node.lef, ops; discount_factor = discount_factor) + 1.0
     else
         return 1.0
     end
 end
 
-function discount_similar_terms(node, ops)
-    if node.ari == 1
-        return discount_similar_terms(node.lef, ops) + 1.0, nothing
+function get_measure_discount_similar_terms_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    discount_similar_terms(node, ops)
+end
 
-    elseif node.ari == 2
-        cur = (ops.binops[node.ind] in (+, -))
+# ==================================================================================================
+# adapted virgolin_compl
+# ==================================================================================================
+function beauty_compl(node, ops)
+    return (
+        0.2 * count_nodes(node) +
+        0.5 * count_ops(node) +
+        3.4 * count_non_arith_ops(node, ops) +
+        4.5 * count_cons_non_arith_ops(node, ops)[1] +
 
-        lef, prev_lef = discount_similar_terms(node.lef, ops)
-        rig, prev_rig = discount_similar_terms(node.rig, ops)
+        3.0 * get_max_depth_per_term(node, ops) +
+        2.0 * discount_similar_terms(node, ops) +
+        0.5 * get_weighted_compl(node, ops) +
+        0.2 * recursive_compl(node, ops) +
+    )
+end
 
-        if cur && !isnothing(prev_lef) && node.rig.ari > 0 && isapprox_structure(prev_lef, node.rig)
-            return lef + 0.1 * rig + 1.0, prev_lef
-
-        elseif cur && !isnothing(prev_rig) && node.lef.ari > 0 && isapprox_structure(prev_rig, node.lef)
-            return rig + 0.1 * lef + 1.0, prev_rig
-
-        elseif cur && node.lef.ari > 0 && node.rig.ari > 0 && isapprox_structure(node.lef, node.rig)
-            return lef + 0.1 * rig + 1.0, node.lef
-        else
-            return lef + rig + 1.0, nothing
-        end
-    else
-        return 1.0, nothing
-    end
+function get_measure_beauty_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+    beauty_compl(node, ops)
 end
 
