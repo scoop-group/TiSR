@@ -104,8 +104,6 @@ ops, data = Options(
         selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the Pareto-optimal selection part of selection
         hall_of_fame_niching_sigdigits::Int64      = 5,                                                           # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
         population_niching_sigdigits::Int64        = 5,                                                           # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
-        ratio_pareto_tournament_selection::Float64 = 0.5,                                                         # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
-        tournament_size::Int64                     = 5,                                                           # -> tournament size
     ),
     fitting = fitting_params(;
         max_iter::Int64                       = 10,                 # -> maximum iterations for parameter fitting. -> 10 ... 50 ==> biggest time consumer <==

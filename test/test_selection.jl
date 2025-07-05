@@ -3,7 +3,7 @@
 # TODO: test normalize_objectives(indiv_obj_vals) -> median, offset
 # TODO: test get_relative_fitness(indiv_obj_vals)
 
-# TODO: test perform_population_selection!(pop, ops) -> niching, age, last front sampling, pareto, tournament, rank, crowding
+# TODO: test perform_population_selection!(pop, ops) -> niching, age, last front sampling, pareto, rank, crowding
 # TODO: test perform_hall_of_fame_selection!(hall_of_fame, population, ops) -> niching, deepcopy, pareto
 
 @testset "non_dominated_sort" begin
@@ -109,37 +109,6 @@ end
     rows = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
     expected = [0.0, 0.0, 0.0]  # All values are the same, no distance
     @test TiSR.crowding_distance(rows) == expected
-end
-
-@testset "tournament_selection" begin
-    x = 1.0:10.0
-    x_data = repeat(x, 10)                                                                           # generate shifted 1/x points
-    y_data = sort(x_data)
-    data = [x_data, y_data]
-    @assert length(data) == 2 && length.(data) == [100, 100]
-    all_inds = collect(eachindex(x_data))
-    rows = [[x, y] for (x, y) in zip(x_data, y_data)]
-
-    fitness = TiSR.get_relative_fitness(rows)
-
-    selection_better = count(1:1000) do _
-        tournament_size = rand(5:30)
-        n_select        = rand(2:30)
-
-        inds = TiSR.tournament_selection(fitness, copy(all_inds),
-            tournament_size = tournament_size,
-            n_select        = n_select
-        )
-
-        @test length(unique(inds)) == n_select
-        @test all(i in all_inds for i in inds)
-
-        fitness_select = sum(fitness[inds]) / length(inds)
-        fitness_not_selected = sum(fitness[setdiff(all_inds, inds)]) / length(setdiff(all_inds, inds))
-        fitness_select > fitness_not_selected
-    end
-
-    @test selection_better > 950
 end
 
 @testset "niching tests" begin

@@ -59,44 +59,6 @@ end
 """
 parent_selection(pop; tournament_size=2) = minimum(rand(pop) for _ in 1:tournament_size)
 
-""" Tournament selection. The proprocessing of the fitness may be adapted. The inds passed into
-    this function are modified and should not be used afterwards.
-"""
-function tournament_selection(fitness, inds; tournament_size=5, n_select=10, modify=true)
-    #@timeit to "tournament_selection" begin
-        n_select >= length(inds) && return inds
-
-        if !modify
-            inds = deepcopy(inds)
-        end
-
-        selected = Int64[]
-
-        for _ in 1:n_select
-            shuffle!(inds)
-            _, win_ind = findmax(i -> fitness[i], view(inds, 1:min(tournament_size, length(inds))))
-            push!(selected, popat!(inds, win_ind))
-        end
-
-        sort!(selected)
-    #end # @timeit
-    return selected
-end
-
-""" Normalize vector of vectors using the median instead of the maximum.
-"""
-function normalize_objectives(indiv_obj_vals)
-    indiv_obj_vals   = reduce(hcat, indiv_obj_vals)'
-    indiv_obj_vals .-= minimum(indiv_obj_vals, dims=1)
-    indiv_obj_vals ./= (median(indiv_obj_vals, dims=1) .+ 1e-1)
-    return eachrow(indiv_obj_vals)
-end
-
-""" Calculate the relative fitness based on normalized objectives using the
-    median instead of the maximum.
-"""
-get_relative_fitness(indiv_obj_vals) = -sum.(indiv_obj_vals)
-
 """ Perform the population selection.
 """
 function perform_population_selection!(pop, ops, isle)
@@ -138,35 +100,9 @@ function perform_population_selection!(pop, ops, isle)
 
     length(pop) > ops.general.pop_per_isle || return
 
-    # Pareto selection # -------------------------------------------------------------------
-    selection_inds = Int64[]
-
-    if ops.selection.n_pareto_select_per_isle > 0
-        sort!(pop)
-        append!(selection_inds, 1:ops.selection.n_pareto_select_per_isle)
-    end
-
-    # tournament selection # ---------------------------------------------------------------
-    if ops.general.pop_per_isle - ops.selection.n_pareto_select_per_isle > 0
-        remaining_inds = setdiff(eachindex(pop), selection_inds)
-
-        if ops.general.pop_per_isle - length(selection_inds) < length(remaining_inds)
-            indiv_obj_vals = normalize_objectives(indiv_obj_vals)
-            fitness  = get_relative_fitness(indiv_obj_vals)
-            selected = tournament_selection(fitness, remaining_inds,
-                tournament_size = ops.selection.tournament_size,
-                n_select        = ops.general.pop_per_isle - length(selection_inds)
-            )
-        else
-            selected = remaining_inds
-        end
-
-        append!(selection_inds, selected)
-    end
-
-    # apply selection
-    sort!(selection_inds)
-    keepat!(pop, selection_inds)
+    # pareto selection # ---------------------------------------------------------------------------
+    sort!(pop)
+    keepat!(pop, 1:ops.general.pop_per_isle)
 end
 
 """ Perfroms the hall_of_fame selection.

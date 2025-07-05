@@ -82,9 +82,6 @@ struct Options{A, B, C, D, F, G, H, I, J, K}#, L}
         end
 
         # resulting parameters # -------------------------------------------------------------------
-        n_pareto_select_per_isle = ceil(Int64, general.pop_per_isle * selection.ratio_pareto_tournament_selection)
-        selection = (;selection..., n_pareto_select_per_isle = n_pareto_select_per_isle)
-
         global __operators = (unaops = unaops, binops = binops) # required for Base.show() Nodes
 
         # # dynamic expressions # --------------------------------------------------------------------
@@ -321,12 +318,7 @@ function selection_params(;
     selection_objectives::Vector{Symbol}       = [:ms_processed_e, :one_minus_abs_spearman, :weighted_compl], # -> objectives for the population selection
     hall_of_fame_niching_sigdigits::Int64      = 5,                                                           # -> number of significant digits to round hall_of_fame_objectives for hall_of_fame selection after their normalization. -> 2 ... 5; 0 is off
     population_niching_sigdigits::Int64        = 5,                                                           # -> number of significant digits to round selection_objectives for population selection after their normalization. -> 2 ... 5; 0 is off
-    ratio_pareto_tournament_selection::Float64 = 0.5,                                                         # -> ratio to which the selection is conducted using the Pareto-optimal selection vs. tournament selection
-    tournament_size::Int64                     = 5,                                                           # -> tournament size
 )
-    @assert tournament_size > 1                             "tournament size must be greater than 1"
-    @assert 0.0 <= ratio_pareto_tournament_selection <= 1.0 "ratio_pareto_tournament_selection must be between 0.0 and 1.0"
-
     0 <= hall_of_fame_niching_sigdigits < 10 || @warn "hall_of_fame_niching_sigdigits should be between 0 and 5"
     0 <= population_niching_sigdigits   < 10 || @warn "population_niching_sigdigits should be between 0 and 5"
 
@@ -335,8 +327,6 @@ function selection_params(;
         selection_objectives              = selection_objectives,
         hall_of_fame_niching_sigdigits    = hall_of_fame_niching_sigdigits,
         population_niching_sigdigits      = population_niching_sigdigits,
-        tournament_size                   = tournament_size,
-        ratio_pareto_tournament_selection = ratio_pareto_tournament_selection
     )
 end
 

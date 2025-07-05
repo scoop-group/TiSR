@@ -399,7 +399,7 @@ function beauty_compl(node, ops)
         3.0 * get_max_depth_per_term(node, ops) +
         2.0 * discount_similar_terms(node, ops) +
         0.5 * get_weighted_compl(node, ops) +
-        0.2 * recursive_compl(node, ops) +
+        0.2 * recursive_compl(node, ops)
     )
 end
 
