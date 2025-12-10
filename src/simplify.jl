@@ -153,7 +153,7 @@ function node_to_symbolic(node::Node, ops::Options)
     if node.ari == -1
         return node.val
     elseif node.ari == 0
-        return SymbolicUtils.Sym{Real}(Symbol("v$(node.ind)"))
+        return SymbolicUtils.Sym{SymReal}(Symbol("v$(node.ind)"); type = Real, shape = UnitRange{Int64}[])
     elseif node.ari == 1
         lef = node_to_symbolic(node.lef, ops)
         return ops.unaops[node.ind](lef)
