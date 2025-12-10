@@ -11,7 +11,7 @@ For more details on past and future uses, a paper accompanying this code is avai
 
 This package is currently not registered at the Julia package registry.
 
-To get started, install Julia 1.11 and run the following in a Julia REPL:
+To get started, install the latest release version of Julia and run the following in a Julia REPL:
 
 ```julia
 import Pkg
