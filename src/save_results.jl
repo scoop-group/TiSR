@@ -48,9 +48,9 @@ end
 
 """ Save vector of individuals to a csv-file.
 """
-function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name="TiSR")
+function save_to_csv(individuals, ops; sort_by=:ms_processed_e, name="TiSR", delim = ";")
     df = convert_to_dataframe(individuals, ops, sort_by=sort_by)
-    str = df_to_csv_string(df)
+    str = df_to_csv_string(df, delim = delim)
     path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * name
     open(path * ".txt", "w") do f
         write(f, str)
@@ -62,6 +62,7 @@ end
 function df_to_fwf_string(df)
     for col in names(df)
         df[!, col] = string.(df[!, col])
+        @assert all(!(" " in strip(c)) for c in df[!, col]) "cannot write a fixed-width-file -> some cell contains spaces. Either remove the spaces in the cells or write to a csv."
         max_len = maximum(length.(df[!, col]))
         max_len = max(max_len, length(col))
         df[!, col] = rpad.(df[!, col], max_len)
@@ -73,12 +74,13 @@ end
 
 """ Convert a dataframe to a ;-separated string.
 """
-function df_to_csv_string(df)
+function df_to_csv_string(df; delim = ";")
     for col in names(df)
         df[!, col] = string.(df[!, col])
+        @assert all(!(delim in c) for c in df[!, col]) "cannot use '$delim' as a delimiter in the csv -> already used in some cell"
     end
-    str = join(names(df), ";") * "\n"
-    return str * join([join(df[row, :], ";") for row in axes(df, 1)], "\n")
+    str = join(names(df), delim) * "\n"
+    return str * join([join(df[row, :], delim) for row in axes(df, 1)], "\n")
 end
 
 """ Outputs of a run and the options -> excel file.
