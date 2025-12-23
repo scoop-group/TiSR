@@ -1,7 +1,7 @@
 name = "TiSR"
 uuid = "e1088136-a916-4db6-8e31-3a049800401f"
-authors = ["Viktor Martinek", "Ophelia Frotscher", "Markus Richter", "Roland Herzog"]
 version = "1.0.0-DEV"
+authors = ["Viktor Martinek", "Ophelia Frotscher", "Markus Richter", "Roland Herzog"]
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -24,6 +24,7 @@ SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 DataFrames = "1"
@@ -31,6 +32,7 @@ DiffResults = "1.1.0"
 Printf = "1.11.0"
 StringDistances = "0.11.3"
 TimerOutputs = "0.5.26"
+YAML = "0.4.16"
 julia = "1"
 
 [extras]

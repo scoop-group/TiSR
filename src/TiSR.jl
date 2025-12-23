@@ -39,6 +39,7 @@ using LineSearches
 
 using DataFrames
 using XLSX
+using YAML
 using UnicodePlots
 using Printf
 

@@ -90,3 +90,11 @@ save_to_fwf(hall_of_fame, ops)
 
 # save_to_csv(hall_of_fame, ops)
 # save_to_excel(hall_of_fame, population, prog_dict, ops)
+
+# we can also write all information into a YAML file # ---------------------------------------------
+# write_to_yaml(hall_of_fame, population, prog_dict, ops)
+
+# and we can load the YAML again into julia
+# df_hall_of_fame, df_population, df_prog_dict, df_data, options_dict = load_from_yaml(path_to_yaml)
+
+

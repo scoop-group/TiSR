@@ -62,7 +62,7 @@ end
 function df_to_fwf_string(df)
     for col in names(df)
         df[!, col] = string.(df[!, col])
-        @assert all(!(" " in strip(c)) for c in df[!, col]) "cannot write a fixed-width-file -> some cell contains spaces. Either remove the spaces in the cells or write to a csv."
+        @assert all(!occursin(" " in strip(c)) for c in df[!, col]) "cannot write a fixed-width-file -> some cell contains spaces. Either remove the spaces in the cells or write to a csv."
         max_len = maximum(length.(df[!, col]))
         max_len = max(max_len, length(col))
         df[!, col] = rpad.(df[!, col], max_len)
@@ -77,7 +77,7 @@ end
 function df_to_csv_string(df; delim = ";")
     for col in names(df)
         df[!, col] = string.(df[!, col])
-        @assert all(!(delim in c) for c in df[!, col]) "cannot use '$delim' as a delimiter in the csv -> already used in some cell"
+        @assert all(!occursin(delim, c) for c in df[!, col]) "cannot use '$delim' as a delimiter in the csv -> already used in some cell"
     end
     str = join(names(df), delim) * "\n"
     return str * join([join(df[row, :], delim) for row in axes(df, 1)], "\n")
@@ -163,5 +163,84 @@ function simplify_to_string(node::Node, ops::Options; sigdigits=3)
         eq_str = node_to_string(node, ops)
     end
     return round_equation_string(eq_str, sigdigits=sigdigits)
+end
+
+# ==================================================================================================
+# yaml stuff
+# ==================================================================================================
+function options_to_nested_dict(cur::T) where T
+    if T <: Options
+        return OrderedDict(
+            k => options_to_nested_dict(getfield(cur, k))
+            for k in fieldnames(T)
+        )
+    elseif T <: NamedTuple
+        return OrderedDict(
+            k => options_to_nested_dict(getfield(cur, k))
+            for k in keys(cur)
+        )
+    elseif T <: Union{Dict, OrderedDict}
+        return OrderedDict(
+            k => options_to_nested_dict(cur[k])
+            for k in keys(cur)
+        )
+    elseif T <: Function # TODO: how to get a better representation? for anonymous functions?
+        return string(cur)
+    elseif T <: Symbol
+        return string(cur)
+    elseif T <: Tuple
+        return options_to_nested_dict(collect(cur))
+    elseif T <: AbstractArray
+        return [options_to_nested_dict(c) for c in cur]
+    else
+        return cur
+    end
+end
+
+function flow_i_fy(yaml_str)
+    m = match(r"(\n\s+- [0-9\.e-]+)+", yaml_str)
+    if !isnothing(m)
+        new_m    = " [" * replace(m.match, r"\n\s+- ([0-9\.e-]+)" => s"\1, ") * "]"
+        yaml_str = yaml_str[1:m.offset-1] * new_m * yaml_str[m.offset+length(m.match):end]
+        return flow_i_fy(yaml_str)
+    end
+    return yaml_str
+end
+
+function write_to_yaml(hall_of_fame, population, prog_dict, ops; sort_by = :ms_processed_e, name="TiSR", delim = ";")
+    # TODO: how to get commit hash # Base.pkgversion(TiSR)
+    # TODO: how to get the main contents? # read(@__FILE__, String)
+
+    out = OrderedDict()
+
+    df_hall_of_fame = TiSR.convert_to_dataframe(hall_of_fame, ops, sort_by = sort_by)
+    df_population   = TiSR.convert_to_dataframe(population, ops, sort_by = sort_by)
+    df_prog_dict    = DataFrame(prog_dict)
+
+    out[:options]      = options_to_nested_dict(ops)
+    out[:hall_of_fame] = TiSR.df_to_csv_string(df_hall_of_fame, delim = delim)
+    out[:population]   = TiSR.df_to_csv_string(df_population, delim = delim)
+    out[:prog_dict]    = TiSR.df_to_csv_string(df_prog_dict, delim = delim)
+    out[:data]         = TiSR.df_to_csv_string(DataFrame(reduce(hcat, data), ["v$i" for i in 1:length(data)]), delim = delim)
+
+    io = IOBuffer()
+    YAML.write(io, out)
+    yaml_str = String(take!(io))
+    yaml_str = flow_i_fy(yaml_str)
+
+    path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * name
+    open(path * ".yaml", "w") do f
+        write(f, yaml_str)
+    end
+end
+
+function load_from_yaml(path_to_yaml; delim = ";")
+    yaml_dict       = YAML.load_file(path_to_yaml)
+    df_data         = CSV.read(IOBuffer(yaml_dict["data"]),         DataFrame, delim = delim)
+    df_hall_of_fame = CSV.read(IOBuffer(yaml_dict["hall_of_fame"]), DataFrame, delim = delim)
+    df_population   = CSV.read(IOBuffer(yaml_dict["population"]),   DataFrame, delim = delim)
+    df_prog_dict    = CSV.read(IOBuffer(yaml_dict["prog_dict"]),    DataFrame, delim = delim)
+    options_dict    = yaml_dict["options"]
+    return df_hall_of_fame, df_population, df_prog_dict, df_data, options_dict
 end
 
