@@ -1,63 +1,63 @@
 
 """ Various pre-implemented fit quality measures.
 """
-function get_measure_max_ae(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_max_ae(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[end]
     residual = target .- prediction
     @views maximum(abs, residual[inds])
 end
 
-function get_measure_mae(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_mae(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[end]
     residual = target .- prediction
     @views mean(abs, residual[inds])
 end
 
-function get_measure_mse(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_mse(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[end]
     residual = target .- prediction
     @views mean(abs2, residual[inds])
 end
 
-function get_measure_one_minus_r2(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_one_minus_r2(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[end]
-    @views get_one_minus_r2(prediction[ind], target[ind])
+    @views get_one_minus_r2(prediction[inds], target[inds])
 end
 
-function get_measure_one_minus_abs_spearman(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_one_minus_abs_spearman(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[end]
     @views get_one_minus_abs_spearman(prediction[inds], target[inds])
 end
 
-function get_measure_mare(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_mare(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[end]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views mean(abs, rel_residual[inds])
 end
 
-function get_measure_q75_are(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_q75_are(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[end]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views quantile(abs.(rel_residual[inds]), 0.75)
 end
 
-function get_measure_max_are(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_max_are(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[end]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     maximum(abs, rel_residual[inds])
 end
 
-function get_measure_ms_processed_e(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_ms_processed_e(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[end]
     residual = target .- prediction
     @views mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops)[inds] # TODO: are inds and eachindex(residual) right?
                             .* ops.data_descript.fit_weights[inds])
 end
 
-function get_one_minus_r2(pred::Vector{T}, orig::Vector{T})::T where {T}
+function get_one_minus_r2(pred::AbstractArray{T}, orig::AbstractArray{T})::T where {T}
     total_sum_of_squares = sum(abs2, orig .- mean(orig))
     sum_of_squares_pred = sum(abs2, pred .- orig)
     return 1.0-(1.0 - sum_of_squares_pred / total_sum_of_squares)
@@ -71,56 +71,56 @@ end
 
 """ Various pre-implemented measures -> test versions.
 """
-function get_measure_max_ae_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_max_ae_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[3]
     residual = target .- prediction
     @views maximum(abs, residual[inds])
 end
 
-function get_measure_mae_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_mae_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[3]
     residual = target .- prediction
     @views mean(abs, residual[inds])
 end
 
-function get_measure_mse_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_mse_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[3]
     residual = target .- prediction
     @views mean(abs2, residual[inds])
 end
 
-function get_measure_one_minus_r2_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_one_minus_r2_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[3]
     @views get_one_minus_r2(prediction[ind], target[ind])
 end
 
-function get_measure_one_minus_abs_spearman_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_one_minus_abs_spearman_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[3]
     @views get_one_minus_abs_spearman(prediction[inds], target[inds])
 end
 
-function get_measure_mare_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_mare_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[3]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views mean(abs, rel_residual[inds])
 end
 
-function get_measure_q75_are_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_q75_are_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[3]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     @views quantile(abs.(rel_residual[inds]), 0.75)
 end
 
-function get_measure_max_are_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_max_are_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     guard = inv(ops.general.replace_inf)
     inds = ops.data_descript.split_inds[3]
     rel_residual = @. (prediction - target) / (abs(target) + guard)
     maximum(abs, rel_residual[inds])
 end
 
-function get_measure_ms_processed_e_test(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_ms_processed_e_test(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     inds = ops.data_descript.split_inds[3]
     residual = target .- prediction
     @views mean(abs2, ops.fitting.residual_processing(residual, eachindex(residual), ops)[inds]
@@ -129,23 +129,23 @@ end
 
 """ Various pre-implemented complexity measures.
 """
-function get_measure_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     count_nodes(node)
 end
 
-function get_measure_n_params(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_n_params(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     length(list_of_param_nodes(node))
 end
 
-function get_measure_max_nodes_per_term(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_max_nodes_per_term(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     get_max_nodes_per_term(node, ops)
 end
 
-function get_measure_square_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_square_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     get_max_nodes_per_term(node, ops) * get_weighted_compl(node, ops)
 end
 
-function get_measure_cross_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_cross_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     get_max_nodes_per_term(node, ops) + get_weighted_compl(node, ops)
 end
 
@@ -187,7 +187,7 @@ function get_weighted_compl(node, ops)::Float64
     end
 end
 
-function get_measure_weighted_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_weighted_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     get_weighted_compl(node, ops)
 end
 
@@ -241,11 +241,11 @@ function recursive_compl(
     return min(floatmax(), compl)
 end
 
-function get_measure_recursive_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_recursive_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     recursive_compl(node, ops)
 end
 
-function get_measure_constr_vios(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_constr_vios(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     isempty(ops.fitting.all_constr_f_select) && return 0.0
 
     function node_func(params::Vector{T1}, constr_data::Vector{Vector{T2}}) where {T1, T2} # evaluate a node at given parameters and given data
@@ -319,7 +319,7 @@ function virgolin_compl(node, ops)
     )
 end
 
-function get_measure_virgolin_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_virgolin_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     virgolin_compl(node, ops)
 end
 
@@ -382,7 +382,7 @@ function discount_similar_terms(node, ops; discount_factor = 0.1)
     end
 end
 
-function get_measure_discount_similar_terms_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_discount_similar_terms_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     discount_similar_terms(node, ops)
 end
 
@@ -403,7 +403,7 @@ function beauty_compl(node, ops)
     )
 end
 
-function get_measure_beauty_compl(prediction::Vector{T}, target::Vector{T}, node, ops)::T where {T}
+function get_measure_beauty_compl(prediction::AbstractArray{T}, target::AbstractArray{T}, node, ops)::T where {T}
     beauty_compl(node, ops)
 end
 
