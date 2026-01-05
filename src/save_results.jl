@@ -197,17 +197,17 @@ function options_to_nested_dict(cur::T) where T
     end
 end
 
-function flow_i_fy(yaml_str)
-    m = match(r"(\n\s+- [0-9\.e-]+)+", yaml_str)
-    if !isnothing(m)
-        new_m    = " [" * replace(m.match, r"\n\s+- ([0-9\.e-]+)" => s"\1, ") * "]"
-        yaml_str = yaml_str[1:m.offset-1] * new_m * yaml_str[m.offset+length(m.match):end]
-        return flow_i_fy(yaml_str)
-    end
-    return yaml_str
-end
+# function flow_i_fy(yaml_str)
+#     m = match(r"(\n\s+- [0-9\.e-]+)+", yaml_str)
+#     if !isnothing(m)
+#         new_m    = " [" * replace(m.match, r"\n\s+- ([0-9\.e-]+)" => s"\1, ") * "]"
+#         yaml_str = yaml_str[1:m.offset-1] * new_m * yaml_str[m.offset+length(m.match):end]
+#         return flow_i_fy(yaml_str)
+#     end
+#     return yaml_str
+# end
 
-function write_to_yaml(hall_of_fame, population, prog_dict, ops; sort_by = :ms_processed_e, name="TiSR", delim = ";")
+function save_to_yaml(hall_of_fame, population, data, prog_dict, ops; sort_by = :ms_processed_e, name="TiSR", delim = ";")
     # TODO: how to get commit hash # Base.pkgversion(TiSR)
     # TODO: how to get the main contents? # read(@__FILE__, String)
 
@@ -226,7 +226,6 @@ function write_to_yaml(hall_of_fame, population, prog_dict, ops; sort_by = :ms_p
     io = IOBuffer()
     YAML.write(io, out)
     yaml_str = String(take!(io))
-    yaml_str = flow_i_fy(yaml_str)
 
     path = string(Dates.format(Dates.now(), "yyyy_mm_dd-e-HH_MM")) * "_" * name
     open(path * ".yaml", "w") do f
