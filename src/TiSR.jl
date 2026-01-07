@@ -43,6 +43,7 @@ using XLSX
 using YAML
 using UnicodePlots
 using Printf
+using CSV
 
 using DiffResults
 
